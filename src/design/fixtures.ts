@@ -102,7 +102,7 @@ export const homeFixture: HomeResponse = {
   },
   resume: {
     ...binarySearch,
-    nextStep: "中央の要素と探す値を比べる動きを、コードに写すところから始めよう",
+    nextStep: "前回、探す値と真ん中を比べて範囲を絞る問題で一度つまずいたね。今日は、その動きがコードのどこに書かれるかを確かめてみよう",
   },
   hasInProgressUnit: true,
   week: {

@@ -145,7 +145,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   {current.title}
                 </Typography>
                 {current.nextPhase && (
-                  <Typography fontSize={18} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
+                  <Typography fontSize={18} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。動きの一つひとつがコードのどこに対応するかを見ていく段階です。</Typography>
                 )}
                 {sameUnit && resume?.nextStep && (
                   <Box sx={{ mt: 2 }}>
@@ -300,7 +300,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       ))}
                     </Stack>
                     <Typography fontSize={16} sx={{ mt: 1 }}>
-                      あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
+                      あと{nearAchievement.goal - nearAchievement.progress}単元で達成
                     </Typography>
                   </Box>
                   <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5, whiteSpace: "nowrap", flexShrink: 0 }}>
