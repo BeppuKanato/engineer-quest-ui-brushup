@@ -30,7 +30,7 @@ export default function HomePage() {
     <Container maxWidth={false} sx={{ maxWidth: 1440, py: { xs: 3, md: 4 } }}>
       {errorMessage && <Alert severity={homeData ? "warning" : "error"} sx={{ mb: 3 }}>{errorMessage}</Alert>}
       {homeData ? (isDesignMode()
-        ? <HomeDesignDraft data={homeData} goalText={homeData.hasInProgressUnit ? "二分探索を最後まで進める" : undefined} />
+        ? <HomeDesignDraft data={homeData} goalText={homeData.hasInProgressUnit ? "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる" : undefined} />
         : <HomeDashboard data={homeData} review={<DailyReviewCard />} currentGoal={homeData.hasInProgressUnit ? <BigGoalBanner currentOnly /> : undefined} />) : isLoading ? <Stack spacing={3}><Skeleton variant="rounded" height={260} /><Skeleton variant="rounded" height={180} /></Stack> : null}
     </Container>
   </Box>;

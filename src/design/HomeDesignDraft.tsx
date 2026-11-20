@@ -88,7 +88,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
   const nearAchievement = today.nearAchievements[0];
   const nearAchievementData = nearAchievement ? achievementsData.find((a) => a.id === nearAchievement.id) : undefined;
   const latestTone = latestCard ? knowledgeCardTones[latestCard.rarity as keyof typeof knowledgeCardTones] : undefined;
-  const overallRatio = overview.totalUnits > 0 ? overview.completedUnits / overview.totalUnits : 0;
 
   return (
     <Stack spacing={3}>
@@ -108,7 +107,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             <Box sx={{ minWidth: { md: 260 } }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                 <Typography fontSize={12} fontWeight={800}>
-                  進み具合
+                  学習ステップの進捗
                 </Typography>
                 <Typography fontSize={14} fontWeight={800}>
                   {current.completedPhases}/{current.totalPhases} ステップ
@@ -140,7 +139,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 32 }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ flex: 1, minWidth: 0, maxWidth: 780 }}>
                 <Typography component="h3" fontSize={22} fontWeight={900}>
                   {current.title}
                 </Typography>
@@ -159,47 +158,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, fontSize: 16, px: 4, py: 1.75, borderRadius: 2.5 }}
                 >
                   {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
-                </Button>
-              </Box>
-              {/* 進捗は2階層を分けて明示する：この単元／全体 */}
-              <Box sx={{ width: { md: 210 }, flexShrink: 0, borderLeft: { md: "1px solid #e2e8f0" }, pl: { md: 3 } }}>
-                <Typography fontSize={12} fontWeight={800}>
-                  この単元の進み具合
-                </Typography>
-                <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
-                  {current.title} {current.completedPhases}/{current.totalPhases} ステップ
-                </Typography>
-                <Stack direction="row" spacing={0.75} sx={{ mt: 1.5 }} aria-hidden>
-                  {Array.from({ length: current.totalPhases }, (_, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        flex: 1,
-                        height: 8,
-                        borderRadius: 4,
-                        bgcolor: i < current.completedPhases ? PRIMARY : "#e7edf5",
-                        border: i === current.completedPhases ? `2px solid ${PRIMARY}` : "2px solid transparent",
-                      }}
-                    />
-                  ))}
-                </Stack>
-                {current.nextPhase && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-                    次は{current.nextPhase}
-                  </Typography>
-                )}
-                <Divider sx={{ my: 2 }} />
-                <Typography fontSize={12} fontWeight={800}>
-                  全体の進み具合
-                </Typography>
-                <Typography fontSize={18} fontWeight={800} sx={{ mt: 0.5 }}>
-                  全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
-                </Typography>
-                <Box sx={{ height: 8, borderRadius: 4, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
-                  <Box sx={{ height: "100%", width: `${overallRatio * 100}%`, bgcolor: PRIMARY, borderRadius: 4 }} />
-                </Box>
-                <Button component={Link} href="/courses" sx={{ color: PRIMARY, fontWeight: 800, mt: 1.5, px: 0.5 }}>
-                  コース一覧へ
                 </Button>
               </Box>
             </Stack>
