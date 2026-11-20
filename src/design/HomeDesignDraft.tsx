@@ -259,7 +259,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         {/* 実績：達成が近いものを1つ、トロフィーの色でレアリティが分かる形で */}
         {nearAchievement && (
           <Paper component="section" aria-label="実績" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
-            <TileTitle>実績</TileTitle>
+            <TileTitle>次の実績</TileTitle>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Box
                 sx={{
@@ -284,7 +284,21 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 </Typography>
               </Box>
             </Stack>
-            <Typography fontSize={18} sx={{ mt: 2 }}>
+            <Stack direction="row" spacing={0.75} sx={{ mt: 2 }} aria-hidden>
+              {Array.from({ length: nearAchievement.goal }, (_, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    flex: 1,
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: i < nearAchievement.progress ? PRIMARY : "#e7edf5",
+                    border: i === nearAchievement.progress ? `2px solid ${PRIMARY}` : "2px solid transparent",
+                  }}
+                />
+              ))}
+            </Stack>
+            <Typography fontSize={18} sx={{ mt: 1.5 }}>
               あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
             </Typography>
             <Box sx={{ flex: 1 }} />
