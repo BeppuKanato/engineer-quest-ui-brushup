@@ -63,6 +63,9 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
 const POST_META: Record<string, { tag: string; replies: number }> = {
   "design-post-1": { tag: "幅優先探索", replies: 3 },
   "design-post-2": { tag: "二分探索", replies: 1 },
+  "design-post-3": { tag: "バブルソート", replies: 2 },
+  "design-post-4": { tag: "深さ優先探索", replies: 5 },
+  "design-post-5": { tag: "貪欲法", replies: 0 },
 };
 
 // 復習の問題は実在の教材から引く（フィクスチャと同じキー）。
@@ -369,8 +372,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         {questions.length > 0 && (
           <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
             <TileTitle>掲示板の新着質問</TileTitle>
+            <Box sx={{ flex: 1, minHeight: 0, maxHeight: 264, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
             <Stack divider={<Divider flexItem />}>
-              {questions.slice(0, 1).map((question) => {
+              {questions.map((question) => {
                 const meta = POST_META[question.id];
                 return (
                   <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
@@ -395,7 +399,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 );
               })}
             </Stack>
-            <Box sx={{ flex: 1 }} />
+            </Box>
             <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
               掲示板へ
             </Button>
