@@ -4,13 +4,14 @@
 // 実績の解除と知識カードの獲得の演出を、レアリティごとに本物のコンポーネントで再生する。
 // レジェンダリーは「色は金、強さはエピックと同じ」で設定済み（2026-11-20、一旦の決定）。
 
-import { Box, Button, Container, Typography } from "@mui/material";
-import { useMemo, useState } from "react";
+import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 
 import type { AwardedCard } from "@/api/learning.api";
 import { NewAchievementZone, type AchievementPresentationItem } from "@/components/rewards/AchievementPresentation";
 import { cardPresentation, presentationFor } from "@/components/rewards/presentation";
 import cardsData from "@/design/data/knowledgeCards.json";
+import { MascotSvg, mascotExpressionLabels, type MascotExpression } from "@/design/mascotSvg";
 import { LearningRewardsContext } from "@/features/learning/app/LearningRewardsContext";
 import { LearningRewardBoundary } from "@/features/learning/rewards/LearningRewardBoundary";
 
@@ -47,9 +48,23 @@ const specText = (rarity: string): string => {
   return rarity === "LEGENDARY" ? `${base}（レジェンダリーは色だけ金で、強さはエピックと同じ）` : base;
 };
 
+const mascotExpressions = Object.keys(mascotExpressionLabels) as MascotExpression[];
+const waitCaptions = ["記録を確認している", "次の一歩を考えている"];
+
 export default function DesignPreviewPage() {
   const [achievementRun, setAchievementRun] = useState<{ rarity: string; runId: number } | null>(null);
   const [cardRun, setCardRun] = useState<{ rarity: string; runId: number } | null>(null);
+  const [mascotExpr, setMascotExpr] = useState<MascotExpression>("normal");
+  const [reaction, setReaction] = useState<{ level: 1 | 2 | 3; nonce: number } | null>(null);
+  const [waiting, setWaiting] = useState(false);
+  const [waitStep, setWaitStep] = useState(0);
+
+  useEffect(() => {
+    if (!waiting) return;
+    setWaitStep(0);
+    const timer = setInterval(() => setWaitStep((step) => (step + 1) % waitCaptions.length), 2200);
+    return () => clearInterval(timer);
+  }, [waiting]);
 
   const rewardsValue = useMemo(
     () => ({
@@ -71,6 +86,74 @@ export default function DesignPreviewPage() {
       </Typography>
       <Typography sx={{ mb: 4, color: "text.secondary" }}>
         デザイン確認専用のページです。実績の解除と知識カードの獲得の演出を、レアリティごとに本物の部品で再生します。
+      </Typography>
+
+      <Typography component="h2" sx={{ fontSize: 20, fontWeight: 800, mb: 1 }}>
+        マスコット（SVG 試作）
+      </Typography>
+      <Typography sx={{ mb: 2, color: "text.secondary" }}>
+        方針（1体・パーツ分け SVG）の試作です。色と特徴は現在の PNG から取り、画風は平たく作り直しました。
+        表情はパーツの組み合わせで切り替わります。待機中は、まばたきとしっぽと体の小さな動きが入ります。
+      </Typography>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+        {mascotExpressions.map((expr) => (
+          <Chip
+            key={expr}
+            label={mascotExpressionLabels[expr]}
+            color={!waiting && mascotExpr === expr ? "primary" : "default"}
+            variant={!waiting && mascotExpr === expr ? "filled" : "outlined"}
+            onClick={() => {
+              setWaiting(false);
+              setMascotExpr(expr);
+            }}
+          />
+        ))}
+      </Box>
+      <Stack direction="row" spacing={4} sx={{ alignItems: "flex-start", flexWrap: "wrap", mb: 2 }}>
+        <Box
+          sx={{
+            width: 248,
+            height: 248,
+            display: "grid",
+            placeItems: "center",
+            borderRadius: 3,
+            bgcolor: "#F6F8FB",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <MascotSvg expression={waiting ? "thinking" : mascotExpr} reaction={reaction} size={232} />
+        </Box>
+        <Box sx={{ minWidth: 220 }}>
+          <Typography sx={{ fontWeight: 700, mb: 1 }}>反応の強さ</Typography>
+          <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
+            {([1, 2, 3] as const).map((level) => (
+              <Button
+                key={level}
+                variant="outlined"
+                onClick={() => {
+                  setWaiting(false);
+                  setMascotExpr("celebrate");
+                  setReaction({ level, nonce: Date.now() });
+                }}
+              >
+                {level === 1 ? "弱（頷く）" : level === 2 ? "中（小さく跳ねる）" : "強（大きく跳ねる）"}
+              </Button>
+            ))}
+          </Box>
+          <Typography sx={{ fontWeight: 700, mb: 1 }}>生成待ちの場面</Typography>
+          <Button variant={waiting ? "contained" : "outlined"} onClick={() => setWaiting((value) => !value)}>
+            {waiting ? "生成待ちを止める" : "生成待ちを再生"}
+          </Button>
+          {waiting && (
+            <Typography sx={{ mt: 1.5, fontSize: 14 }}>
+              {waitCaptions[waitStep]}…
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+      <Typography sx={{ mb: 5, fontSize: 13, color: "text.secondary" }}>
+        試作の出どころ：src/design/mascotSvg.tsx。表情の名前は今の7種（通常・嬉しい・応援・考え中・驚き・お祝い・顔だけ）を引き継いでいます。
       </Typography>
 
       <Typography component="h2" sx={{ fontSize: 20, fontWeight: 800, mb: 1 }}>
