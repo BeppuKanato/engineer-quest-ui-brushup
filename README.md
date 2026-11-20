@@ -21,6 +21,7 @@ npm run dev   # http://localhost:3000
 デザインモードが常時オン（`.env` の `NEXT_PUBLIC_DESIGN_MODE=1`）なので、ログインなしで画面が開く。データは `src/design/fixtures.ts` のフィクスチャで描かれ、実績・カード・単元の中身は実データ（`src/design/data/`）、利用者の状態だけが仮。
 
 - ページの棚卸しと進め方：`docs/design-inventory.md`
+- 演出の確認：`/design-preview` で、実績解除とカード獲得の演出をレアリティごとに再生できる（デザイン確認専用ページ）
 - フィクスチャが無い画面は「フィクスチャはまだ用意されていません」と出る。その画面をデザインする時に足す
 
 ## 注意
