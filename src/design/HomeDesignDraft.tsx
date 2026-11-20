@@ -50,7 +50,7 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
       <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
-        <Typography fontSize={13} fontWeight={800}>
+        <Typography fontSize={14} fontWeight={800}>
           次の一歩
         </Typography>
         <Typography fontSize={18} sx={{ mt: 0.25 }}>{nextStep}</Typography>
@@ -106,7 +106,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Stack>
             <Box sx={{ minWidth: { md: 260 }, flexShrink: 0 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-                <Typography fontSize={13} fontWeight={800}>
+                <Typography fontSize={14} fontWeight={800}>
                   学習ステップの進捗
                 </Typography>
                 <Typography fontSize={16} fontWeight={900}>
@@ -173,7 +173,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Typography fontSize={18} sx={{ mt: 1.25 }}>
                 {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              <Typography fontSize={14} color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 今日の分はこの1問だけです
               </Typography>
               <Box sx={{ flex: 1 }} />
@@ -234,13 +234,13 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                           bgcolor: day.learned ? "#ffedd5" : "#eef1f5",
                           color: day.learned ? STREAK_ORANGE : "#94a3b8",
                           border: day.isToday ? `2px solid ${STREAK_ORANGE}` : "2px solid transparent",
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: 800,
                         }}
                       >
                         {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 16 }} /> : Number(day.date.slice(8))}
                       </Box>
-                      <Typography variant="caption" fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
+                      <Typography fontSize={14} fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
                         {day.label}
                       </Typography>
                     </Stack>
@@ -277,7 +277,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                         <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
                           {achievementTitle(nearAchievement.title)}
                         </Typography>
-                        <Typography fontSize={13} fontWeight={800} sx={{ color: "#1d4ed8" }}>
+                        <Typography fontSize={14} fontWeight={800} sx={{ color: "#1d4ed8" }}>
                           {nearAchievementData ? knowledgeCardTones[nearAchievementData.rarity as keyof typeof knowledgeCardTones]?.label ?? "" : ""}
                         </Typography>
                       </Box>
@@ -321,17 +321,17 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 {latestCard && latestTone && (
                   <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 }, flexShrink: 0 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography fontSize={13} fontWeight={800}>
+                      <Typography fontSize={14} fontWeight={800}>
                         {latestCard.label}
                       </Typography>
-                      <Typography fontSize={13} fontWeight={900} sx={{ color: latestTone.color }}>
+                      <Typography fontSize={14} fontWeight={900} sx={{ color: latestTone.color }}>
                         {latestTone.label}
                       </Typography>
                     </Stack>
                     <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
                       {latestCard.title}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography fontSize={14} color="text.secondary">
                       二分探索で獲得
                     </Typography>
                   </Box>
@@ -358,11 +358,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                             {question.title}
                           </Typography>
                           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 12, fontWeight: 700 }} />}
+                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 14, fontWeight: 700 }} />}
                             {meta && (
                               <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
                                 <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
-                                <Typography fontSize={13} fontWeight={800}>
+                                <Typography fontSize={14} fontWeight={800}>
                                   {meta.replies}
                                 </Typography>
                               </Stack>
