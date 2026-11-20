@@ -1,10 +1,11 @@
 "use client";
 
-// ホームの設計叩き台 v8（デザイン用）。
+// ホームの設計叩き台 v9（デザイン用）。
 // 目的（2026-11-20 確認）：開いてすぐに学習を再開できる画面。
-// - 最上段は行動のカード。「今日の狙い」と「今日の復習（1問）」を切り替える。
-//   強調は面の色ではなく主色の枠線で示す（色の面積を抑える）
-// - 現在地は要約の帯にする（全体の完了・現在の単元・次の一手）。全体図はコース画面の仕事
+// - 最上段は今日の行動を2枚並べる：今日の狙い（主・枠線で強調）と今日の復習（1問）。
+//   切り替えタブは選ばれていない方が隠れるのでやめ、両方を常に見せる
+// - 「現在地」の帯は置かない。全体の進捗と単元内の進捗は、狙いの右側に分けて明示する
+//   （全体図はコース画面の仕事）
 // - 下部は「アプリの直近の状況」のタイル列：ストリーク／実績／知識カード／掲示板。
 //   形は「見出し＋代表の1件＋要約＋行き先リンク」で揃える。小さい画面では縦に積む
 // - 文字は役割の5種、見出しは本文色。意味色は予約制（橙＝ストリーク、レアリティ色は実績とカードの中だけ）
@@ -16,7 +17,7 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { HomeResponse } from "@/api/home.api";
 import { isMascotId } from "@/app/component/mascot";
 import { MascotFigure } from "@/app/component/mascotFigure";
@@ -73,20 +74,7 @@ const reviewMaterial = resolveReviewMaterial({
 // 最近手に入れたカード（叩き台では固定の1枚）。
 const latestCard = knowledgeCardsData.find((card) => card.id === "knowledge-card-binary-search-halving-range");
 
-const tabSx = (active: boolean) =>
-  ({
-    borderRadius: 999,
-    px: 2.5,
-    py: 1,
-    fontWeight: 900,
-    bgcolor: active ? PRIMARY : "#ffffff",
-    color: active ? "#ffffff" : "#334155",
-    border: `2px solid ${active ? PRIMARY : "#c7d3e8"}`,
-    "&:hover": { bgcolor: active ? PRIMARY : "#eef2fb" },
-  }) as const;
-
 export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode; goalText?: string }) {
-  const [tab, setTab] = useState<"aim" | "review">("aim");
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
@@ -99,53 +87,36 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
 
   return (
     <Stack spacing={3}>
-      {/* (1) 今日の行動：狙いと復習の切り替え。強調は枠線 */}
+      {/* (1) 今日の行動：狙い（主）と復習（副）を横に並べる */}
       {current && (
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          aria-label="今日の行動"
-          style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
+        <Box
+          sx={{
+            display: "grid",
+            gap: 3,
+            gridTemplateColumns: reviewMaterial ? { xs: "1fr", lg: "2fr 1fr" } : "1fr",
+            alignItems: "stretch",
+          }}
         >
-          <Stack direction="row" spacing={1} sx={{ mb: 3 }} role="tablist" aria-label="今日の行動の切り替え">
-            <Button onClick={() => setTab("aim")} sx={tabSx(tab === "aim")} aria-selected={tab === "aim"} role="tab">
-              今日の狙い
-            </Button>
-            <Button onClick={() => setTab("review")} sx={tabSx(tab === "review")} aria-selected={tab === "review"} role="tab">
-              今日の復習（1問）
-              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: tab === "review" ? "#ffffff" : PRIMARY, ml: 1 }} />
-            </Button>
-          </Stack>
-          {tab === "review" && reviewMaterial ? (
-            <Box>
-              <Typography component="h3" fontSize={22} fontWeight={900}>
-                {reviewMaterial.question.prompt}
-              </Typography>
-              <Typography fontSize={14} sx={{ mt: 1 }}>
-                {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                今日の分はこの1問だけです
-              </Typography>
-              <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5 }}>
-                復習する
-              </Button>
-            </Box>
-          ) : (
-            <>
-              {goalText && (
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-                  <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
-                  <Typography fontSize={14} fontWeight={800}>
-                    目標
-                  </Typography>
-                  <Typography fontSize={14} fontWeight={900}>
-                    {goalText}
-                  </Typography>
-                </Stack>
-              )}
-              <Box sx={{ maxWidth: 640 }}>
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            aria-label="今日の狙い"
+            style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
+          >
+            <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {goalText && (
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                    <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
+                    <Typography fontSize={14} fontWeight={800}>
+                      目標
+                    </Typography>
+                    <Typography fontSize={14} fontWeight={900}>
+                      {goalText}
+                    </Typography>
+                  </Stack>
+                )}
                 <Typography component="h3" fontSize={22} fontWeight={900}>
                   {current.title}
                 </Typography>
@@ -166,43 +137,72 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
                 </Button>
               </Box>
-            </>
+              {/* 進捗は2階層を分けて明示する：この単元／全体 */}
+              <Box sx={{ width: { md: 210 }, flexShrink: 0, borderLeft: { md: "1px solid #e2e8f0" }, pl: { md: 3 } }}>
+                <Typography fontSize={12} fontWeight={800}>
+                  この単元の進み具合
+                </Typography>
+                <Typography fontSize={16} fontWeight={900} sx={{ mt: 0.5 }}>
+                  {current.title} {current.completedPhases}/{current.totalPhases} ステップ
+                </Typography>
+                <Stack direction="row" spacing={0.75} sx={{ mt: 1.5 }} aria-hidden>
+                  {Array.from({ length: current.totalPhases }, (_, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        flex: 1,
+                        height: 8,
+                        borderRadius: 4,
+                        bgcolor: i < current.completedPhases ? PRIMARY : "#e7edf5",
+                        border: i === current.completedPhases ? `2px solid ${PRIMARY}` : "2px solid transparent",
+                      }}
+                    />
+                  ))}
+                </Stack>
+                {current.nextPhase && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                    次は{current.nextPhase}
+                  </Typography>
+                )}
+                <Divider sx={{ my: 2 }} />
+                <Typography fontSize={12} fontWeight={800}>
+                  全体の進み具合
+                </Typography>
+                <Typography fontSize={14} fontWeight={800} sx={{ mt: 0.5 }}>
+                  全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
+                </Typography>
+                <Box sx={{ height: 8, borderRadius: 4, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
+                  <Box sx={{ height: "100%", width: `${overallRatio * 100}%`, bgcolor: PRIMARY, borderRadius: 4 }} />
+                </Box>
+                <Button component={Link} href="/courses" sx={{ color: PRIMARY, fontWeight: 800, mt: 1.5, px: 0.5 }}>
+                  コース一覧へ
+                </Button>
+              </Box>
+            </Stack>
+          </motion.section>
+
+          {/* 今日の復習：狙いの横に独立した小さい行動として置く */}
+          {reviewMaterial && (
+            <Paper component="section" aria-label="今日の復習" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
+              <TileTitle>今日の復習（1問）</TileTitle>
+              <Typography fontSize={16} fontWeight={900} sx={{ lineHeight: 1.6 }}>
+                {reviewMaterial.question.prompt}
+              </Typography>
+              <Typography fontSize={14} sx={{ mt: 1.25 }}>
+                {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                今日の分はこの1問だけです
+              </Typography>
+              <Box sx={{ flex: 1 }} />
+              <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5, alignSelf: "flex-start" }}>
+                復習する
+              </Button>
+            </Paper>
           )}
-        </motion.section>
+        </Box>
       )}
       {!goalText && data.hasInProgressUnit && currentGoal}
-
-      {/* (2) 現在地：要約の帯。全体図はコース画面が担う */}
-      <Paper component="section" aria-label="現在地" elevation={0} sx={S1}>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }}>
-          <Box sx={{ minWidth: 220, flex: "1 1 0" }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-              <Typography component="h2" fontSize={16} fontWeight={900}>
-                現在地
-              </Typography>
-              <Typography fontSize={14} fontWeight={800}>
-                全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
-              </Typography>
-            </Stack>
-            <Box sx={{ height: 8, borderRadius: 4, bgcolor: "#e7edf5", mt: 1.5, overflow: "hidden" }}>
-              <Box sx={{ height: "100%", width: `${overallRatio * 100}%`, bgcolor: PRIMARY, borderRadius: 4 }} />
-            </Box>
-          </Box>
-          {current && (
-            <Typography fontSize={14}>
-              現在の単元：<strong>{current.title}</strong>（ステップ {current.completedPhases}/{current.totalPhases}）
-              {current.nextPhase && (
-                <>
-                  　次：<strong>{current.nextPhase}</strong>
-                </>
-              )}
-            </Typography>
-          )}
-          <Button component={Link} href="/courses" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5, whiteSpace: "nowrap" }}>
-            全体を見る
-          </Button>
-        </Stack>
-      </Paper>
 
       {/* 前回の続き：再開先が推奨先と違う単元の時だけ独立させる */}
       {resume && !sameUnit && (
@@ -222,7 +222,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         </Paper>
       )}
 
-      {/* (3) 直近の状況：タイルの列 */}
+      {/* (2) 直近の状況：タイルの列 */}
       <Box
         sx={{
           display: "grid",
