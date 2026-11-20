@@ -212,7 +212,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             {/* 学習ストリーク */}
             <Box component="section" aria-label="学習ストリーク" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
-                <Box sx={{ minWidth: 168 }}>
+                <Box sx={{ width: { md: 300 }, flexShrink: 0 }}>
                   <TileTitle>学習ストリーク</TileTitle>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 34 }} />
@@ -221,7 +221,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     </Typography>
                   </Stack>
                 </Box>
-                <Stack direction="row" gap={0.75} sx={{ flex: 1, maxWidth: 430 }}>
+                <Stack direction="row" gap={0.75} sx={{ width: { md: 430 }, flexShrink: 0 }}>
                   {week.days.map((day) => (
                     <Stack key={day.date} alignItems="center" spacing={0.5} sx={{ flex: 1 }}>
                       <Box
@@ -247,7 +247,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     </Stack>
                   ))}
                 </Stack>
-                <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5, whiteSpace: "nowrap", flexShrink: 0 }}>
                   履歴を見る
                 </Button>
               </Stack>
@@ -257,7 +257,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             {nearAchievement && (
               <Box component="section" aria-label="実績" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
-                  <Box sx={{ minWidth: 250 }}>
+                  <Box sx={{ width: { md: 300 }, flexShrink: 0 }}>
                     <TileTitle>次の実績</TileTitle>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Box
@@ -284,7 +284,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       </Box>
                     </Stack>
                   </Box>
-                  <Box sx={{ flex: 1, maxWidth: 400 }}>
+                  <Box sx={{ width: { md: 430 }, flexShrink: 0 }}>
                     <Stack direction="row" spacing={0.75} aria-hidden>
                       {Array.from({ length: nearAchievement.goal }, (_, i) => (
                         <Box
@@ -303,7 +303,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
                     </Typography>
                   </Box>
-                  <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                  <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5, whiteSpace: "nowrap", flexShrink: 0 }}>
                     実績一覧へ
                   </Button>
                 </Stack>
@@ -313,7 +313,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             {/* 知識カード：最近の1枚と全体の数 */}
             <Box component="section" aria-label="知識カード" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
-                <Box sx={{ minWidth: 168 }}>
+                <Box sx={{ width: { md: 300 }, flexShrink: 0 }}>
                   <TileTitle>知識カード</TileTitle>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
@@ -335,8 +335,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     </Typography>
                   </Stack>
                 </Box>
+                <Box sx={{ width: { md: 430 }, flexShrink: 0 }}>
                 {latestCard && latestTone && (
-                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 }, flexShrink: 0 }}>
+                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography fontSize={14} fontWeight={800}>
                         {latestCard.label}
@@ -353,7 +354,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     </Typography>
                   </Box>
                 )}
-                <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                </Box>
+                <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5, whiteSpace: "nowrap", flexShrink: 0 }}>
                   コレクションへ
                 </Button>
               </Stack>
