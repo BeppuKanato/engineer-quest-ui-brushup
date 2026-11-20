@@ -147,10 +147,48 @@ export const homeFixture: HomeResponse = {
 
 const getMeFixture: GetMeResponse = { user: designUser };
 
+// 今日の復習は、二分探索の動きの確認問題から1問（実在する問題キー）。
+const dailyReviewFixture = {
+  review: {
+    id: "design-review-1",
+    date: "2026-11-20",
+    courseId: "course-algorithm-binary-search-v1",
+    phaseKey: "binary-search-check",
+    assessmentId: "binary-search-check",
+    questionId: "first-center",
+    selectedAt: "2026-11-20T05:00:00+09:00",
+    answeredAt: null,
+    correct: null,
+  },
+};
+
+// 大目標は、二分探索の単元完了型が進行中の状態。
+const bigGoalFixture = {
+  goal: {
+    id: "design-big-goal-1",
+    type: "UNIT_COMPLETION",
+    params: { courseId: "course-algorithm-binary-search-v1" },
+    displayText: "二分探索を最後まで進める",
+    status: "ACTIVE",
+    confirmedAt: "2026-11-19T10:00:00+09:00",
+    progress: 4 / 7,
+    evaluation: {
+      outcome: "ONGOING",
+      fraction: 4 / 7,
+      detail: { completedPhaseCount: 4, totalPhaseCount: 7 },
+    },
+    evaluatedAt: "2026-11-20T05:00:00+09:00",
+    closedAt: null,
+    createdAt: "2026-11-19T10:00:00+09:00",
+  },
+};
+
 const fixtures: Record<string, unknown> = {
   "/auth/me": getMeFixture,
   "/auth/ensure": getMeFixture,
   "/home": homeFixture,
+  "/daily-review/today": dailyReviewFixture,
+  "/big-goals/current": bigGoalFixture,
 };
 
 // パスに対応するフィクスチャを返す。無い場合は undefined。
