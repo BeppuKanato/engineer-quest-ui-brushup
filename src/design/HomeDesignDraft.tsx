@@ -351,7 +351,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
             <TileTitle>掲示板の新着質問</TileTitle>
             <Stack divider={<Divider flexItem />}>
-              {questions.map((question) => {
+              {questions.slice(0, 1).map((question) => {
                 const meta = POST_META[question.id];
                 return (
                   <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
