@@ -95,7 +95,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
       {goalText && current && (
         <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
               <FlagIcon sx={{ color: PRIMARY, fontSize: 28 }} />
               <Typography fontSize={14} fontWeight={800} sx={{ whiteSpace: "nowrap" }}>
                 目標
@@ -104,7 +104,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 {goalText}
               </Typography>
             </Stack>
-            <Box sx={{ minWidth: { md: 260 } }}>
+            <Box sx={{ minWidth: { md: 260 }, flexShrink: 0 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                 <Typography fontSize={12} fontWeight={800}>
                   学習ステップの進捗
@@ -204,181 +204,184 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         </Paper>
       )}
 
-      {/* (2) 直近の状況：1枚の面の中で4領域が仕切りで分かれる */}
+      {/* (2) 直近の状況：1枚の面の中に、左＝自分の記録3段／右＝掲示板（縦長） */}
       <Paper component="section" aria-label="最近の状況" elevation={0} sx={{ ...S1, p: 0, overflow: "hidden" }}>
-      <Box
-        sx={{
-          display: "grid",
-          gap: 0,
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-          alignItems: "stretch",
-        }}
-      >
-        {/* 学習ストリーク */}
-        <Box component="section" aria-label="学習ストリーク" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 } }}>
-          <TileTitle>学習ストリーク</TileTitle>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 34 }} />
-            <Typography fontSize={24} fontWeight={900}>
-              {week.streakDays}日連続
-            </Typography>
-          </Stack>
-          <Stack direction="row" gap={0.75} sx={{ mt: 2 }}>
-            {week.days.map((day) => (
-              <Stack key={day.date} alignItems="center" spacing={0.5} sx={{ flex: 1 }}>
-                <Box
-                  aria-label={`${day.date} ${day.learned ? "学習済み" : "学習記録なし"}${day.isToday ? " 今日" : ""}`}
-                  sx={{
-                    width: 30,
-                    height: 30,
-                    display: "grid",
-                    placeItems: "center",
-                    borderRadius: "50%",
-                    bgcolor: day.learned ? "#ffedd5" : "#eef1f5",
-                    color: day.learned ? STREAK_ORANGE : "#94a3b8",
-                    border: day.isToday ? `2px solid ${STREAK_ORANGE}` : "2px solid transparent",
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 16 }} /> : Number(day.date.slice(8))}
+        <Box sx={{ display: "grid", gap: 0, gridTemplateColumns: { xs: "1fr", lg: "2.1fr 1fr" }, alignItems: "stretch" }}>
+          <Box>
+            {/* 学習ストリーク */}
+            <Box component="section" aria-label="学習ストリーク" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
+                <Box sx={{ minWidth: 168 }}>
+                  <TileTitle>学習ストリーク</TileTitle>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 34 }} />
+                    <Typography fontSize={24} fontWeight={900}>
+                      {week.streakDays}日連続
+                    </Typography>
+                  </Stack>
                 </Box>
-                <Typography variant="caption" fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
-                  {day.label}
-                </Typography>
+                <Stack direction="row" gap={0.75} sx={{ flex: 1, maxWidth: 430 }}>
+                  {week.days.map((day) => (
+                    <Stack key={day.date} alignItems="center" spacing={0.5} sx={{ flex: 1 }}>
+                      <Box
+                        aria-label={`${day.date} ${day.learned ? "学習済み" : "学習記録なし"}${day.isToday ? " 今日" : ""}`}
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          display: "grid",
+                          placeItems: "center",
+                          borderRadius: "50%",
+                          bgcolor: day.learned ? "#ffedd5" : "#eef1f5",
+                          color: day.learned ? STREAK_ORANGE : "#94a3b8",
+                          border: day.isToday ? `2px solid ${STREAK_ORANGE}` : "2px solid transparent",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 16 }} /> : Number(day.date.slice(8))}
+                      </Box>
+                      <Typography variant="caption" fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
+                        {day.label}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+                <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                  履歴を見る
+                </Button>
               </Stack>
-            ))}
-          </Stack>
-
-          <Box sx={{ flex: 1 }} />
-
-          <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
-            履歴を見る
-          </Button>
-        </Box>
-
-        {/* 実績：達成が近いものを1つ、トロフィーの色でレアリティが分かる形で */}
-        {nearAchievement && (
-          <Box component="section" aria-label="実績" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { sm: "1px solid #e7edf5" } }}>
-            <TileTitle>次の実績</TileTitle>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box
-                sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: "50%",
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: "#dbeafe",
-                  color: "#1d4ed8",
-                  flexShrink: 0,
-                }}
-              >
-                <EmojiEventsIcon sx={{ fontSize: 36 }} />
+            </Box>
+            <Divider />
+            {/* 実績：達成が近いものを1つ、進捗は形で見せる */}
+            {nearAchievement && (
+              <Box component="section" aria-label="実績" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 250 }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: "#dbeafe",
+                        color: "#1d4ed8",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <EmojiEventsIcon sx={{ fontSize: 28 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" fontWeight={800} color="text.secondary">
+                        次の実績
+                      </Typography>
+                      <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
+                        {achievementTitle(nearAchievement.title)}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={800} sx={{ color: "#1d4ed8" }}>
+                        {nearAchievementData ? knowledgeCardTones[nearAchievementData.rarity as keyof typeof knowledgeCardTones]?.label ?? "" : ""}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Box sx={{ flex: 1, maxWidth: 400 }}>
+                    <Stack direction="row" spacing={0.75} aria-hidden>
+                      {Array.from({ length: nearAchievement.goal }, (_, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            borderRadius: 4,
+                            bgcolor: i < nearAchievement.progress ? PRIMARY : "#e7edf5",
+                            border: i === nearAchievement.progress ? `2px solid ${PRIMARY}` : "2px solid transparent",
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                    <Typography fontSize={16} sx={{ mt: 1 }}>
+                      あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
+                    </Typography>
+                  </Box>
+                  <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                    実績一覧へ
+                  </Button>
+                </Stack>
               </Box>
-              <Box>
-                <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
-                  {achievementTitle(nearAchievement.title)}
-                </Typography>
-                <Typography variant="caption" fontWeight={800} sx={{ color: "#1d4ed8" }}>
-                  {nearAchievementData ? knowledgeCardTones[nearAchievementData.rarity as keyof typeof knowledgeCardTones]?.label ?? "" : ""}
-                </Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" spacing={0.75} sx={{ mt: 2 }} aria-hidden>
-              {Array.from({ length: nearAchievement.goal }, (_, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    flex: 1,
-                    height: 8,
-                    borderRadius: 4,
-                    bgcolor: i < nearAchievement.progress ? PRIMARY : "#e7edf5",
-                    border: i === nearAchievement.progress ? `2px solid ${PRIMARY}` : "2px solid transparent",
-                  }}
-                />
-              ))}
-            </Stack>
-            <Typography fontSize={18} sx={{ mt: 1.5 }}>
-              あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
-            </Typography>
-            <Box sx={{ flex: 1 }} />
-            <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
-              実績一覧へ
-            </Button>
+            )}
+            <Divider />
+            {/* 知識カード：最近の1枚と全体の数 */}
+            <Box component="section" aria-label="知識カード" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
+                <Box sx={{ minWidth: 168 }}>
+                  <TileTitle>知識カード</TileTitle>
+                  <Typography fontSize={18} fontWeight={800}>
+                    {overview.collectedCards}/{overview.totalCards} 枚を獲得
+                  </Typography>
+                </Box>
+                {latestCard && latestTone && (
+                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 320 }, flexShrink: 0 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography fontSize={12} fontWeight={800}>
+                        {latestCard.label}
+                      </Typography>
+                      <Typography fontSize={12} fontWeight={900} sx={{ color: latestTone.color }}>
+                        {latestTone.label}
+                      </Typography>
+                    </Stack>
+                    <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
+                      {latestCard.title}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      二分探索で獲得
+                    </Typography>
+                  </Box>
+                )}
+                <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
+                  コレクションへ
+                </Button>
+              </Stack>
+            </Box>
           </Box>
-        )}
-
-        {/* 知識カード：最近の1枚と全体の数 */}
-        <Box component="section" aria-label="知識カード" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-          <TileTitle>知識カード</TileTitle>
-          {latestCard && latestTone && (
-            <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography fontSize={12} fontWeight={800}>
-                  {latestCard.label}
-                </Typography>
-                <Typography fontSize={12} fontWeight={900} sx={{ color: latestTone.color }}>
-                  {latestTone.label}
-                </Typography>
-              </Stack>
-              <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
-                {latestCard.title}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                二分探索で獲得
-              </Typography>
+          {/* 掲示板：右の縦長の列。投稿の部分だけスクロール */}
+          {questions.length > 0 && (
+            <Box component="section" aria-label="掲示板の新着質問" sx={{ position: "relative", borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
+              <Box sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, height: "100%", position: { lg: "absolute" }, inset: { lg: 0 } }}>
+              <TileTitle>掲示板の新着質問</TileTitle>
+              <Box sx={{ flex: 1, minHeight: 0, maxHeight: { xs: 160, lg: "none" }, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
+                <Stack divider={<Divider flexItem />}>
+                  {questions.map((question) => {
+                    const meta = POST_META[question.id];
+                    return (
+                      <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
+                        <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography fontWeight={900} fontSize={18} sx={{ lineHeight: 1.45 }}>
+                            {question.title}
+                          </Typography>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />}
+                            {meta && (
+                              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
+                                <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
+                                <Typography fontSize={12} fontWeight={800}>
+                                  {meta.replies}
+                                </Typography>
+                              </Stack>
+                            )}
+                          </Stack>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Box>
+              <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
+                掲示板へ
+              </Button>
+              </Box>
             </Box>
           )}
-          <Typography fontSize={18} sx={{ mt: 2 }}>
-            {overview.collectedCards}/{overview.totalCards} 枚を獲得
-          </Typography>
-
-          <Box sx={{ flex: 1 }} />
-
-          <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
-            コレクションへ
-          </Button>
         </Box>
-
-        {/* 掲示板：新着の行 */}
-        {questions.length > 0 && (
-          <Box component="section" aria-label="掲示板の新着質問" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { sm: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-            <TileTitle>掲示板の新着質問</TileTitle>
-            <Box sx={{ flex: 1, minHeight: 0, maxHeight: 160, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
-            <Stack divider={<Divider flexItem />}>
-              {questions.map((question) => {
-                const meta = POST_META[question.id];
-                return (
-                  <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
-                    <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography fontWeight={900} fontSize={18} sx={{ lineHeight: 1.45 }}>
-                        {question.title}
-                      </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                        {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />}
-                        {meta && (
-                          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
-                            <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
-                            <Typography fontSize={12} fontWeight={800}>
-                              {meta.replies}
-                            </Typography>
-                          </Stack>
-                        )}
-                      </Stack>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Stack>
-            </Box>
-            <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
-              掲示板へ
-            </Button>
-          </Box>
-        )}
-      </Box>
       </Paper>
     </Stack>
   );
