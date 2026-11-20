@@ -1,7 +1,8 @@
 "use client";
 
-// ホームの設計叩き台 v10（デザイン用）。v10：本文を15に拡大、主ボタンを強調、
-// タイルと復習カードの高さは中身に合わせる（揃えない）。幅はアプリ共通の外枠（1440）に従う
+// ホームの設計叩き台 v11（デザイン用）。v11：カードの大きさは揃える（ばらつきはノイズ）。
+// 余白対策は「残した情報を大きくする」：本文16・見出し18、面の余白とアイコンも拡大。
+// 幅はアプリ共通の外枠（1440）に従う
 // 目的（2026-11-20 確認）：開いてすぐに学習を再開できる画面。
 // - 最上段は今日の行動を2枚並べる：今日の狙い（主・枠線で強調）と今日の復習（1問）。
 //   切り替えタブは選ばれていない方が隠れるのでやめ、両方を常に見せる
@@ -30,13 +31,13 @@ import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily
 const PRIMARY = "#2563eb";
 const STREAK_ORANGE = "#ea580c";
 
-const S1 = { bgcolor: "#fff", borderRadius: 3, p: { xs: 2.5, md: 3 }, boxShadow: "none" } as const;
+const S1 = { bgcolor: "#fff", borderRadius: 3, p: { xs: 3, md: 4 }, boxShadow: "none" } as const;
 
 const achievementTitle = (title: string) => title.replace(/Lv\.(\d+)/g, "第$1段階");
 
 function TileTitle({ children }: { children: ReactNode }) {
   return (
-    <Typography component="h2" fontSize={16} fontWeight={900} sx={{ mb: 2 }}>
+    <Typography component="h2" fontSize={18} fontWeight={900} sx={{ mb: 2 }}>
       {children}
     </Typography>
   );
@@ -52,7 +53,7 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
         <Typography fontSize={12} fontWeight={800}>
           次の一歩
         </Typography>
-        <Typography fontSize={15} sx={{ mt: 0.25 }}>{nextStep}</Typography>
+        <Typography fontSize={18} sx={{ mt: 0.25 }}>{nextStep}</Typography>
       </Box>
     </Box>
   );
@@ -95,7 +96,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             display: "grid",
             gap: 3,
             gridTemplateColumns: reviewMaterial ? { xs: "1fr", lg: "2fr 1fr" } : "1fr",
-            alignItems: "start",
+            alignItems: "stretch",
           }}
         >
           <motion.section
@@ -103,17 +104,17 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
             aria-label="今日の狙い"
-            style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
+            style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 32 }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {goalText && (
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
                     <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
-                    <Typography fontSize={15} fontWeight={800}>
+                    <Typography fontSize={18} fontWeight={800}>
                       目標
                     </Typography>
-                    <Typography fontSize={15} fontWeight={900}>
+                    <Typography fontSize={18} fontWeight={900}>
                       {goalText}
                     </Typography>
                   </Stack>
@@ -122,7 +123,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   {current.title}
                 </Typography>
                 {current.nextPhase && (
-                  <Typography fontSize={15} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
+                  <Typography fontSize={18} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
                 )}
                 {sameUnit && resume?.nextStep && (
                   <Box sx={{ mt: 2 }}>
@@ -143,7 +144,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 <Typography fontSize={12} fontWeight={800}>
                   この単元の進み具合
                 </Typography>
-                <Typography fontSize={16} fontWeight={900} sx={{ mt: 0.5 }}>
+                <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
                   {current.title} {current.completedPhases}/{current.totalPhases} ステップ
                 </Typography>
                 <Stack direction="row" spacing={0.75} sx={{ mt: 1.5 }} aria-hidden>
@@ -169,7 +170,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 <Typography fontSize={12} fontWeight={800}>
                   全体の進み具合
                 </Typography>
-                <Typography fontSize={15} fontWeight={800} sx={{ mt: 0.5 }}>
+                <Typography fontSize={18} fontWeight={800} sx={{ mt: 0.5 }}>
                   全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
                 </Typography>
                 <Box sx={{ height: 8, borderRadius: 4, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
@@ -186,15 +187,16 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           {reviewMaterial && (
             <Paper component="section" aria-label="今日の復習" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
               <TileTitle>今日の復習（1問）</TileTitle>
-              <Typography fontSize={16} fontWeight={900} sx={{ lineHeight: 1.6 }}>
+              <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.6 }}>
                 {reviewMaterial.question.prompt}
               </Typography>
-              <Typography fontSize={15} sx={{ mt: 1.25 }}>
+              <Typography fontSize={18} sx={{ mt: 1.25 }}>
                 {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 今日の分はこの1問だけです
               </Typography>
+              <Box sx={{ flex: 1 }} />
               <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5, alignSelf: "flex-start" }}>
                 復習する
               </Button>
@@ -227,15 +229,15 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         sx={{
           display: "grid",
           gap: 3,
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "1fr 1fr 1fr 1.35fr" },
-          alignItems: "start",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+          alignItems: "stretch",
         }}
       >
         {/* 学習ストリーク */}
         <Paper component="section" aria-label="学習ストリーク" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
           <TileTitle>学習ストリーク</TileTitle>
           <Stack direction="row" alignItems="center" spacing={1}>
-            <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 30 }} />
+            <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 34 }} />
             <Typography fontSize={24} fontWeight={900}>
               {week.streakDays}日連続
             </Typography>
@@ -246,8 +248,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 <Box
                   aria-label={`${day.date} ${day.learned ? "学習済み" : "学習記録なし"}${day.isToday ? " 今日" : ""}`}
                   sx={{
-                    width: 26,
-                    height: 26,
+                    width: 30,
+                    height: 30,
                     display: "grid",
                     placeItems: "center",
                     borderRadius: "50%",
@@ -258,7 +260,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     fontWeight: 800,
                   }}
                 >
-                  {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 14 }} /> : Number(day.date.slice(8))}
+                  {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 16 }} /> : Number(day.date.slice(8))}
                 </Box>
                 <Typography variant="caption" fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
                   {day.label}
@@ -266,6 +268,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Stack>
             ))}
           </Stack>
+
+          <Box sx={{ flex: 1 }} />
 
           <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
             履歴を見る
@@ -279,8 +283,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Box
                 sx={{
-                  width: 52,
-                  height: 52,
+                  width: 60,
+                  height: 60,
                   borderRadius: "50%",
                   display: "grid",
                   placeItems: "center",
@@ -289,10 +293,10 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   flexShrink: 0,
                 }}
               >
-                <EmojiEventsIcon sx={{ fontSize: 30 }} />
+                <EmojiEventsIcon sx={{ fontSize: 36 }} />
               </Box>
               <Box>
-                <Typography fontSize={16} fontWeight={900} sx={{ lineHeight: 1.4 }}>
+                <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
                   {achievementTitle(nearAchievement.title)}
                 </Typography>
                 <Typography variant="caption" fontWeight={800} sx={{ color: "#1d4ed8" }}>
@@ -300,9 +304,10 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 </Typography>
               </Box>
             </Stack>
-            <Typography fontSize={15} sx={{ mt: 2 }}>
+            <Typography fontSize={18} sx={{ mt: 2 }}>
               あと{nearAchievement.goal - nearAchievement.progress}単元で達成（{nearAchievement.progress}/{nearAchievement.goal}単元完了）
             </Typography>
+            <Box sx={{ flex: 1 }} />
             <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
               実績一覧へ
             </Button>
@@ -322,7 +327,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   {latestTone.label}
                 </Typography>
               </Stack>
-              <Typography fontSize={16} fontWeight={900} sx={{ mt: 0.5 }}>
+              <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
                 {latestCard.title}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -330,9 +335,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Typography>
             </Box>
           )}
-          <Typography fontSize={15} sx={{ mt: 2 }}>
+          <Typography fontSize={18} sx={{ mt: 2 }}>
             {overview.collectedCards}/{overview.totalCards} 枚を獲得
           </Typography>
+
+          <Box sx={{ flex: 1 }} />
 
           <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
             コレクションへ
@@ -348,9 +355,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 const meta = POST_META[question.id];
                 return (
                   <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
-                    <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
+                    <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography fontWeight={900} fontSize={15} sx={{ lineHeight: 1.45 }}>
+                      <Typography fontWeight={900} fontSize={18} sx={{ lineHeight: 1.45 }}>
                         {question.title}
                       </Typography>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
@@ -369,6 +376,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 );
               })}
             </Stack>
+            <Box sx={{ flex: 1 }} />
             <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
               掲示板へ
             </Button>
