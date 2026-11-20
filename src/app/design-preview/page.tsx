@@ -2,7 +2,7 @@
 
 // デザイン確認専用のページ。本体の画面ではない。
 // 実績の解除と知識カードの獲得の演出を、レアリティごとに本物のコンポーネントで再生する。
-// レジェンダリーは演出の設定がまだ無く、今はコモンの演出に落ちる（presentationFor の既定）。
+// レジェンダリーは「色は金、強さはエピックと同じ」で設定済み（2026-11-20、一旦の決定）。
 
 import { Box, Button, Container, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
@@ -44,7 +44,7 @@ const rarityLabels: Record<string, string> = {
 const specText = (rarity: string): string => {
   const spec = presentationFor(rarity);
   const base = `前振り ${spec.durations[0]}ms ／ 開示 ${spec.durations[1]}ms ／ 賞賛 ${spec.durations[2]}ms、放射 ${spec.rays} 本、グロー ${spec.glow}px、回転 ${spec.turns} 回`;
-  return rarity === "LEGENDARY" ? `${base}（レジェンダリーの設定はまだ無く、コモンの演出で表示中）` : base;
+  return rarity === "LEGENDARY" ? `${base}（レジェンダリーは色だけ金で、強さはエピックと同じ）` : base;
 };
 
 export default function DesignPreviewPage() {
@@ -134,9 +134,8 @@ export default function DesignPreviewPage() {
       )}
 
       <Typography sx={{ mt: 6, fontSize: 13, color: "text.secondary" }}>
-        設定の出どころ：src/components/rewards/presentation.ts（cardPresentation）。レジェンダリーの行はまだ無く、{" "}
-        {`presentationFor は不明なレアリティをコモンに落とす`}。
-        参考：{Object.keys(cardPresentation).join(" / ")} の3段階が定義済み。
+        設定の出どころ：src/components/rewards/presentation.ts（cardPresentation）。
+        定義済み：{Object.keys(cardPresentation).join(" / ")}。
       </Typography>
     </Container>
   );
