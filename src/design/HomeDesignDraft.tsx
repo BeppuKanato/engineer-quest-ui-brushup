@@ -372,7 +372,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         {questions.length > 0 && (
           <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
             <TileTitle>掲示板の新着質問</TileTitle>
-            <Box sx={{ flex: 1, minHeight: 0, maxHeight: 264, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
+            <Box sx={{ flex: 1, minHeight: 0, maxHeight: 160, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
             <Stack divider={<Divider flexItem />}>
               {questions.map((question) => {
                 const meta = POST_META[question.id];
