@@ -48,7 +48,7 @@ const achievementTitle = (title: string) => title.replace(/Lv\.(\d+)/g, "第$1�
 
 function RegionTitle({ children }: { children: ReactNode }) {
   return (
-    <Typography component="h2" fontSize={14} fontWeight={900} color="text.secondary" sx={{ mb: 2 }}>
+    <Typography component="h2" fontSize={16} fontWeight={900} sx={{ mb: 2 }}>
       {children}
     </Typography>
   );
@@ -87,7 +87,7 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
               >
                 {done ? <CheckIcon sx={{ fontSize: 20 }} /> : current ? `${unit.completedPhases}` : ""}
               </Box>
-              <Typography fontSize={12.5} fontWeight={current ? 900 : 700} sx={{ mt: 0.75, lineHeight: 1.35 }}>
+              <Typography fontSize={14} fontWeight={current ? 900 : 700} sx={{ mt: 0.75, lineHeight: 1.35 }}>
                 {unit.title}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -129,7 +129,7 @@ function CardGrid({ units }: { units: HomeUnit[] }) {
                 {has ? <CheckIcon sx={{ fontSize: 13 }} /> : null}
               </Box>
             ))}
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, lineHeight: 1.2, textAlign: "center" }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.2, textAlign: "center" }}>
               {unit.title.replace(/（.*）/, "")}
             </Typography>
           </Stack>
@@ -185,10 +185,10 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
       <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
-        <Typography variant="caption" fontWeight={800} color="text.secondary">
+        <Typography fontSize={12} fontWeight={800}>
           前回のフィードバックの次の一歩
         </Typography>
-        <Typography sx={{ mt: 0.25 }}>{nextStep}</Typography>
+        <Typography fontSize={14} sx={{ mt: 0.25 }}>{nextStep}</Typography>
       </Box>
     </Box>
   );
@@ -216,7 +216,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             <UnitPath units={overview.units} />
           </Box>
           <Box sx={{ flex: "1 1 38%", minWidth: 0 }}>
-            <Typography fontSize={14} fontWeight={900} color="text.secondary" sx={{ mb: 2 }}>
+            <Typography fontSize={16} fontWeight={900} sx={{ mb: 2 }}>
               知識カード
             </Typography>
             <CardGrid units={overview.units} />
@@ -251,7 +251,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     {current.title}
                   </Typography>
                   {current.nextPhase && (
-                    <Typography sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
+                    <Typography fontSize={14} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
                   )}
                   <Button
                     component={Link}
@@ -284,7 +284,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Paper component="section" aria-label="いまの目標" elevation={0} sx={{ ...S1, py: 2 }}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <FlagIcon sx={{ color: PRIMARY, fontSize: 22 }} />
-                  <Typography fontWeight={800} color="text.secondary">
+                  <Typography fontWeight={800} fontSize={14}>
                     いまの目標
                   </Typography>
                   <Typography fontWeight={900} fontSize={16}>
@@ -327,7 +327,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           {reviewMaterial && (
             <Paper component="section" aria-label="今日の復習" elevation={0} sx={S1}>
               <RegionTitle>今日の復習</RegionTitle>
-              <Typography fontWeight={900} fontSize={17}>
+              <Typography fontWeight={900} fontSize={16}>
                 {reviewMaterial.question.prompt}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -368,7 +368,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       bgcolor: day.learned ? "#ffedd5" : "#eef1f5",
                       color: day.learned ? STREAK_ORANGE : "#94a3b8",
                       border: day.isToday ? `2px solid ${STREAK_ORANGE}` : "2px solid transparent",
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 800,
                     }}
                   >
@@ -393,7 +393,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.5, py: 1.75, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
                       <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography fontWeight={800} sx={{ lineHeight: 1.45 }}>
+                        <Typography fontWeight={900} fontSize={16} sx={{ lineHeight: 1.45 }}>
                           {question.title}
                         </Typography>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
@@ -406,7 +406,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       {meta && (
                         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary", flexShrink: 0 }}>
                           <ChatBubbleOutlineIcon sx={{ fontSize: 17 }} />
-                          <Typography fontSize={13.5} fontWeight={800}>
+                          <Typography fontSize={14} fontWeight={800}>
                             {meta.replies}
                           </Typography>
                         </Stack>
