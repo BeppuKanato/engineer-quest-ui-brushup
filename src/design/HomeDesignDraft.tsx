@@ -95,9 +95,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
       {goalText && current && (
         <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
               <FlagIcon sx={{ color: PRIMARY, fontSize: 28 }} />
-              <Typography fontSize={14} fontWeight={800}>
+              <Typography fontSize={14} fontWeight={800} sx={{ whiteSpace: "nowrap" }}>
                 目標
               </Typography>
               <Typography fontSize={22} fontWeight={900}>
@@ -204,17 +204,18 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         </Paper>
       )}
 
-      {/* (2) 直近の状況：タイルの列 */}
+      {/* (2) 直近の状況：1枚の面の中で4領域が仕切りで分かれる */}
+      <Paper component="section" aria-label="最近の状況" elevation={0} sx={{ ...S1, p: 0, overflow: "hidden" }}>
       <Box
         sx={{
           display: "grid",
-          gap: 3,
+          gap: 0,
           gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
           alignItems: "stretch",
         }}
       >
         {/* 学習ストリーク */}
-        <Paper component="section" aria-label="学習ストリーク" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
+        <Box component="section" aria-label="学習ストリーク" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 } }}>
           <TileTitle>学習ストリーク</TileTitle>
           <Stack direction="row" alignItems="center" spacing={1}>
             <LocalFireDepartmentIcon sx={{ color: STREAK_ORANGE, fontSize: 34 }} />
@@ -254,11 +255,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           <Button component={Link} href="/history" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
             履歴を見る
           </Button>
-        </Paper>
+        </Box>
 
         {/* 実績：達成が近いものを1つ、トロフィーの色でレアリティが分かる形で */}
         {nearAchievement && (
-          <Paper component="section" aria-label="実績" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
+          <Box component="section" aria-label="実績" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { sm: "1px solid #e7edf5" } }}>
             <TileTitle>次の実績</TileTitle>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Box
@@ -305,11 +306,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             <Button component={Link} href="/achievements" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
               実績一覧へ
             </Button>
-          </Paper>
+          </Box>
         )}
 
         {/* 知識カード：最近の1枚と全体の数 */}
-        <Paper component="section" aria-label="知識カード" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
+        <Box component="section" aria-label="知識カード" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
           <TileTitle>知識カード</TileTitle>
           {latestCard && latestTone && (
             <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5 }}>
@@ -338,11 +339,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, mt: 2, px: 0.5, alignSelf: "flex-start" }}>
             コレクションへ
           </Button>
-        </Paper>
+        </Box>
 
         {/* 掲示板：新着の行 */}
         {questions.length > 0 && (
-          <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
+          <Box component="section" aria-label="掲示板の新着質問" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { sm: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
             <TileTitle>掲示板の新着質問</TileTitle>
             <Box sx={{ flex: 1, minHeight: 0, maxHeight: 160, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
             <Stack divider={<Divider flexItem />}>
@@ -375,9 +376,10 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
               掲示板へ
             </Button>
-          </Paper>
+          </Box>
         )}
       </Box>
+      </Paper>
     </Stack>
   );
 }
