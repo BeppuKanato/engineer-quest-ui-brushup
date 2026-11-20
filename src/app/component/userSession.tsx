@@ -15,6 +15,7 @@ import {
 } from "react";
 
 import { getMe, type AuthUser } from "@/api/auth.api";
+import { isDesignMode } from "@/design/fixtures";
 import { auth } from "@/lib/firebase";
 import { setClientQueryCacheScope } from "@/lib/clientQueryCache";
 
@@ -46,6 +47,14 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
   const loadSequence = useRef(0);
 
   useEffect(() => {
+    // デザインモード：Firebase を使わず、仮のログイン済みセッションにする。
+    if (isDesignMode()) {
+      setClientQueryCacheScope("design-user");
+      setToken("design-token");
+      setStatus("authenticated");
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       const sequence = ++loadSequence.current;
       setClientQueryCacheScope(nextUser?.uid ?? null);
@@ -82,6 +91,18 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshAppUser = useCallback(async () => {
+    // デザインモード：フィクスチャの利用者を返す。
+    if (isDesignMode()) {
+      try {
+        const response = await getMe("design-token");
+        setAppUserState(response.user);
+        setStatus("authenticated");
+        return response.user;
+      } catch {
+        return null;
+      }
+    }
+
     const currentUser = auth.currentUser;
     if (!currentUser) {
       setAppUserState(null);

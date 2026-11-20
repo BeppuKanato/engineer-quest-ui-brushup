@@ -1,3 +1,4 @@
+import { isDesignMode, resolveFixture } from "@/design/fixtures";
 import { getApiBaseUrl } from "@/lib/api";
 
 export type ApiErrorResponse = {
@@ -49,6 +50,23 @@ export const fetcher = async <T>(
   path: string,
   options: FetcherOptions = {}
 ): Promise<T> => {
+    // デザインモード：API を呼ばず、src/design/fixtures.ts のフィクスチャを返す。
+    if (isDesignMode()) {
+        const fixture = resolveFixture(path);
+        if (fixture !== undefined) {
+            return structuredClone(fixture) as T;
+        }
+        const method = (options.method ?? "GET").toUpperCase();
+        if (method !== "GET") {
+            return {} as T;
+        }
+        throw new ApiError(
+            404,
+            "DESIGN_FIXTURE_MISSING",
+            `デザインモード: ${path} のフィクスチャはまだ用意されていません`
+        );
+    }
+
     const baseUrl = getApiBaseUrl();
     const { token, headers, ...requestOptions } = options;
 

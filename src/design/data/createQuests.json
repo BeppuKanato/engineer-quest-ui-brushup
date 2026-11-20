@@ -1,0 +1,1839 @@
+[
+ {
+  "id": "create-quest-turn-order-v1",
+  "title": "RPGの行動順を作ろう",
+  "description": "キャラクターを素早さの高い順に並べ、戦闘で使える行動順を完成させます。まず正しく動かし、安定性や入力非破壊、大量データへの対応で得点を伸ばせます。",
+  "scenario": "あなたはRPGの戦闘機能を担当しています。画面とキャラクターデータは用意済みです。decide_turn_order関数を実装し、行動順を返してください。",
+  "problemType": "SORT",
+  "functionName": "decide_turn_order",
+  "starterCode": "def decide_turn_order(characters):\n    # charactersは、nameとspeedを持つ辞書のリストです\n    # 素早さが高いキャラクターから順に、新しいリストで返してください\n    return characters",
+  "estimatedMinutes": 45,
+  "tags": [
+   "Python",
+   "並べ替え",
+   "ゲーム"
+  ],
+  "thumbnailUrl": "/images/create-quests/turn-order.svg",
+  "previewData": {
+   "kind": "SORT",
+   "previewTitle": "戦闘プレビュー",
+   "previewDescription": "テスト後は実行結果の行動順を表示します。",
+   "guidanceTitle": "標準ソートも使えます",
+   "guidanceBody": "sorted()や.sort()で基本要件をクリアして構いません。自作実装へ置き換えると追加得点を狙えます。",
+   "characters": [
+    {
+     "id": "knight",
+     "name": "ナイト",
+     "speed": 42
+    },
+    {
+     "id": "mage",
+     "name": "メイジ",
+     "speed": 68
+    },
+    {
+     "id": "archer",
+     "name": "アーチャー",
+     "speed": 81
+    },
+    {
+     "id": "healer",
+     "name": "ヒーラー",
+     "speed": 55
+    }
+   ]
+  },
+  "sortOrder": 1,
+  "relatedCourses": [
+   {
+    "courseId": "course-algorithm-selection-sort-v1",
+    "reason": "小さいリストを自分で並べ替える処理から始められます。",
+    "order": 1
+   },
+   {
+    "courseId": "course-algorithm-merge-sort-v1",
+    "reason": "大量データ、安定性、自作実装の要件を同時に狙いやすくなります。",
+    "order": 2
+   }
+  ],
+  "requirements": [
+   {
+    "id": "turn-order-descending",
+    "title": "素早さが高い順に並べる",
+    "description": "通常のパーティーをspeedの降順で返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 20,
+    "order": 1,
+    "tests": [
+     {
+      "id": "mixed-party",
+      "type": "OUTPUT_EQUALS",
+      "label": "4人の行動順",
+      "args": [
+       [
+        {
+         "id": "a",
+         "name": "ナイト",
+         "speed": 42
+        },
+        {
+         "id": "b",
+         "name": "メイジ",
+         "speed": 68
+        },
+        {
+         "id": "c",
+         "name": "アーチャー",
+         "speed": 81
+        },
+        {
+         "id": "d",
+         "name": "ヒーラー",
+         "speed": 55
+        }
+       ]
+      ],
+      "expected": [
+       {
+        "id": "c",
+        "name": "アーチャー",
+        "speed": 81
+       },
+       {
+        "id": "b",
+        "name": "メイジ",
+        "speed": 68
+       },
+       {
+        "id": "d",
+        "name": "ヒーラー",
+        "speed": 55
+       },
+       {
+        "id": "a",
+        "name": "ナイト",
+        "speed": 42
+       }
+      ]
+     },
+     {
+      "id": "already-descending",
+      "type": "OUTPUT_EQUALS",
+      "label": "すでに行動順",
+      "args": [
+       [
+        {
+         "id": "a",
+         "name": "A",
+         "speed": 90
+        },
+        {
+         "id": "b",
+         "name": "B",
+         "speed": 50
+        },
+        {
+         "id": "c",
+         "name": "C",
+         "speed": 10
+        }
+       ]
+      ],
+      "expected": [
+       {
+        "id": "a",
+        "name": "A",
+        "speed": 90
+       },
+       {
+        "id": "b",
+        "name": "B",
+        "speed": 50
+       },
+       {
+        "id": "c",
+        "name": "C",
+        "speed": 10
+       }
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "compare-speed",
+      "title": "比較する値",
+      "body": "辞書のspeedを比較し、大きい値を先へ置きます。"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-boundaries",
+    "title": "空と1人のパーティーも扱う",
+    "description": "キャラクターが0人または1人でもエラーにしません。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 15,
+    "order": 2,
+    "tests": [
+     {
+      "id": "empty",
+      "type": "OUTPUT_EQUALS",
+      "label": "0人",
+      "args": [
+       []
+      ],
+      "expected": []
+     },
+     {
+      "id": "single",
+      "type": "OUTPUT_EQUALS",
+      "label": "1人",
+      "args": [
+       [
+        {
+         "id": "a",
+         "name": "A",
+         "speed": 40
+        }
+       ]
+      ],
+      "expected": [
+       {
+        "id": "a",
+        "name": "A",
+        "speed": 40
+       }
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "short-list",
+      "title": "短いリスト",
+      "body": "要素が1個以下なら、並べ替える必要はありません。"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-all-members",
+    "title": "全員を一度ずつ行動順に含める",
+    "description": "人数を増やしても、欠けたり重複したりせず全員を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 10,
+    "order": 3,
+    "tests": [
+     {
+      "id": "six-members",
+      "type": "OUTPUT_EQUALS",
+      "label": "6人全員",
+      "args": [
+       [
+        {
+         "id": "a",
+         "name": "A",
+         "speed": 3
+        },
+        {
+         "id": "b",
+         "name": "B",
+         "speed": 9
+        },
+        {
+         "id": "c",
+         "name": "C",
+         "speed": 1
+        },
+        {
+         "id": "d",
+         "name": "D",
+         "speed": 7
+        },
+        {
+         "id": "e",
+         "name": "E",
+         "speed": 5
+        },
+        {
+         "id": "f",
+         "name": "F",
+         "speed": 11
+        }
+       ]
+      ],
+      "expected": [
+       {
+        "id": "f",
+        "name": "F",
+        "speed": 11
+       },
+       {
+        "id": "b",
+        "name": "B",
+        "speed": 9
+       },
+       {
+        "id": "d",
+        "name": "D",
+        "speed": 7
+       },
+       {
+        "id": "e",
+        "name": "E",
+        "speed": 5
+       },
+       {
+        "id": "a",
+        "name": "A",
+        "speed": 3
+       },
+       {
+        "id": "c",
+        "name": "C",
+        "speed": 1
+       }
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "leftovers",
+      "title": "残りの要素",
+      "body": "途中で片方を使い切った場合も、残った要素を結果へ追加します。"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-stable",
+    "title": "同じ素早さなら登録順を維持する",
+    "description": "speedが同じキャラクターは、入力に登場した順番を保ちます。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 15,
+    "order": 4,
+    "tests": [
+     {
+      "id": "same-speed",
+      "type": "OUTPUT_EQUALS",
+      "label": "同じ素早さの3人",
+      "args": [
+       [
+        {
+         "id": "first",
+         "name": "先に登録",
+         "speed": 50
+        },
+        {
+         "id": "fast",
+         "name": "最速",
+         "speed": 80
+        },
+        {
+         "id": "second",
+         "name": "次に登録",
+         "speed": 50
+        },
+        {
+         "id": "third",
+         "name": "最後に登録",
+         "speed": 50
+        }
+       ]
+      ],
+      "expected": [
+       {
+        "id": "fast",
+        "name": "最速",
+        "speed": 80
+       },
+       {
+        "id": "first",
+        "name": "先に登録",
+        "speed": 50
+       },
+       {
+        "id": "second",
+        "name": "次に登録",
+        "speed": 50
+       },
+       {
+        "id": "third",
+        "name": "最後に登録",
+        "speed": 50
+       }
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "stability",
+      "title": "安定した並べ替え",
+      "body": "値が等しいときに左側を先に選ぶ方法は、元の順番を維持できます。"
+     },
+     {
+      "id": "stable-course",
+      "title": "役立つアルゴリズム",
+      "body": "マージソートは、結合時の比較を工夫すると安定した並べ替えにできます。",
+      "courseId": "course-algorithm-merge-sort-v1"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-non-mutating",
+    "title": "元のパーティーデータを変更しない",
+    "description": "返り値を作る際に、入力されたリストの並びを変更しません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 5,
+    "tests": [
+     {
+      "id": "input-unchanged",
+      "type": "INPUT_UNCHANGED",
+      "label": "入力リストを維持",
+      "args": [
+       [
+        {
+         "id": "a",
+         "name": "A",
+         "speed": 10
+        },
+        {
+         "id": "b",
+         "name": "B",
+         "speed": 30
+        },
+        {
+         "id": "c",
+         "name": "C",
+         "speed": 20
+        }
+       ]
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "copy",
+      "title": "新しいリスト",
+      "body": "入力を直接並べ替えず、新しいリストを返す方法を考えます。"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-custom-sort",
+    "title": "並べ替え処理を自分で実装する",
+    "description": "sorted()とリストの.sort()を呼ばずに並べ替えます。",
+    "kind": "OPTIONAL",
+    "category": "IMPLEMENTATION",
+    "points": 15,
+    "order": 6,
+    "tests": [
+     {
+      "id": "no-standard-sort",
+      "type": "SOURCE_NO_STANDARD_SORT",
+      "label": "標準ソートを直接呼ばない"
+     }
+    ],
+    "hints": [
+     {
+      "id": "simple-sort",
+      "title": "小さく始める",
+      "body": "未整列部分から次の値を探す選択ソートでも、この要件を達成できます。",
+      "courseId": "course-algorithm-selection-sort-v1"
+     },
+     {
+      "id": "fast-sort",
+      "title": "性能要件も狙う",
+      "body": "分割と結合を使うマージソートなら、大量データ要件も同時に狙えます。",
+      "courseId": "course-algorithm-merge-sort-v1"
+     }
+    ]
+   },
+   {
+    "id": "turn-order-efficient",
+    "title": "128人を比較回数1,000回以内で並べる",
+    "description": "データが増えても、すべての組み合わせを調べない方法で処理します。",
+    "kind": "OPTIONAL",
+    "category": "PERFORMANCE",
+    "points": 15,
+    "order": 7,
+    "tests": [
+     {
+      "id": "comparison-budget",
+      "type": "COMPARISON_LIMIT",
+      "label": "128人の比較回数",
+      "size": 128,
+      "maxComparisons": 1000
+     }
+    ],
+    "hints": [
+     {
+      "id": "growth",
+      "title": "比較回数の増え方",
+      "body": "人数が2倍になったとき比較回数が約4倍になる方法では、上限を超えます。"
+     },
+     {
+      "id": "n-log-n",
+      "title": "役立つアルゴリズム",
+      "body": "マージソートなど、処理量がO(n log n)程度の方法が適しています。",
+      "courseId": "course-algorithm-merge-sort-v1"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "create-quest-dungeon-route-v1",
+  "title": "ダンジョンの最短脱出ルートを作ろう",
+  "description": "部屋のつながりから出口までの道を探します。まず脱出できる経路を返し、最短経路や循環する通路、大きなダンジョンへ対応して得点を伸ばせます。",
+  "scenario": "あなたはダンジョンゲームの案内機能を担当しています。部屋ごとの移動先を受け取り、入口から出口までに通る部屋を順番に返すfind_escape_route関数を実装してください。",
+  "problemType": "BFS",
+  "functionName": "find_escape_route",
+  "starterCode": "def find_escape_route(passages, start, goal):\n    # passagesは、部屋名をキー、移動先の部屋名リストを値に持つ辞書です\n    # startからgoalまでに通る部屋名を、startとgoalを含むリストで返してください\n    # 脱出できない場合は空のリストを返してください\n    return []",
+  "estimatedMinutes": 50,
+  "tags": [
+   "Python",
+   "最短経路",
+   "ゲーム"
+  ],
+  "thumbnailUrl": "/images/create-quests/dungeon-route.svg",
+  "previewData": {
+   "kind": "ROUTE",
+   "previewTitle": "ダンジョンマップ",
+   "previewDescription": "入口Sから出口Gまで、つながっている部屋をたどります。",
+   "guidanceTitle": "経路の探し方は自由です",
+   "guidanceBody": "基本要件はどの探索方法でも達成できます。最短経路の要件には、入口に近い部屋から順番に調べる幅優先探索が役立ちます。",
+   "passages": {
+    "S": [
+     "A",
+     "B"
+    ],
+    "A": [
+     "C"
+    ],
+    "B": [
+     "G"
+    ],
+    "C": [
+     "D"
+    ],
+    "D": [
+     "G"
+    ],
+    "G": []
+   },
+   "start": "S",
+   "goal": "G"
+  },
+  "sortOrder": 2,
+  "relatedCourses": [
+   {
+    "courseId": "course-algorithm-breadth-first-search-v1",
+    "reason": "入口に近い部屋から調べることで、最短の脱出経路を見つけられます。",
+    "order": 1
+   },
+   {
+    "courseId": "course-algorithm-depth-first-search-v1",
+    "reason": "経路が存在するかを、ひとつの道を奥まで進みながら調べる方法として活用できます。",
+    "order": 2
+   }
+  ],
+  "requirements": [
+   {
+    "id": "dungeon-route-found",
+    "title": "出口までの経路を返す",
+    "description": "入口と出口を含め、実際につながっている部屋だけで経路を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 20,
+    "order": 1,
+    "tests": [
+     {
+      "id": "single-route",
+      "type": "OUTPUT_EQUALS",
+      "label": "一本道のダンジョン",
+      "args": [
+       {
+        "S": [
+         "A"
+        ],
+        "A": [
+         "C"
+        ],
+        "C": [
+         "G"
+        ],
+        "G": []
+       },
+       "S",
+       "G"
+      ],
+      "expected": [
+       "S",
+       "A",
+       "C",
+       "G"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "remember-route",
+      "title": "通ってきた道を残す",
+      "body": "次の部屋だけでなく、そこまでに通った部屋のリストも一緒に記録すると、出口で経路を返せます。"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-no-route",
+    "title": "脱出できない場合を扱う",
+    "description": "出口へつながる道がない場合は空のリストを返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 15,
+    "order": 2,
+    "tests": [
+     {
+      "id": "blocked",
+      "type": "OUTPUT_EQUALS",
+      "label": "出口と分断されたマップ",
+      "args": [
+       {
+        "S": [
+         "A"
+        ],
+        "A": [
+         "B"
+        ],
+        "B": [],
+        "G": []
+       },
+       "S",
+       "G"
+      ],
+      "expected": []
+     }
+    ],
+    "hints": [
+     {
+      "id": "exhausted",
+      "title": "調べる部屋がなくなったら",
+      "body": "未確認の部屋がなくなるまで出口が見つからなければ、脱出経路はありません。"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-same-room",
+    "title": "入口が出口の場合を扱う",
+    "description": "startとgoalが同じなら、その部屋だけを含む経路を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 10,
+    "order": 3,
+    "tests": [
+     {
+      "id": "already-goal",
+      "type": "OUTPUT_EQUALS",
+      "label": "入口が出口",
+      "args": [
+       {
+        "S": [
+         "A"
+        ],
+        "A": []
+       },
+       "S",
+       "S"
+      ],
+      "expected": [
+       "S"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "first-check",
+      "title": "探索前に確認する",
+      "body": "移動を始める前に、現在地がすでに目的地かを確認できます。"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-shortest",
+    "title": "最短の脱出経路を返す",
+    "description": "複数の脱出経路がある場合、通る部屋数が最も少ない経路を返します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 20,
+    "order": 4,
+    "tests": [
+     {
+      "id": "short-vs-long",
+      "type": "OUTPUT_EQUALS",
+      "label": "長い道と短い道",
+      "args": [
+       {
+        "S": [
+         "A",
+         "B"
+        ],
+        "A": [
+         "C"
+        ],
+        "B": [
+         "G"
+        ],
+        "C": [
+         "D"
+        ],
+        "D": [
+         "G"
+        ],
+        "G": []
+       },
+       "S",
+       "G"
+      ],
+      "expected": [
+       "S",
+       "B",
+       "G"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "bfs",
+      "title": "役立つアルゴリズム",
+      "body": "入口から1回で行ける部屋、2回で行ける部屋という順に調べると、最初に見つけた出口が最短になります。",
+      "courseId": "course-algorithm-breadth-first-search-v1"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-cycle",
+    "title": "循環する通路でも止まる",
+    "description": "同じ部屋へ戻れる通路があっても、無限に探索を続けません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 15,
+    "order": 5,
+    "tests": [
+     {
+      "id": "cycle",
+      "type": "OUTPUT_EQUALS",
+      "label": "AとBを行き来できるマップ",
+      "args": [
+       {
+        "S": [
+         "A"
+        ],
+        "A": [
+         "B"
+        ],
+        "B": [
+         "A",
+         "G"
+        ],
+        "G": []
+       },
+       "S",
+       "G"
+      ],
+      "expected": [
+       "S",
+       "A",
+       "B",
+       "G"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "visited",
+      "title": "確認済みの部屋",
+      "body": "一度調べた部屋を集合に記録し、同じ部屋をもう一度追加しないようにします。"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-input",
+    "title": "元のマップを変更しない",
+    "description": "経路を探しても、受け取ったpassagesの内容を変更しません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 6,
+    "tests": [
+     {
+      "id": "map-unchanged",
+      "type": "INPUT_UNCHANGED",
+      "label": "通路データを維持",
+      "args": [
+       {
+        "S": [
+         "A",
+         "B"
+        ],
+        "A": [
+         "G"
+        ],
+        "B": [],
+        "G": []
+       },
+       "S",
+       "G"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "separate-state",
+      "title": "探索用の記録を分ける",
+      "body": "確認済みの部屋や経路は、新しい集合やリストへ記録します。"
+     }
+    ]
+   },
+   {
+    "id": "dungeon-efficient",
+    "title": "不要な遠回りをせず出口を見つける",
+    "description": "短い出口がある大きなマップを、通路の参照6回以内で解きます。",
+    "kind": "OPTIONAL",
+    "category": "PERFORMANCE",
+    "points": 10,
+    "order": 7,
+    "tests": [
+     {
+      "id": "access-budget",
+      "type": "GRAPH_ACCESS_LIMIT",
+      "label": "近くの出口を優先",
+      "maxAccesses": 6,
+      "args": [
+       {
+        "S": [
+         "A1",
+         "B"
+        ],
+        "A1": [
+         "A2"
+        ],
+        "A2": [
+         "A3"
+        ],
+        "A3": [
+         "A4"
+        ],
+        "A4": [
+         "A5"
+        ],
+        "A5": [
+         "A6"
+        ],
+        "A6": [
+         "A7"
+        ],
+        "A7": [
+         "A8"
+        ],
+        "A8": [
+         "A9"
+        ],
+        "A9": [
+         "A10"
+        ],
+        "A10": [],
+        "B": [
+         "G"
+        ],
+        "G": []
+       },
+       "S",
+       "G"
+      ],
+      "expected": [
+       "S",
+       "B",
+       "G"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "near-first",
+      "title": "近い部屋から調べる",
+      "body": "先に追加した経路から取り出す待ち行列を使うと、深い行き止まりへ進む前に近い出口を確認できます。",
+      "courseId": "course-algorithm-breadth-first-search-v1"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "create-quest-chat-keyword-v1",
+  "title": "チャットの禁止ワード検出を作ろう",
+  "description": "チャット本文から指定された語句を探します。短い文では標準機能も使えますが、繰り返しの多い長文を少ない比較回数で探すと高得点になります。",
+  "scenario": "あなたはチャットの安全機能を担当しています。本文textから禁止ワードkeywordが最初に現れる位置を返すfind_keyword関数を実装してください。見つからない場合は-1を返します。",
+  "problemType": "KMP",
+  "functionName": "find_keyword",
+  "starterCode": "def find_keyword(text, keyword):\n    # 最初にkeywordと一致する位置を返してください\n    # 見つからない場合は-1、keywordが空なら0を返してください\n    return -1",
+  "estimatedMinutes": 55,
+  "tags": [
+   "Python",
+   "文字列検索",
+   "チャット"
+  ],
+  "thumbnailUrl": "/images/create-quests/chat-keyword.svg",
+  "previewData": {
+   "kind": "TEXT_SEARCH",
+   "previewTitle": "メッセージ確認",
+   "previewDescription": "本文のどこからキーワードが始まるかを探します。",
+   "guidanceTitle": "まず見つけることから始められます",
+   "guidanceBody": "find()などで基本要件を達成して構いません。比較回数の追加要件では、LPS表を使って比較済みの情報を再利用するKMP法が役立ちます。",
+   "text": "イベント参加はこちら。無料プレゼントの案内に注意してください。",
+   "keyword": "無料プレゼント"
+  },
+  "sortOrder": 3,
+  "relatedCourses": [
+   {
+    "courseId": "course-algorithm-kmp-v1",
+    "reason": "一致済みの文字を比較し直さず、長い文章から語句を効率よく探せます。",
+    "order": 1
+   }
+  ],
+  "requirements": [
+   {
+    "id": "keyword-found",
+    "title": "禁止ワードの開始位置を返す",
+    "description": "本文の途中にあるkeywordの最初の位置を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 20,
+    "order": 1,
+    "tests": [
+     {
+      "id": "middle",
+      "type": "OUTPUT_EQUALS",
+      "label": "文の途中で一致",
+      "args": [
+       "今日は無料プレゼントがあります",
+       "無料プレゼント"
+      ],
+      "expected": 3
+     }
+    ],
+    "hints": [
+     {
+      "id": "two-positions",
+      "title": "2つの位置を使う",
+      "body": "本文の位置とkeywordの位置を別々に持ち、同じ文字なら両方を進めます。"
+     }
+    ]
+   },
+   {
+    "id": "keyword-missing",
+    "title": "見つからない場合を扱う",
+    "description": "最後まで一致しない場合は-1を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 15,
+    "order": 2,
+    "tests": [
+     {
+      "id": "missing",
+      "type": "OUTPUT_EQUALS",
+      "label": "禁止ワードなし",
+      "args": [
+       "安全なメッセージです",
+       "プレゼント"
+      ],
+      "expected": -1
+     }
+    ],
+    "hints": [
+     {
+      "id": "finish",
+      "title": "本文の最後まで進んだら",
+      "body": "一致が完成しないまま本文の位置が末尾に達した場合は、見つかりません。"
+     }
+    ]
+   },
+   {
+    "id": "keyword-edges",
+    "title": "文頭と文末でも見つける",
+    "description": "keywordが本文の先頭または末尾にある場合も正しい位置を返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 10,
+    "order": 3,
+    "tests": [
+     {
+      "id": "start",
+      "type": "OUTPUT_EQUALS",
+      "label": "文頭で一致",
+      "args": [
+       "注意してください",
+       "注意"
+      ],
+      "expected": 0
+     },
+     {
+      "id": "end",
+      "type": "OUTPUT_EQUALS",
+      "label": "文末で一致",
+      "args": [
+       "これは重要な注意",
+       "注意"
+      ],
+      "expected": 6
+     }
+    ],
+    "hints": [
+     {
+      "id": "index",
+      "title": "位置は0から始まる",
+      "body": "一致が完成したとき、本文の現在位置からkeywordの長さを引くと開始位置になります。"
+     }
+    ]
+   },
+   {
+    "id": "keyword-overlap",
+    "title": "重なりの多い文字列を正しく探す",
+    "description": "同じ文字が続き、途中まで一致してから不一致になる場合も最初の一致を返します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 15,
+    "order": 4,
+    "tests": [
+     {
+      "id": "fallback",
+      "type": "OUTPUT_EQUALS",
+      "label": "一致途中からの戻り",
+      "args": [
+       "ABABABAC",
+       "ABABAC"
+      ],
+      "expected": 2
+     }
+    ],
+    "hints": [
+     {
+      "id": "lps",
+      "title": "一致済みの一部を再利用する",
+      "body": "不一致になったとき、keywordの先頭と一致済み部分の末尾で同じ並びになっている長さへ戻れます。",
+      "courseId": "course-algorithm-kmp-v1"
+     }
+    ]
+   },
+   {
+    "id": "keyword-empty",
+    "title": "空のキーワードを扱う",
+    "description": "keywordが空文字なら、本文の先頭で一致したものとして0を返します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 5,
+    "tests": [
+     {
+      "id": "empty-pattern",
+      "type": "OUTPUT_EQUALS",
+      "label": "空のkeyword",
+      "args": [
+       "メッセージ",
+       ""
+      ],
+      "expected": 0
+     },
+     {
+      "id": "both-empty",
+      "type": "OUTPUT_EQUALS",
+      "label": "両方とも空",
+      "args": [
+       "",
+       ""
+      ],
+      "expected": 0
+     }
+    ],
+    "hints": [
+     {
+      "id": "before-table",
+      "title": "最初に特別扱いする",
+      "body": "LPS表を作る前にkeywordの長さを確認すると、添字エラーを防げます。"
+     }
+    ]
+   },
+   {
+    "id": "keyword-unicode",
+    "title": "日本語や記号を含む文章を探す",
+    "description": "日本語や記号を1文字として扱い、正しい位置を返します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 6,
+    "tests": [
+     {
+      "id": "japanese",
+      "type": "OUTPUT_EQUALS",
+      "label": "日本語の検索",
+      "args": [
+       "確認✅無料プレゼント",
+       "無料"
+      ],
+      "expected": 3
+     }
+    ],
+    "hints": [
+     {
+      "id": "same-logic",
+      "title": "文字の種類で処理を変えない",
+      "body": "Pythonでは日本語や記号も文字列の添字で1文字ずつ比較できます。"
+     }
+    ]
+   },
+   {
+    "id": "keyword-efficient",
+    "title": "長文を2,000回以内の比較で探す",
+    "description": "同じ文字が長く続く本文でも、最初から比較し直す回数を抑えます。",
+    "kind": "OPTIONAL",
+    "category": "PERFORMANCE",
+    "points": 20,
+    "order": 7,
+    "tests": [
+     {
+      "id": "comparison-budget",
+      "type": "STRING_COMPARISON_LIMIT",
+      "label": "繰り返しの多い長文",
+      "args": [
+       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+      ],
+      "expected": 448,
+      "maxComparisons": 2000
+     }
+    ],
+    "hints": [
+     {
+      "id": "kmp",
+      "title": "役立つアルゴリズム",
+      "body": "LPS表を先に作り、不一致時にkeyword側だけを適切な位置へ戻すKMP法なら、本文の位置を戻さずに探せます。",
+      "courseId": "course-algorithm-kmp-v1"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "create-quest-product-search-v1",
+  "title": "ショップの商品検索を作ろう",
+  "description": "商品番号順に並んだ在庫から商品を探します。基本機能は順番に探しても作れますが、大量商品を少ない比較回数で探すと高得点になります。",
+  "scenario": "あなたはショップの在庫検索を担当しています。idの小さい順に並んだproductsと商品番号target_idを受け取り、該当する商品辞書を返すfind_product関数を実装してください。",
+  "problemType": "BINARY_SEARCH",
+  "functionName": "find_product",
+  "starterCode": "def find_product(products, target_id):\n    # productsはidの小さい順に並んだ商品辞書のリストです\n    # 見つかった商品辞書を返し、なければNoneを返してください\n    return None",
+  "estimatedMinutes": 45,
+  "tags": [
+   "Python",
+   "商品検索",
+   "二分探索"
+  ],
+  "thumbnailUrl": "/images/create-quests/product-search.svg",
+  "previewData": {
+   "kind": "PRODUCT_SEARCH",
+   "previewTitle": "商品番号検索",
+   "previewDescription": "番号順の商品一覧から指定された商品を探します。",
+   "guidanceTitle": "線形探索から始められます",
+   "guidanceBody": "基本要件は先頭から順番に探しても達成できます。大量商品の比較回数要件には、中央との比較で範囲を半分にする二分探索が役立ちます。",
+   "products": [
+    {
+     "id": 101,
+     "name": "回復薬",
+     "stock": 12
+    },
+    {
+     "id": 205,
+     "name": "魔法の杖",
+     "stock": 3
+    },
+    {
+     "id": 330,
+     "name": "鉄の盾",
+     "stock": 5
+    },
+    {
+     "id": 480,
+     "name": "旅人のマント",
+     "stock": 2
+    }
+   ],
+   "targetId": 330
+  },
+  "sortOrder": 4,
+  "relatedCourses": [
+   {
+    "courseId": "course-algorithm-binary-search-v1",
+    "reason": "中央の商品番号と比較して、探す範囲を半分ずつ狭められます。",
+    "order": 1
+   }
+  ],
+  "requirements": [
+   {
+    "id": "product-found",
+    "title": "商品番号から商品を返す",
+    "description": "該当するidを持つ商品辞書をそのまま返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 20,
+    "order": 1,
+    "tests": [
+     {
+      "id": "middle-item",
+      "type": "OUTPUT_EQUALS",
+      "label": "一覧の途中の商品",
+      "args": [
+       [
+        {
+         "id": 10,
+         "name": "薬草",
+         "stock": 8
+        },
+        {
+         "id": 20,
+         "name": "剣",
+         "stock": 2
+        },
+        {
+         "id": 30,
+         "name": "盾",
+         "stock": 4
+        }
+       ],
+       20
+      ],
+      "expected": {
+       "id": 20,
+       "name": "剣",
+       "stock": 2
+      }
+     }
+    ],
+    "hints": [
+     {
+      "id": "compare-id",
+      "title": "比較する値",
+      "body": "商品辞書全体ではなく、product[\"id\"]とtarget_idを比較します。"
+     }
+    ]
+   },
+   {
+    "id": "product-missing",
+    "title": "未登録の商品を扱う",
+    "description": "商品番号が一覧にない場合はNoneを返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 15,
+    "order": 2,
+    "tests": [
+     {
+      "id": "missing",
+      "type": "OUTPUT_EQUALS",
+      "label": "一覧にない番号",
+      "args": [
+       [
+        {
+         "id": 10,
+         "name": "薬草"
+        },
+        {
+         "id": 30,
+         "name": "盾"
+        }
+       ],
+       20
+      ],
+      "expected": null
+     }
+    ],
+    "hints": [
+     {
+      "id": "range-end",
+      "title": "探す範囲がなくなったら",
+      "body": "候補範囲を最後まで調べても一致しなければNoneを返します。"
+     }
+    ]
+   },
+   {
+    "id": "product-empty",
+    "title": "商品が0件でも検索できる",
+    "description": "空の商品一覧を受け取ってもエラーにせずNoneを返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 10,
+    "order": 3,
+    "tests": [
+     {
+      "id": "empty",
+      "type": "OUTPUT_EQUALS",
+      "label": "空の商品一覧",
+      "args": [
+       [],
+       100
+      ],
+      "expected": null
+     }
+    ],
+    "hints": [
+     {
+      "id": "empty-range",
+      "title": "最初から候補がない",
+      "body": "要素数が0なら探索ループを一度も実行せずNoneへ到達できます。"
+     }
+    ]
+   },
+   {
+    "id": "product-boundaries",
+    "title": "先頭と末尾の商品を見つける",
+    "description": "一覧の端にある商品番号も正しく検索します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 4,
+    "tests": [
+     {
+      "id": "first",
+      "type": "OUTPUT_EQUALS",
+      "label": "先頭の商品",
+      "args": [
+       [
+        {
+         "id": 1,
+         "name": "A"
+        },
+        {
+         "id": 5,
+         "name": "B"
+        },
+        {
+         "id": 9,
+         "name": "C"
+        }
+       ],
+       1
+      ],
+      "expected": {
+       "id": 1,
+       "name": "A"
+      }
+     },
+     {
+      "id": "last",
+      "type": "OUTPUT_EQUALS",
+      "label": "末尾の商品",
+      "args": [
+       [
+        {
+         "id": 1,
+         "name": "A"
+        },
+        {
+         "id": 5,
+         "name": "B"
+        },
+        {
+         "id": 9,
+         "name": "C"
+        }
+       ],
+       9
+      ],
+      "expected": {
+       "id": 9,
+       "name": "C"
+      }
+     }
+    ],
+    "hints": [
+     {
+      "id": "inclusive",
+      "title": "両端を候補に含める",
+      "body": "leftとrightが同じ位置になったときも、その位置を比較します。"
+     }
+    ]
+   },
+   {
+    "id": "product-duplicate",
+    "title": "同じ番号なら最初の商品を返す",
+    "description": "同じidの商品が複数ある場合、一覧で最初に現れる商品を返します。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 15,
+    "order": 5,
+    "tests": [
+     {
+      "id": "first-duplicate",
+      "type": "OUTPUT_EQUALS",
+      "label": "同じ番号の商品",
+      "args": [
+       [
+        {
+         "id": 10,
+         "name": "通常版"
+        },
+        {
+         "id": 20,
+         "name": "限定版A"
+        },
+        {
+         "id": 20,
+         "name": "限定版B"
+        },
+        {
+         "id": 30,
+         "name": "予約版"
+        }
+       ],
+       20
+      ],
+      "expected": {
+       "id": 20,
+       "name": "限定版A"
+      }
+     }
+    ],
+    "hints": [
+     {
+      "id": "keep-left",
+      "title": "見つけても左側を確認する",
+      "body": "一致した商品を候補として覚え、さらに左側に同じidがないか範囲を狭めます。"
+     }
+    ]
+   },
+   {
+    "id": "product-input",
+    "title": "元の商品一覧を変更しない",
+    "description": "検索の前後でproductsの内容と順番を変えません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 6,
+    "tests": [
+     {
+      "id": "products-unchanged",
+      "type": "INPUT_UNCHANGED",
+      "label": "商品一覧を維持",
+      "args": [
+       [
+        {
+         "id": 10,
+         "name": "A"
+        },
+        {
+         "id": 20,
+         "name": "B"
+        },
+        {
+         "id": 30,
+         "name": "C"
+        }
+       ],
+       20
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "indexes",
+      "title": "位置だけを動かす",
+      "body": "リストを切り分けたり並べ替えたりせず、left・right・midという位置を更新できます。"
+     }
+    ]
+   },
+   {
+    "id": "product-efficient",
+    "title": "256商品を20回以内の比較で探す",
+    "description": "大量の商品を先頭からすべて確認せず、比較範囲を絞り込みます。",
+    "kind": "OPTIONAL",
+    "category": "PERFORMANCE",
+    "points": 20,
+    "order": 7,
+    "tests": [
+     {
+      "id": "comparison-budget",
+      "type": "FIELD_COMPARISON_LIMIT",
+      "label": "256件の商品検索",
+      "size": 256,
+      "field": "id",
+      "targetId": 506,
+      "maxComparisons": 20,
+      "trackedArgIndexes": [
+       1
+      ],
+      "expected": {
+       "id": 506,
+       "name": "商品253",
+       "stock": 3
+      }
+     }
+    ],
+    "hints": [
+     {
+      "id": "binary",
+      "title": "役立つアルゴリズム",
+      "body": "中央の商品番号とtarget_idを比較し、不要な半分を候補から外す二分探索なら達成できます。",
+      "courseId": "course-algorithm-binary-search-v1"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "create-quest-skill-tree-v1",
+  "title": "ゲームのスキルツリーを調べよう",
+  "description": "選んだスキルから先に習得できるスキルをすべて集めます。分岐、循環、深いツリーへ対応しながら探索機能を完成させます。",
+  "scenario": "あなたはRPGのスキル画面を担当しています。スキルごとの派生先skill_treeと開始スキルstartを受け取り、startから到達できる派生スキルを重複なく返すfind_unlockable_skills関数を実装してください。start自身は結果に含めません。",
+  "problemType": "DFS",
+  "functionName": "find_unlockable_skills",
+  "starterCode": "def find_unlockable_skills(skill_tree, start):\n    # startから先に到達できるスキル名を、重複のないリストで返してください\n    # start自身と、つながっていないスキルは含めません\n    return []",
+  "estimatedMinutes": 50,
+  "tags": [
+   "Python",
+   "全探索",
+   "ゲーム"
+  ],
+  "thumbnailUrl": "/images/create-quests/skill-tree.svg",
+  "previewData": {
+   "kind": "GRAPH",
+   "previewTitle": "スキルツリー",
+   "previewDescription": "剣術から派生先をたどり、習得候補をすべて集めます。",
+   "guidanceTitle": "返す順番は自由です",
+   "guidanceBody": "同じスキル集合なら並び順に関係なく得点になります。ひとつの派生を奥まで調べてから戻る深さ優先探索が実装しやすい課題です。",
+   "graph": {
+    "剣術": [
+     "連撃",
+     "防御"
+    ],
+    "連撃": [
+     "旋風斬り"
+    ],
+    "防御": [
+     "反撃"
+    ],
+    "旋風斬り": [],
+    "反撃": []
+   },
+   "start": "剣術"
+  },
+  "sortOrder": 5,
+  "relatedCourses": [
+   {
+    "courseId": "course-algorithm-depth-first-search-v1",
+    "reason": "ひとつの派生を奥までたどり、戻りながら別の分岐を調べる方法が使えます。",
+    "order": 1
+   }
+  ],
+  "requirements": [
+   {
+    "id": "skills-reachable",
+    "title": "派生スキルをすべて返す",
+    "description": "startからたどれる派生スキルを、漏れや重複なく返します。返す順番は自由です。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 20,
+    "order": 1,
+    "tests": [
+     {
+      "id": "branch",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "2方向へ分岐するツリー",
+      "args": [
+       {
+        "基礎": [
+         "攻撃",
+         "防御"
+        ],
+        "攻撃": [
+         "強撃"
+        ],
+        "防御": [],
+        "強撃": []
+       },
+       "基礎"
+      ],
+      "expected": [
+       "攻撃",
+       "防御",
+       "強撃"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "work-list",
+      "title": "次に調べるスキルを記録する",
+      "body": "startの派生先を調査対象へ追加し、取り出したスキルの派生先も続けて追加します。"
+     }
+    ]
+   },
+   {
+    "id": "skills-leaf",
+    "title": "派生先がないスキルを扱う",
+    "description": "startに派生先がない場合は空のリストを返します。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 15,
+    "order": 2,
+    "tests": [
+     {
+      "id": "leaf",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "末端のスキル",
+      "args": [
+       {
+        "剣術": []
+       },
+       "剣術"
+      ],
+      "expected": []
+     }
+    ],
+    "hints": [
+     {
+      "id": "empty-neighbors",
+      "title": "空の派生先",
+      "body": "派生先が空なら追加する調査対象はありません。そのまま探索を終えられます。"
+     }
+    ]
+   },
+   {
+    "id": "skills-start-excluded",
+    "title": "開始スキルを結果に含めない",
+    "description": "結果にはstartより後に習得できるスキルだけを含めます。",
+    "kind": "BASIC",
+    "category": "FUNCTIONAL",
+    "points": 10,
+    "order": 3,
+    "tests": [
+     {
+      "id": "exclude-start",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "開始地点を除外",
+      "args": [
+       {
+        "剣術": [
+         "連撃"
+        ],
+        "連撃": [
+         "奥義"
+        ],
+        "奥義": []
+       },
+       "剣術"
+      ],
+      "expected": [
+       "連撃",
+       "奥義"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "visited-start",
+      "title": "startは確認済みにする",
+      "body": "探索を始めるときにstartを確認済みへ入れ、結果へ追加するのはその派生先からにします。"
+     }
+    ]
+   },
+   {
+    "id": "skills-cycle",
+    "title": "循環する派生でも一度ずつ返す",
+    "description": "派生先から元のスキルへ戻れる場合も、無限に繰り返さず重複を除きます。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 20,
+    "order": 4,
+    "tests": [
+     {
+      "id": "cycle",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "相互に派生するスキル",
+      "args": [
+       {
+        "A": [
+         "B"
+        ],
+        "B": [
+         "C"
+        ],
+        "C": [
+         "A",
+         "D"
+        ],
+        "D": []
+       },
+       "A"
+      ],
+      "expected": [
+       "B",
+       "C",
+       "D"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "visited",
+      "title": "確認済みを集合で持つ",
+      "body": "初めて見つけたスキルだけを確認済み集合と調査対象へ追加します。",
+      "courseId": "course-algorithm-depth-first-search-v1"
+     }
+    ]
+   },
+   {
+    "id": "skills-disconnected",
+    "title": "つながっていないスキルを除外する",
+    "description": "skill_treeに登録されていても、startからたどれないスキルは結果に含めません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 5,
+    "tests": [
+     {
+      "id": "separate-tree",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "別系統のスキル",
+      "args": [
+       {
+        "A": [
+         "B"
+        ],
+        "B": [],
+        "X": [
+         "Y"
+        ],
+        "Y": []
+       },
+       "A"
+      ],
+      "expected": [
+       "B"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "from-start",
+      "title": "一覧全体を直接返さない",
+      "body": "辞書の全キーではなく、startから実際に見つけたスキルだけを結果へ追加します。"
+     }
+    ]
+   },
+   {
+    "id": "skills-deep",
+    "title": "深い派生を最後まで調べる",
+    "description": "10段階先まで続くスキルも漏らさず返します。",
+    "kind": "OPTIONAL",
+    "category": "PERFORMANCE",
+    "points": 15,
+    "order": 6,
+    "tests": [
+     {
+      "id": "deep-chain",
+      "type": "OUTPUT_SET_EQUALS",
+      "label": "10段階の派生",
+      "args": [
+       {
+        "S0": [
+         "S1"
+        ],
+        "S1": [
+         "S2"
+        ],
+        "S2": [
+         "S3"
+        ],
+        "S3": [
+         "S4"
+        ],
+        "S4": [
+         "S5"
+        ],
+        "S5": [
+         "S6"
+        ],
+        "S6": [
+         "S7"
+        ],
+        "S7": [
+         "S8"
+        ],
+        "S8": [
+         "S9"
+        ],
+        "S9": [
+         "S10"
+        ],
+        "S10": []
+       },
+       "S0"
+      ],
+      "expected": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "S5",
+       "S6",
+       "S7",
+       "S8",
+       "S9",
+       "S10"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "dfs",
+      "title": "役立つアルゴリズム",
+      "body": "調べているスキルの派生先へ同じ処理を使う深さ優先探索なら、深い一本道も自然にたどれます。",
+      "courseId": "course-algorithm-depth-first-search-v1"
+     }
+    ]
+   },
+   {
+    "id": "skills-input",
+    "title": "元のスキルツリーを変更しない",
+    "description": "探索の前後でskill_treeの派生関係を変更しません。",
+    "kind": "OPTIONAL",
+    "category": "QUALITY",
+    "points": 10,
+    "order": 7,
+    "tests": [
+     {
+      "id": "tree-unchanged",
+      "type": "INPUT_UNCHANGED",
+      "label": "スキルツリーを維持",
+      "args": [
+       {
+        "A": [
+         "B",
+         "C"
+        ],
+        "B": [],
+        "C": []
+       },
+       "A"
+      ]
+     }
+    ],
+    "hints": [
+     {
+      "id": "separate-result",
+      "title": "結果と確認済みを新しく作る",
+      "body": "辞書から要素を削除せず、新しいリストと集合へ探索状態を記録します。"
+     }
+    ]
+   }
+  ]
+ }
+]
