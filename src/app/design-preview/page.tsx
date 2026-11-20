@@ -89,11 +89,11 @@ export default function DesignPreviewPage() {
       </Typography>
 
       <Typography component="h2" sx={{ fontSize: 20, fontWeight: 800, mb: 1 }}>
-        マスコット（SVG 試作）
+        マスコット（SVG 試作・没）
       </Typography>
       <Typography sx={{ mb: 2, color: "text.secondary" }}>
-        方針（1体・パーツ分け SVG）の試作です。色と特徴は現在の PNG から取り、画風は平たく作り直しました。
-        表情はパーツの組み合わせで切り替わります。待機中は、まばたきとしっぽと体の小さな動きが入ります。
+        この試作は没になりました（平たい面と正面の大きな目で人形のように見え、愛着が持てなかったため）。記録として残しています。
+        決まった方式は、デザイン方針の3章（状態ごとの画像の切り替え＋全体の動き）を見てください。
       </Typography>
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
         {mascotExpressions.map((expr) => (
