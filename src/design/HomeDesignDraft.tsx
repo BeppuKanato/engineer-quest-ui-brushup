@@ -89,6 +89,36 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
 
   return (
     <Stack spacing={3}>
+      {/* (0) 目標：最上部に切り出し、進捗ゲージと一緒に見せる */}
+      {goalText && current && (
+        <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <FlagIcon sx={{ color: PRIMARY, fontSize: 28 }} />
+              <Typography fontSize={14} fontWeight={800}>
+                目標
+              </Typography>
+              <Typography fontSize={22} fontWeight={900}>
+                {goalText}
+              </Typography>
+            </Stack>
+            <Box sx={{ minWidth: { md: 260 } }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+                <Typography fontSize={12} fontWeight={800}>
+                  進み具合
+                </Typography>
+                <Typography fontSize={14} fontWeight={800}>
+                  {current.completedPhases}/{current.totalPhases} ステップ
+                </Typography>
+              </Stack>
+              <Box sx={{ height: 10, borderRadius: 5, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
+                <Box sx={{ height: "100%", width: `${(current.completedPhases / current.totalPhases) * 100}%`, bgcolor: PRIMARY, borderRadius: 5 }} />
+              </Box>
+            </Box>
+          </Stack>
+        </Paper>
+      )}
+
       {/* (1) 今日の行動：狙い（主）と復習（副）を横に並べる */}
       {current && (
         <Box
@@ -108,17 +138,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                {goalText && (
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-                    <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
-                    <Typography fontSize={18} fontWeight={800}>
-                      目標
-                    </Typography>
-                    <Typography fontSize={18} fontWeight={900}>
-                      {goalText}
-                    </Typography>
-                  </Stack>
-                )}
                 <Typography component="h3" fontSize={22} fontWeight={900}>
                   {current.title}
                 </Typography>
