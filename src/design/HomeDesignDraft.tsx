@@ -1,12 +1,13 @@
 "use client";
 
-// ホームの設計叩き台 v2（デザイン用）。方針5章「統一感の前提」の適用：
-// - 面は3階層：S1＝全領域共通の基底（白・影なし・角丸と余白は統一）、S2＝強調は今日の狙いだけ
-// - 領域ごとに「形のアンカー」：現在地＝道＋カード21枚の格子、狙い＝単元の図、
-//   続き＝タイムライン＋引用（話者はマスコット）、復習＝問題の形、ストリーク＝曜日ドット＋炎、
-//   掲示板＝マスコット＋タグ＋返信数のスレッド行
-// - レイアウト：現在地は全幅、主ゾーン（狙い→続き→復習）＋副ゾーン（ストリーク→掲示板）
-// - 単元の識別は色ではなく図で結ぶ。色は形と組でだけ使う
+// ホームの設計叩き台 v5（デザイン用）。
+// 目的（2026-11-20 確認）：開いてすぐに学習を再開できる画面。
+// - 最上段は「今日の狙い」（再開の領域）。目標は狙いの上位目的として中に入れる
+// - 狙いの図は「次の段階の教材の形」（二分探索なら図とコードの対応）で予告する
+// - 現在地は単元の道だけにし、知識カードの格子は副ゾーンの独立した領域に分ける
+//   （格子の列＝カードが手に入る段階、行＝単元。意味が読める形にする）
+// - 復習は設問とボタンだけの compact な領域にする
+// - 面は S1 共通基底、強調（S2）は狙いだけ。文字は役割の5種、見出しは本文色
 
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import CheckIcon from "@mui/icons-material/Check";
@@ -20,8 +21,8 @@ import type { HomeResponse, HomeUnit } from "@/api/home.api";
 import { isMascotId } from "@/app/component/mascot";
 import { MascotFigure } from "@/app/component/mascotFigure";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
-import { BinarySearchExecutionCanvas } from "@/features/learning/binary-search/execution/BinarySearchExecutionCanvas";
-import type { BinarySearchExecutionCanvasState } from "@/features/learning/binary-search/execution/execution.types";
+import { BinarySearchCodeMappingCanvas } from "@/features/learning/binary-search/code-mapping/BinarySearchCodeMappingCanvas";
+import { binarySearchCodeMappingContent } from "@/features/learning/binary-search/code-mapping/codeMapping.content";
 
 const PRIMARY = "#2563eb";
 const STREAK_ORANGE = "#ea580c";
@@ -30,19 +31,6 @@ const LINE_TODO = "#d7dee9";
 
 const S1 = { bgcolor: "#fff", borderRadius: 3, p: { xs: 2.5, md: 3 }, boxShadow: "none" } as const;
 const S2 = { bgcolor: "#e8effe", borderRadius: 3, p: { xs: 2.5, md: 3 }, boxShadow: "none" } as const;
-
-const binarySearchNow: BinarySearchExecutionCanvasState = {
-  data: { kind: "binary-search-execution" },
-  state: {
-    values: [3, 7, 12, 19, 25, 31, 42],
-    target: 25,
-    lo: 4,
-    hi: 6,
-    mid: 5,
-    cells: ["discarded", "discarded", "discarded", "discarded", "remaining", "center", "remaining"],
-  },
-  highlights: [],
-};
 
 const achievementTitle = (title: string) => title.replace(/Lv\.(\d+)/g, "第$1段階");
 
@@ -101,41 +89,62 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
   );
 }
 
-// 知識カード21枚のミニ格子。行＝単元、列＝手に入る順（フェーズ2→5→7）。
-// 所持はフェーズの完了から決まる（2以上で1枚目、5以上で2枚目、7で3枚目）。
-// 所持セルの色は統一する（レアリティの色分けはコレクション画面の仕事）。
+// 知識カードの集まり具合。行＝単元、列＝手に入る段階（動きの説明／コードの確認問題／自分で実装）。
+// 所持はフェーズの完了から決まる（2以上で1枚目、5以上で2枚目、7で3枚目）。色は統一。
 const OWNED_TONE = { bgcolor: "#dbeafe", border: "#93c5fd" };
-function CardGrid({ units }: { units: HomeUnit[] }) {
+const SLOT_LABELS = ["説明", "確認", "実装"];
+function CardCollection({ units, collected, total }: { units: HomeUnit[]; collected: number; total: number }) {
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.75 }} role="img" aria-label="知識カードの集まり具合">
-      {units.map((unit) => {
-        const owned = [unit.completedPhases >= 2, unit.completedPhases >= 5, unit.completedPhases >= 7];
-        return (
-          <Stack key={unit.id} spacing={0.75} alignItems="center">
-            {owned.map((has, slot) => (
-              <Box
-                key={slot}
-                sx={{
-                  width: 22,
-                  height: 30,
-                  borderRadius: 0.75,
-                  bgcolor: has ? OWNED_TONE.bgcolor : "#eef1f5",
-                  border: has ? `2px solid ${OWNED_TONE.border}` : "2px solid #dde3ea",
-                  display: "grid",
-                  placeItems: "center",
-                  color: "#64748b",
-                }}
-              >
-                {has ? <CheckIcon sx={{ fontSize: 13 }} /> : null}
-              </Box>
-            ))}
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.2, textAlign: "center" }}>
+    <Paper component="section" aria-label="知識カード" elevation={0} sx={S1}>
+      <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 2 }}>
+        <Typography component="h2" fontSize={16} fontWeight={900}>
+          知識カード
+        </Typography>
+        <Typography fontSize={14} fontWeight={800}>
+          {collected}/{total}
+        </Typography>
+      </Stack>
+      <Box sx={{ display: "grid", gridTemplateColumns: "64px repeat(3, 1fr)", rowGap: 1, alignItems: "center" }}>
+        <Box />
+        {SLOT_LABELS.map((label) => (
+          <Typography key={label} variant="caption" color="text.secondary" fontWeight={800} sx={{ textAlign: "center" }}>
+            {label}
+          </Typography>
+        ))}
+        {units.map((unit) => {
+          const owned = [unit.completedPhases >= 2, unit.completedPhases >= 5, unit.completedPhases >= 7];
+          return [
+            <Typography key={`${unit.id}-name`} fontSize={12} fontWeight={700} sx={{ pr: 1, lineHeight: 1.3 }}>
               {unit.title.replace(/（.*）/, "")}
-            </Typography>
-          </Stack>
-        );
-      })}
-    </Box>
+            </Typography>,
+            ...owned.map((has, slot) => (
+              <Box key={`${unit.id}-${slot}`} sx={{ display: "flex", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 22,
+                    height: 30,
+                    borderRadius: 0.75,
+                    bgcolor: has ? OWNED_TONE.bgcolor : "#eef1f5",
+                    border: has ? `2px solid ${OWNED_TONE.border}` : "2px solid #dde3ea",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#64748b",
+                  }}
+                >
+                  {has ? <CheckIcon sx={{ fontSize: 13 }} /> : null}
+                </Box>
+              </Box>
+            )),
+          ];
+        })}
+      </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+        カードは各段階を終えると手に入ります
+      </Typography>
+      <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5 }}>
+        コレクションへ
+      </Button>
+    </Paper>
   );
 }
 
@@ -145,6 +154,22 @@ function SegmentDots({ progress, goal }: { progress: number; goal: number }) {
       {Array.from({ length: goal }, (_, i) => (
         <Box key={i} sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: i < progress ? PRIMARY : "transparent", border: `2px solid ${i < progress ? PRIMARY : "#b6c2d2"}` }} />
       ))}
+    </Box>
+  );
+}
+
+// フィードバックの「次の一歩」の引用。話者はマスコット。
+function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: string }) {
+  const id = isMascotId(mascotId) ? mascotId : "red-panda";
+  return (
+    <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+      <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
+      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
+        <Typography fontSize={12} fontWeight={800}>
+          前回のフィードバックの次の一歩
+        </Typography>
+        <Typography fontSize={14} sx={{ mt: 0.25 }}>{nextStep}</Typography>
+      </Box>
     </Box>
   );
 }
@@ -163,36 +188,8 @@ const reviewMaterial = resolveReviewMaterial({
   questionId: "first-center",
 });
 
-// 復習の設問が指す場面（範囲を出す前、25 を探し始める盤面）。回答用の盤面部品は
-// ホームの小さい枠に合わないため、同じ盤面を説明用の図で見せる。
-const reviewScene: BinarySearchExecutionCanvasState = {
-  data: { kind: "binary-search-execution" },
-  state: {
-    values: [3, 7, 12, 19, 25, 31, 42],
-    target: 25,
-    lo: null,
-    hi: null,
-    mid: null,
-    cells: ["in-range", "in-range", "in-range", "in-range", "in-range", "in-range", "in-range"],
-  },
-  highlights: [],
-};
-
-// フィードバックの「次の一歩」の引用。話者はマスコット。
-function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: string }) {
-  const id = isMascotId(mascotId) ? mascotId : "red-panda";
-  return (
-    <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
-      <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
-      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
-        <Typography fontSize={12} fontWeight={800}>
-          前回のフィードバックの次の一歩
-        </Typography>
-        <Typography fontSize={14} sx={{ mt: 0.25 }}>{nextStep}</Typography>
-      </Box>
-    </Box>
-  );
-}
+// 狙いの予告は「次の段階（動きとコードの対応）」の実在のステップから引く。
+const aimStep = binarySearchCodeMappingContent.steps.find((step) => step.id === "if-hit-2");
 
 export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode; goalText?: string }) {
   const { overview, today, resume, week, questions } = data;
@@ -203,100 +200,88 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
 
   return (
     <Stack spacing={3}>
-      {/* (1) 現在地：全幅の帯。道＋カード格子 */}
-      <Paper component="section" aria-label="現在地" elevation={0} sx={S1}>
-        <Stack direction={{ xs: "column", lg: "row" }} spacing={3}>
-          <Box sx={{ flex: "1 1 62%", minWidth: 0 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
-              <RegionTitle>現在地</RegionTitle>
+      {/* (1) 今日の狙い：最上段。S2 の強調。目標は上位目的として中に入れる */}
+      {current && (
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          aria-label="今日の狙い"
+          style={{ background: S2.bgcolor, borderRadius: 12, padding: 24 }}
+        >
+          {goalText && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+              <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
               <Typography fontSize={14} fontWeight={800}>
-                単元 {overview.completedUnits}/{overview.totalUnits} ・ カード {overview.collectedCards}/{overview.totalCards}
+                目標
+              </Typography>
+              <Typography fontSize={14} fontWeight={900}>
+                {goalText}
               </Typography>
             </Stack>
-            <UnitPath units={overview.units} />
+          )}
+          <RegionTitle>今日の狙い</RegionTitle>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={3} justifyContent="space-between">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography component="h3" fontSize={22} fontWeight={900}>
+                {current.title}
+              </Typography>
+              {current.nextPhase && (
+                <Typography fontSize={14} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
+              )}
+              <Button
+                component={Link}
+                href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                variant="contained"
+                sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5 }}
+              >
+                {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
+              </Button>
+            </Box>
+            <Stack spacing={1.5} sx={{ pt: { sm: 1 } }}>
+              {today.nearAchievements.map((achievement) => (
+                <Stack key={achievement.id} direction="row" alignItems="center" spacing={1.5}>
+                  <SegmentDots progress={achievement.progress} goal={achievement.goal} />
+                  <Typography fontSize={14}>あと少しで『{achievementTitle(achievement.title)}』</Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Stack>
+          {/* 予告は次の段階の教材そのもの（図とコードの対応）。幅が要るので領域の全幅で見せる */}
+          <Box sx={{ mt: 3 }}>
+            <Box sx={{ bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1.5, height: { xs: 300, md: 330 } }}>
+              {aimStep && <BinarySearchCodeMappingCanvas canvas={aimStep.canvas} />}
+            </Box>
+            {aimStep && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                次の段階の様子：{aimStep.caption}
+              </Typography>
+            )}
           </Box>
-          <Box sx={{ flex: "1 1 38%", minWidth: 0 }}>
-            <Typography fontSize={16} fontWeight={900} sx={{ mb: 2 }}>
-              知識カード
-            </Typography>
-            <CardGrid units={overview.units} />
-          </Box>
+          {sameUnit && resume?.nextStep && (
+            <Box sx={{ mt: 3 }}>
+              <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+            </Box>
+          )}
+        </motion.section>
+      )}
+      {!goalText && data.hasInProgressUnit && currentGoal}
+
+      {/* (2) 現在地：単元の道だけ */}
+      <Paper component="section" aria-label="現在地" elevation={0} sx={S1}>
+        <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
+          <RegionTitle>現在地</RegionTitle>
+          <Typography fontSize={14} fontWeight={800}>
+            単元 {overview.completedUnits}/{overview.totalUnits} ・ カード {overview.collectedCards}/{overview.totalCards}
+          </Typography>
         </Stack>
+        <UnitPath units={overview.units} />
       </Paper>
 
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, alignItems: "flex-start" }}>
         {/* 主ゾーン */}
         <Stack spacing={3} sx={{ flex: "2 1 0", minWidth: 0, width: "100%" }}>
-          {/* (2) 今日の狙い：S2 の強調。単元の図＋主ボタン1つ */}
-          {current && (
-            <motion.section
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45 }}
-              aria-label="今日の狙い"
-              style={{ background: S2.bgcolor, borderRadius: 12, padding: 24 }}
-            >
-              <RegionTitle>今日の狙い</RegionTitle>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-                <Box sx={{ flex: "1 1 52%", minWidth: 0 }}>
-                  <Box sx={{ bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1, height: 218 }}>
-                    <BinarySearchExecutionCanvas canvas={binarySearchNow} />
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-                    25 を探し中。真ん中の 31 より小さいので、探す範囲は左側に絞られました
-                  </Typography>
-                </Box>
-                <Box sx={{ flex: "1 1 48%", minWidth: 0 }}>
-                  <Typography component="h3" fontSize={22} fontWeight={900}>
-                    {current.title}
-                  </Typography>
-                  {current.nextPhase && (
-                    <Typography fontSize={14} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
-                  )}
-                  <Button
-                    component={Link}
-                    href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                    variant="contained"
-                    sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5 }}
-                  >
-                    {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
-                  </Button>
-                  <Stack spacing={1.5} sx={{ mt: 3 }}>
-                    {today.nearAchievements.map((achievement) => (
-                      <Stack key={achievement.id} direction="row" alignItems="center" spacing={1.5}>
-                        <SegmentDots progress={achievement.progress} goal={achievement.goal} />
-                        <Typography fontSize={14}>あと少しで『{achievementTitle(achievement.title)}』</Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
-                </Box>
-              </Stack>
-              {sameUnit && resume?.nextStep && (
-                <Box sx={{ mt: 3 }}>
-                  <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
-                </Box>
-              )}
-            </motion.section>
-          )}
-          {/* 大目標は「目標の文」だけの細い帯にする。進み具合は現在地の道が担う */}
-          {data.hasInProgressUnit &&
-            (goalText ? (
-              <Paper component="section" aria-label="いまの目標" elevation={0} sx={{ ...S1, py: 2 }}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <FlagIcon sx={{ color: PRIMARY, fontSize: 22 }} />
-                  <Typography fontWeight={800} fontSize={14}>
-                    いまの目標
-                  </Typography>
-                  <Typography fontWeight={900} fontSize={16}>
-                    {goalText}
-                  </Typography>
-                </Stack>
-              </Paper>
-            ) : (
-              currentGoal
-            ))}
-
-          {/* (3) 前回の続き：再開先が推奨先と違う単元の時だけ独立させる */}
+          {/* 前回の続き：再開先が推奨先と違う単元の時だけ独立させる */}
           {resume && !sameUnit && (
             <Paper component="section" aria-label="前回の続き" elevation={0} sx={S1}>
               <RegionTitle>前回の続き</RegionTitle>
@@ -323,7 +308,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Paper>
           )}
 
-          {/* (4) 今日の復習：問題の形（設問と図）。答えるのは専用画面 */}
+          {/* (3) 今日の復習：設問とボタンだけの compact な領域 */}
           {reviewMaterial && (
             <Paper component="section" aria-label="今日の復習" elevation={0} sx={S1}>
               <RegionTitle>今日の復習</RegionTitle>
@@ -333,19 +318,18 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Typography variant="caption" color="text.secondary">
                 {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から
               </Typography>
-              <Box sx={{ height: 190, mt: 1.5, borderRadius: 3, bgcolor: "#fbfcfe", px: 2, py: 1 }}>
-                <BinarySearchExecutionCanvas canvas={reviewScene} />
+              <Box>
+                <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900 }}>
+                  復習する
+                </Button>
               </Box>
-              <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900 }}>
-                復習する
-              </Button>
             </Paper>
           )}
         </Stack>
 
-        {/* 副ゾーン */}
+        {/* 副ゾーン（眺める情報） */}
         <Stack spacing={3} sx={{ flex: "1 1 0", minWidth: 0, width: "100%" }}>
-          {/* (5) ストリーク：曜日ドット＋炎。橙は専用 */}
+          {/* 学習ストリーク：曜日ドット＋炎。橙は専用 */}
           <Paper component="section" aria-label="学習ストリーク" elevation={0} sx={S1}>
             <RegionTitle>学習ストリーク</RegionTitle>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -382,7 +366,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Stack>
           </Paper>
 
-          {/* (6) 掲示板：スレッドの行 */}
+          <CardCollection units={overview.units} collected={overview.collectedCards} total={overview.totalCards} />
+
+          {/* 掲示板：スレッドの行 */}
           {questions.length > 0 && (
             <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={S1}>
               <RegionTitle>掲示板の新着質問</RegionTitle>

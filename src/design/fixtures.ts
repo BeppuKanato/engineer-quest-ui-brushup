@@ -108,9 +108,9 @@ export const homeFixture: HomeResponse = {
   week: {
     streakDays: 4,
     days: [
-      { date: "2026-11-16", label: "月", learned: true, isToday: false },
+      { date: "2026-11-16", label: "月", learned: false, isToday: false },
       { date: "2026-11-17", label: "火", learned: true, isToday: false },
-      { date: "2026-11-18", label: "水", learned: false, isToday: false },
+      { date: "2026-11-18", label: "水", learned: true, isToday: false },
       { date: "2026-11-19", label: "木", learned: true, isToday: false },
       { date: "2026-11-20", label: "金", learned: true, isToday: true },
       { date: "2026-11-21", label: "土", learned: false, isToday: false },
