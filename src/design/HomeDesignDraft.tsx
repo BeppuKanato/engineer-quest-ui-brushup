@@ -103,11 +103,8 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
 
 // 知識カード21枚のミニ格子。行＝単元、列＝手に入る順（フェーズ2→5→7）。
 // 所持はフェーズの完了から決まる（2以上で1枚目、5以上で2枚目、7で3枚目）。
-const SLOT_TONES = [
-  { bgcolor: "#dbeafe", border: "#93c5fd" },
-  { bgcolor: "#ccfbf1", border: "#5eead4" },
-  { bgcolor: "#f3e8ff", border: "#d8b4fe" },
-];
+// 所持セルの色は統一する（レアリティの色分けはコレクション画面の仕事）。
+const OWNED_TONE = { bgcolor: "#dbeafe", border: "#93c5fd" };
 function CardGrid({ units }: { units: HomeUnit[] }) {
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.75 }} role="img" aria-label="知識カードの集まり具合">
@@ -122,8 +119,8 @@ function CardGrid({ units }: { units: HomeUnit[] }) {
                   width: 22,
                   height: 30,
                   borderRadius: 0.75,
-                  bgcolor: has ? SLOT_TONES[slot].bgcolor : "#eef1f5",
-                  border: has ? `2px solid ${SLOT_TONES[slot].border}` : "2px solid #dde3ea",
+                  bgcolor: has ? OWNED_TONE.bgcolor : "#eef1f5",
+                  border: has ? `2px solid ${OWNED_TONE.border}` : "2px solid #dde3ea",
                   display: "grid",
                   placeItems: "center",
                   color: "#64748b",
@@ -181,10 +178,28 @@ const reviewScene: BinarySearchExecutionCanvasState = {
   highlights: [],
 };
 
-export function HomeDesignDraft({ data, currentGoal }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode }) {
+// フィードバックの「次の一歩」の引用。話者はマスコット。
+function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: string }) {
+  const id = isMascotId(mascotId) ? mascotId : "red-panda";
+  return (
+    <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+      <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
+      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
+        <Typography variant="caption" fontWeight={800} color="text.secondary">
+          前回のフィードバックの次の一歩
+        </Typography>
+        <Typography sx={{ mt: 0.25 }}>{nextStep}</Typography>
+      </Box>
+    </Box>
+  );
+}
+
+export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode; goalText?: string }) {
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
+  // 再開先と推奨先が同じ単元なら、前回の続きは独立させず狙いの中の引用に畳む。
+  const sameUnit = Boolean(resume && current && resume.id === current.id);
 
   return (
     <Stack spacing={3}>
@@ -223,8 +238,13 @@ export function HomeDesignDraft({ data, currentGoal }: { data: HomeResponse; rev
             >
               <RegionTitle>今日の狙い</RegionTitle>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-                <Box sx={{ flex: "1 1 52%", minWidth: 0, bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1, height: 218 }}>
-                  <BinarySearchExecutionCanvas canvas={binarySearchNow} />
+                <Box sx={{ flex: "1 1 52%", minWidth: 0 }}>
+                  <Box sx={{ bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1, height: 218 }}>
+                    <BinarySearchExecutionCanvas canvas={binarySearchNow} />
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                    25 を探し中。真ん中の 31 より小さいので、探す範囲は左側に絞られました
+                  </Typography>
                 </Box>
                 <Box sx={{ flex: "1 1 48%", minWidth: 0 }}>
                   <Typography component="h3" fontSize={22} fontWeight={900}>
@@ -251,13 +271,33 @@ export function HomeDesignDraft({ data, currentGoal }: { data: HomeResponse; rev
                   </Stack>
                 </Box>
               </Stack>
+              {sameUnit && resume?.nextStep && (
+                <Box sx={{ mt: 3 }}>
+                  <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+                </Box>
+              )}
             </motion.section>
           )}
-          {/* 大目標は狙いの領域に入れ子にせず、主ゾーンの独立した帯として置く */}
-          {data.hasInProgressUnit && currentGoal}
+          {/* 大目標は「目標の文」だけの細い帯にする。進み具合は現在地の道が担う */}
+          {data.hasInProgressUnit &&
+            (goalText ? (
+              <Paper component="section" aria-label="いまの目標" elevation={0} sx={{ ...S1, py: 2 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <FlagIcon sx={{ color: PRIMARY, fontSize: 22 }} />
+                  <Typography fontWeight={800} color="text.secondary">
+                    いまの目標
+                  </Typography>
+                  <Typography fontWeight={900} fontSize={16}>
+                    {goalText}
+                  </Typography>
+                </Stack>
+              </Paper>
+            ) : (
+              currentGoal
+            ))}
 
-          {/* (3) 前回の続き：タイムライン＋引用。話者はマスコット */}
-          {resume && (
+          {/* (3) 前回の続き：再開先が推奨先と違う単元の時だけ独立させる */}
+          {resume && !sameUnit && (
             <Paper component="section" aria-label="前回の続き" elevation={0} sx={S1}>
               <RegionTitle>前回の続き</RegionTitle>
               <Box sx={{ display: "flex", gap: 2 }}>
@@ -271,14 +311,8 @@ export function HomeDesignDraft({ data, currentGoal }: { data: HomeResponse; rev
                     {resume.title}（{resume.nextPhase ?? "単元の最終結果"}から）
                   </Typography>
                   {resume.nextStep && (
-                    <Box sx={{ display: "flex", gap: 1.5, mt: 1.75, alignItems: "flex-start" }}>
-                      <MascotFigure mascotId={mascotId} state="face" alt="相棒" size="S" grounding="frame" />
-                      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
-                        <Typography variant="caption" fontWeight={800} color="text.secondary">
-                          前回のフィードバックの次の一歩
-                        </Typography>
-                        <Typography sx={{ mt: 0.25 }}>{resume.nextStep}</Typography>
-                      </Box>
+                    <Box sx={{ mt: 1.75 }}>
+                      <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
                     </Box>
                   )}
                   <Button component={Link} href={resume.resumeHref} variant="outlined" sx={{ mt: 2, borderColor: PRIMARY, color: PRIMARY, fontWeight: 900 }}>
