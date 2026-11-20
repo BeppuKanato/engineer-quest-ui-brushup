@@ -20,6 +20,8 @@ import type { ReactNode } from "react";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
 import { isMascotId } from "@/app/component/mascot";
 import { MascotFigure } from "@/app/component/mascotFigure";
+import { knowledgeCardTones } from "@/components/rewards/rarity.tokens";
+import knowledgeCardsData from "@/design/data/knowledgeCards.json";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
 import { BinarySearchCodeMappingCanvas } from "@/features/learning/binary-search/code-mapping/BinarySearchCodeMappingCanvas";
 import { binarySearchCodeMappingContent } from "@/features/learning/binary-search/code-mapping/codeMapping.content";
@@ -91,9 +93,12 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
 
 // 知識カードの集まり具合。行＝単元、列＝手に入る段階（動きの説明／コードの確認問題／自分で実装）。
 // 所持はフェーズの完了から決まる（2以上で1枚目、5以上で2枚目、7で3枚目）。色は統一。
+// 最近手に入れたカードは実物の形（名前とレアリティの色）で見せる。叩き台では固定の1枚。
 const OWNED_TONE = { bgcolor: "#dbeafe", border: "#93c5fd" };
 const SLOT_LABELS = ["説明", "確認", "実装"];
+const latestCard = knowledgeCardsData.find((card) => card.id === "knowledge-card-binary-search-halving-range");
 function CardCollection({ units, collected, total }: { units: HomeUnit[]; collected: number; total: number }) {
+  const tone = latestCard ? knowledgeCardTones[latestCard.rarity as keyof typeof knowledgeCardTones] : undefined;
   return (
     <Paper component="section" aria-label="知識カード" elevation={0} sx={S1}>
       <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 2 }}>
@@ -104,6 +109,29 @@ function CardCollection({ units, collected, total }: { units: HomeUnit[]; collec
           {collected}/{total}
         </Typography>
       </Stack>
+      {latestCard && tone && (
+        <Box sx={{ mb: 2.5 }}>
+          <Typography fontSize={12} fontWeight={800} sx={{ mb: 1 }}>
+            最近手に入れたカード
+          </Typography>
+          <Box sx={{ bgcolor: tone.bgcolor, border: `2px solid ${tone.border}`, borderRadius: 2, px: 2, py: 1.5 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography fontSize={12} fontWeight={800}>
+                {latestCard.label}
+              </Typography>
+              <Typography fontSize={12} fontWeight={900} sx={{ color: tone.color }}>
+                {tone.label}
+              </Typography>
+            </Stack>
+            <Typography fontSize={16} fontWeight={900} sx={{ mt: 0.5 }}>
+              {latestCard.title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              二分探索で獲得
+            </Typography>
+          </Box>
+        </Box>
+      )}
       <Box sx={{ display: "grid", gridTemplateColumns: "64px repeat(3, 1fr)", rowGap: 1, alignItems: "center" }}>
         <Box />
         {SLOT_LABELS.map((label) => (
@@ -222,12 +250,18 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           )}
           <RegionTitle>今日の狙い</RegionTitle>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={3} justifyContent="space-between">
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, maxWidth: 640 }}>
               <Typography component="h3" fontSize={22} fontWeight={900}>
                 {current.title}
               </Typography>
               {current.nextPhase && (
                 <Typography fontSize={14} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。中央の要素と探す値を比べる動きを、コードに写していきます。</Typography>
+              )}
+              {/* 次の一歩は予告より先に、読む前に目に入る場所に置く */}
+              {sameUnit && resume?.nextStep && (
+                <Box sx={{ mt: 2 }}>
+                  <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+                </Box>
               )}
               <Button
                 component={Link}
@@ -247,22 +281,17 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               ))}
             </Stack>
           </Stack>
-          {/* 予告は次の段階の教材そのもの（図とコードの対応）。幅が要るので領域の全幅で見せる */}
+          {/* 予告は次の段階の教材の形が分かる大きさに留める（主役は次の一歩とボタン） */}
           <Box sx={{ mt: 3 }}>
-            <Box sx={{ bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1.5, height: { xs: 300, md: 330 } }}>
+            <Box sx={{ bgcolor: "#f4f8ff", borderRadius: 3, px: 2, py: 1.5, height: { xs: 200, md: 215 } }}>
               {aimStep && <BinarySearchCodeMappingCanvas canvas={aimStep.canvas} />}
             </Box>
             {aimStep && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+              <Typography fontSize={12} fontWeight={700} sx={{ display: "block", mt: 1 }}>
                 次の段階の様子：{aimStep.caption}
               </Typography>
             )}
           </Box>
-          {sameUnit && resume?.nextStep && (
-            <Box sx={{ mt: 3 }}>
-              <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
-            </Box>
-          )}
         </motion.section>
       )}
       {!goalText && data.hasInProgressUnit && currentGoal}
@@ -272,7 +301,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
           <RegionTitle>現在地</RegionTitle>
           <Typography fontSize={14} fontWeight={800}>
-            単元 {overview.completedUnits}/{overview.totalUnits} ・ カード {overview.collectedCards}/{overview.totalCards}
+            全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
           </Typography>
         </Stack>
         <UnitPath units={overview.units} />
@@ -325,6 +354,45 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Box>
             </Paper>
           )}
+
+          {/* 掲示板：スレッドの行（主ゾーンに置いて下部の高さを揃える） */}
+          {questions.length > 0 && (
+            <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={S1}>
+              <RegionTitle>掲示板の新着質問</RegionTitle>
+              <Stack divider={<Divider flexItem />}>
+                {questions.map((question) => {
+                  const meta = POST_META[question.id];
+                  return (
+                    <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.5, py: 1.75, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
+                      <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography fontWeight={900} fontSize={16} sx={{ lineHeight: 1.45 }}>
+                          {question.title}
+                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
+                          {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />}
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(question.createdAt).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                      {meta && (
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary", flexShrink: 0 }}>
+                          <ChatBubbleOutlineIcon sx={{ fontSize: 17 }} />
+                          <Typography fontSize={14} fontWeight={800}>
+                            {meta.replies}
+                          </Typography>
+                        </Stack>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Stack>
+              <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5 }}>
+                掲示板へ
+              </Button>
+            </Paper>
+          )}
         </Stack>
 
         {/* 副ゾーン（眺める情報） */}
@@ -367,45 +435,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           </Paper>
 
           <CardCollection units={overview.units} collected={overview.collectedCards} total={overview.totalCards} />
-
-          {/* 掲示板：スレッドの行 */}
-          {questions.length > 0 && (
-            <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={S1}>
-              <RegionTitle>掲示板の新着質問</RegionTitle>
-              <Stack divider={<Divider flexItem />}>
-                {questions.map((question) => {
-                  const meta = POST_META[question.id];
-                  return (
-                    <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.5, py: 1.75, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
-                      <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography fontWeight={900} fontSize={16} sx={{ lineHeight: 1.45 }}>
-                          {question.title}
-                        </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
-                          {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />}
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(question.createdAt).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}
-                          </Typography>
-                        </Stack>
-                      </Box>
-                      {meta && (
-                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary", flexShrink: 0 }}>
-                          <ChatBubbleOutlineIcon sx={{ fontSize: 17 }} />
-                          <Typography fontSize={14} fontWeight={800}>
-                            {meta.replies}
-                          </Typography>
-                        </Stack>
-                      )}
-                    </Box>
-                  );
-                })}
-              </Stack>
-              <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5 }}>
-                掲示板へ
-              </Button>
-            </Paper>
-          )}
         </Stack>
       </Box>
     </Stack>
