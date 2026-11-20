@@ -1,13 +1,12 @@
 "use client";
 
-// ホームの設計叩き台 v5（デザイン用）。
+// ホームの設計叩き台 v7（デザイン用）。
 // 目的（2026-11-20 確認）：開いてすぐに学習を再開できる画面。
-// - 最上段は「今日の狙い」（再開の領域）。目標は狙いの上位目的として中に入れる
-// - 狙いの図は「次の段階の教材の形」（二分探索なら図とコードの対応）で予告する
-// - 現在地は単元の道だけにし、知識カードの格子は副ゾーンの独立した領域に分ける
-//   （格子の列＝カードが手に入る段階、行＝単元。意味が読める形にする）
-// - 復習は設問とボタンだけの compact な領域にする
-// - 面は S1 共通基底、強調（S2）は狙いだけ。文字は役割の5種、見出しは本文色
+// - 最上段は行動のカード。「今日の狙い」と「今日の復習（1問）」を切り替える
+//   （復習を独立した小さい領域に置くと誰もやらない、という判断から）
+// - 現在地は単元の道＋各単元の下に知識カードのマス。コースページにない合成にする
+// - 知識カードの領域は「最近手に入れたカード」と数だけ（詳細はコレクションの仕事）
+// - 面は S1 共通基底、強調（S2）は行動のカードだけ。文字は役割の5種、見出しは本文色
 
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import CheckIcon from "@mui/icons-material/Check";
@@ -16,7 +15,7 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
 import { isMascotId } from "@/app/component/mascot";
 import { MascotFigure } from "@/app/component/mascotFigure";
@@ -83,6 +82,21 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
               <Typography variant="caption" color="text.secondary">
                 {done ? "完了" : current ? `${unit.completedPhases}/${unit.totalPhases} 進んだ` : "まだ"}
               </Typography>
+              {/* その単元の知識カード。左から「動きの説明」「コードの確認問題」「自分で実装」の獲得分 */}
+              <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ mt: 0.75 }}>
+                {[unit.completedPhases >= 2, unit.completedPhases >= 5, unit.completedPhases >= 7].map((has, slot) => (
+                  <Box
+                    key={slot}
+                    sx={{
+                      width: 16,
+                      height: 22,
+                      borderRadius: 0.5,
+                      bgcolor: has ? OWNED_TONE.bgcolor : "#eef1f5",
+                      border: has ? `2px solid ${OWNED_TONE.border}` : "2px solid #dde3ea",
+                    }}
+                  />
+                ))}
+              </Stack>
             </Box>
           </Box>
         );
@@ -91,13 +105,12 @@ function UnitPath({ units }: { units: HomeUnit[] }) {
   );
 }
 
-// 知識カードの集まり具合。行＝単元、列＝手に入る段階（動きの説明／コードの確認問題／自分で実装）。
-// 所持はフェーズの完了から決まる（2以上で1枚目、5以上で2枚目、7で3枚目）。色は統一。
-// 最近手に入れたカードは実物の形（名前とレアリティの色）で見せる。叩き台では固定の1枚。
+// 知識カードの領域は「最近手に入れたカード」と数だけにする（単元ごとの内訳は現在地の道と
+// コレクションが担う）。最近のカードは実物の形（名前とレアリティの色）で見せる。叩き台では固定の1枚。
+// 道の単元の下に付けるマスの色（所持）もここで定義する。
 const OWNED_TONE = { bgcolor: "#dbeafe", border: "#93c5fd" };
-const SLOT_LABELS = ["説明", "確認", "実装"];
 const latestCard = knowledgeCardsData.find((card) => card.id === "knowledge-card-binary-search-halving-range");
-function CardCollection({ units, collected, total }: { units: HomeUnit[]; collected: number; total: number }) {
+function CardCollection({ collected, total }: { collected: number; total: number }) {
   const tone = latestCard ? knowledgeCardTones[latestCard.rarity as keyof typeof knowledgeCardTones] : undefined;
   return (
     <Paper component="section" aria-label="知識カード" elevation={0} sx={S1}>
@@ -132,44 +145,7 @@ function CardCollection({ units, collected, total }: { units: HomeUnit[]; collec
           </Box>
         </Box>
       )}
-      <Box sx={{ display: "grid", gridTemplateColumns: "64px repeat(3, 1fr)", rowGap: 1, alignItems: "center" }}>
-        <Box />
-        {SLOT_LABELS.map((label) => (
-          <Typography key={label} variant="caption" color="text.secondary" fontWeight={800} sx={{ textAlign: "center" }}>
-            {label}
-          </Typography>
-        ))}
-        {units.map((unit) => {
-          const owned = [unit.completedPhases >= 2, unit.completedPhases >= 5, unit.completedPhases >= 7];
-          return [
-            <Typography key={`${unit.id}-name`} fontSize={12} fontWeight={700} sx={{ pr: 1, lineHeight: 1.3 }}>
-              {unit.title.replace(/（.*）/, "")}
-            </Typography>,
-            ...owned.map((has, slot) => (
-              <Box key={`${unit.id}-${slot}`} sx={{ display: "flex", justifyContent: "center" }}>
-                <Box
-                  sx={{
-                    width: 22,
-                    height: 30,
-                    borderRadius: 0.75,
-                    bgcolor: has ? OWNED_TONE.bgcolor : "#eef1f5",
-                    border: has ? `2px solid ${OWNED_TONE.border}` : "2px solid #dde3ea",
-                    display: "grid",
-                    placeItems: "center",
-                    color: "#64748b",
-                  }}
-                >
-                  {has ? <CheckIcon sx={{ fontSize: 13 }} /> : null}
-                </Box>
-              </Box>
-            )),
-          ];
-        })}
-      </Box>
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
-        カードは各段階を終えると手に入ります
-      </Typography>
-      <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5 }}>
+      <Button component={Link} href="/collection" sx={{ color: PRIMARY, fontWeight: 800, px: 0.5 }}>
         コレクションへ
       </Button>
     </Paper>
@@ -219,7 +195,20 @@ const reviewMaterial = resolveReviewMaterial({
 // 狙いの予告は「次の段階（動きとコードの対応）」の実在のステップから引く。
 const aimStep = binarySearchCodeMappingContent.steps.find((step) => step.id === "if-hit-2");
 
+const tabSx = (active: boolean) =>
+  ({
+    borderRadius: 999,
+    px: 2.5,
+    py: 1,
+    fontWeight: 900,
+    bgcolor: active ? PRIMARY : "#ffffff",
+    color: active ? "#ffffff" : "#334155",
+    border: `2px solid ${active ? PRIMARY : "#c7d3e8"}`,
+    "&:hover": { bgcolor: active ? PRIMARY : "#eef2fb" },
+  }) as const;
+
 export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode; goalText?: string }) {
+  const [tab, setTab] = useState<"aim" | "review">("aim");
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
@@ -234,9 +223,36 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          aria-label="今日の狙い"
+          aria-label="今日の行動"
           style={{ background: S2.bgcolor, borderRadius: 12, padding: 24 }}
         >
+          {/* 今日の行動の切り替え。復習は独立した領域にせず、狙いと対等な選択肢として置く */}
+          <Stack direction="row" spacing={1} sx={{ mb: 3 }} role="tablist" aria-label="今日の行動の切り替え">
+            <Button onClick={() => setTab("aim")} sx={tabSx(tab === "aim")} aria-selected={tab === "aim"} role="tab">
+              今日の狙い
+            </Button>
+            <Button onClick={() => setTab("review")} sx={tabSx(tab === "review")} aria-selected={tab === "review"} role="tab">
+              今日の復習（1問）
+              <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: tab === "review" ? "#ffffff" : PRIMARY, ml: 1 }} />
+            </Button>
+          </Stack>
+          {tab === "review" && reviewMaterial ? (
+            <Box>
+              <Typography component="h3" fontSize={22} fontWeight={900}>
+                {reviewMaterial.question.prompt}
+              </Typography>
+              <Typography fontSize={14} sx={{ mt: 1 }}>
+                {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                今日の分はこの1問だけです
+              </Typography>
+              <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, px: 3, py: 1.25, borderRadius: 2.5 }}>
+                復習する
+              </Button>
+            </Box>
+          ) : (
+            <>
           {goalText && (
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
               <FlagIcon sx={{ color: PRIMARY, fontSize: 19 }} />
@@ -248,7 +264,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Typography>
             </Stack>
           )}
-          <RegionTitle>今日の狙い</RegionTitle>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={3} justifyContent="space-between">
             <Box sx={{ minWidth: 0, maxWidth: 640 }}>
               <Typography component="h3" fontSize={22} fontWeight={900}>
@@ -292,6 +307,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Typography>
             )}
           </Box>
+            </>
+          )}
         </motion.section>
       )}
       {!goalText && data.hasInProgressUnit && currentGoal}
@@ -305,6 +322,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           </Typography>
         </Stack>
         <UnitPath units={overview.units} />
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5 }}>
+          単元名の下のマスは知識カードです。左から「動きの説明」「コードの確認問題」「自分で実装」を終えると手に入ります
+        </Typography>
       </Paper>
 
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, alignItems: "flex-start" }}>
@@ -337,25 +357,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Paper>
           )}
 
-          {/* (3) 今日の復習：設問とボタンだけの compact な領域 */}
-          {reviewMaterial && (
-            <Paper component="section" aria-label="今日の復習" elevation={0} sx={S1}>
-              <RegionTitle>今日の復習</RegionTitle>
-              <Typography fontWeight={900} fontSize={16}>
-                {reviewMaterial.question.prompt}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から
-              </Typography>
-              <Box>
-                <Button component={Link} href="/daily-review" variant="contained" sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900 }}>
-                  復習する
-                </Button>
-              </Box>
-            </Paper>
-          )}
-
-          {/* 掲示板：スレッドの行（主ゾーンに置いて下部の高さを揃える） */}
+          {/* 掲示板：スレッドの行（主ゾーン） */}
           {questions.length > 0 && (
             <Paper component="section" aria-label="掲示板の新着質問" elevation={0} sx={S1}>
               <RegionTitle>掲示板の新着質問</RegionTitle>
@@ -434,7 +436,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Stack>
           </Paper>
 
-          <CardCollection units={overview.units} collected={overview.collectedCards} total={overview.totalCards} />
+          <CardCollection collected={overview.collectedCards} total={overview.totalCards} />
         </Stack>
       </Box>
     </Stack>
