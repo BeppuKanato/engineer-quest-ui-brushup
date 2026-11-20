@@ -50,7 +50,7 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
       <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
-        <Typography fontSize={12} fontWeight={800}>
+        <Typography fontSize={13} fontWeight={800}>
           次の一歩
         </Typography>
         <Typography fontSize={18} sx={{ mt: 0.25 }}>{nextStep}</Typography>
@@ -106,14 +106,14 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             </Stack>
             <Box sx={{ minWidth: { md: 260 }, flexShrink: 0 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-                <Typography fontSize={12} fontWeight={800}>
+                <Typography fontSize={13} fontWeight={800}>
                   学習ステップの進捗
                 </Typography>
-                <Typography fontSize={14} fontWeight={800}>
+                <Typography fontSize={16} fontWeight={900}>
                   {current.completedPhases}/{current.totalPhases} ステップ
                 </Typography>
               </Stack>
-              <Box sx={{ height: 10, borderRadius: 5, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
+              <Box sx={{ height: 12, borderRadius: 6, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
                 <Box sx={{ height: "100%", width: `${(current.completedPhases / current.totalPhases) * 100}%`, bgcolor: PRIMARY, borderRadius: 5 }} />
               </Box>
             </Box>
@@ -140,7 +140,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               <Box sx={{ flex: 1, minWidth: 0, maxWidth: 780 }}>
-                <Typography component="h3" fontSize={22} fontWeight={900}>
+                <Typography component="h3" fontSize={24} fontWeight={900}>
                   {current.title}
                 </Typography>
                 {current.nextPhase && (
@@ -155,7 +155,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   component={Link}
                   href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
                   variant="contained"
-                  sx={{ mt: 2.5, bgcolor: PRIMARY, fontWeight: 900, fontSize: 16, px: 4, py: 1.75, borderRadius: 2.5 }}
+                  sx={{ mt: 3, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
                 >
                   {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
                 </Button>
@@ -234,7 +234,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                           bgcolor: day.learned ? "#ffedd5" : "#eef1f5",
                           color: day.learned ? STREAK_ORANGE : "#94a3b8",
                           border: day.isToday ? `2px solid ${STREAK_ORANGE}` : "2px solid transparent",
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: 800,
                         }}
                       >
@@ -256,33 +256,33 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             {nearAchievement && (
               <Box component="section" aria-label="実績" sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 250 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        display: "grid",
-                        placeItems: "center",
-                        bgcolor: "#dbeafe",
-                        color: "#1d4ed8",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <EmojiEventsIcon sx={{ fontSize: 28 }} />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" fontWeight={800} color="text.secondary">
-                        次の実績
-                      </Typography>
-                      <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
-                        {achievementTitle(nearAchievement.title)}
-                      </Typography>
-                      <Typography variant="caption" fontWeight={800} sx={{ color: "#1d4ed8" }}>
-                        {nearAchievementData ? knowledgeCardTones[nearAchievementData.rarity as keyof typeof knowledgeCardTones]?.label ?? "" : ""}
-                      </Typography>
-                    </Box>
-                  </Stack>
+                  <Box sx={{ minWidth: 250 }}>
+                    <TileTitle>次の実績</TileTitle>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          display: "grid",
+                          placeItems: "center",
+                          bgcolor: "#dbeafe",
+                          color: "#1d4ed8",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <EmojiEventsIcon sx={{ fontSize: 24 }} />
+                      </Box>
+                      <Box>
+                        <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.4 }}>
+                          {achievementTitle(nearAchievement.title)}
+                        </Typography>
+                        <Typography fontSize={13} fontWeight={800} sx={{ color: "#1d4ed8" }}>
+                          {nearAchievementData ? knowledgeCardTones[nearAchievementData.rarity as keyof typeof knowledgeCardTones]?.label ?? "" : ""}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
                   <Box sx={{ flex: 1, maxWidth: 400 }}>
                     <Stack direction="row" spacing={0.75} aria-hidden>
                       {Array.from({ length: nearAchievement.goal }, (_, i) => (
@@ -290,8 +290,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                           key={i}
                           sx={{
                             flex: 1,
-                            height: 8,
-                            borderRadius: 4,
+                            height: 10,
+                            borderRadius: 5,
                             bgcolor: i < nearAchievement.progress ? PRIMARY : "#e7edf5",
                             border: i === nearAchievement.progress ? `2px solid ${PRIMARY}` : "2px solid transparent",
                           }}
@@ -319,12 +319,12 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   </Typography>
                 </Box>
                 {latestCard && latestTone && (
-                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 320 }, flexShrink: 0 }}>
+                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 }, flexShrink: 0 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography fontSize={12} fontWeight={800}>
+                      <Typography fontSize={13} fontWeight={800}>
                         {latestCard.label}
                       </Typography>
-                      <Typography fontSize={12} fontWeight={900} sx={{ color: latestTone.color }}>
+                      <Typography fontSize={13} fontWeight={900} sx={{ color: latestTone.color }}>
                         {latestTone.label}
                       </Typography>
                     </Stack>
@@ -344,12 +344,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           </Box>
           {/* 掲示板：右の縦長の列。投稿の部分だけスクロール */}
           {questions.length > 0 && (
-            <Box component="section" aria-label="掲示板の新着質問" sx={{ position: "relative", borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-              <Box sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, height: "100%", position: { lg: "absolute" }, inset: { lg: 0 } }}>
+            <Box component="section" aria-label="掲示板の新着質問" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
               <TileTitle>掲示板の新着質問</TileTitle>
-              <Box sx={{ flex: 1, minHeight: 0, maxHeight: { xs: 160, lg: "none" }, overflowY: "auto", mr: -1.5, pr: 1.5 }}>
+              <Box>
                 <Stack divider={<Divider flexItem />}>
-                  {questions.map((question) => {
+                  {questions.slice(0, 2).map((question) => {
                     const meta = POST_META[question.id];
                     return (
                       <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
@@ -359,11 +358,11 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                             {question.title}
                           </Typography>
                           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 11, fontWeight: 700 }} />}
+                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 12, fontWeight: 700 }} />}
                             {meta && (
                               <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
                                 <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
-                                <Typography fontSize={12} fontWeight={800}>
+                                <Typography fontSize={13} fontWeight={800}>
                                   {meta.replies}
                                 </Typography>
                               </Stack>
@@ -378,7 +377,6 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
                 掲示板へ
               </Button>
-              </Box>
             </Box>
           )}
         </Box>
