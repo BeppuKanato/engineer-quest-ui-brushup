@@ -48,8 +48,8 @@ function TileTitle({ children }: { children: ReactNode }) {
 function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: string }) {
   const id = isMascotId(mascotId) ? mascotId : "red-panda";
   return (
-    <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
-      <MascotFigure mascotId={id} state="face" alt="相棒" size="S" grounding="frame" />
+    <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+      <MascotFigure mascotId={id} state="normal" alt="相棒" size="L" grounding="shadow" />
       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
         <Typography fontSize={14} fontWeight={800}>
           次の一歩
