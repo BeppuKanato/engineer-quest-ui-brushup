@@ -12,6 +12,7 @@ import { NewAchievementZone, type AchievementPresentationItem } from "@/componen
 import { cardPresentation, presentationFor } from "@/components/rewards/presentation";
 import cardsData from "@/design/data/knowledgeCards.json";
 import { MascotSvg, mascotExpressionLabels, type MascotExpression } from "@/design/mascotSvg";
+import MascotReaction from "@/design/mascotReaction";
 import { LearningRewardsContext } from "@/features/learning/app/LearningRewardsContext";
 import { LearningRewardBoundary } from "@/features/learning/rewards/LearningRewardBoundary";
 
@@ -87,6 +88,19 @@ export default function DesignPreviewPage() {
       <Typography sx={{ mb: 4, color: "text.secondary" }}>
         デザイン確認専用のページです。実績の解除と知識カードの獲得の演出を、レアリティごとに本物の部品で再生します。
       </Typography>
+
+      <Typography component="h2" sx={{ fontSize: 20, fontWeight: 800, mb: 1 }}>
+        マスコットの反応（結果画面・試作）
+      </Typography>
+      <Typography sx={{ mb: 2, color: "text.secondary" }}>
+        決まった方式（状態ごとの画像の切り替え＋全体の動き）の試作です。結果が出る瞬間に表情が驚きへ切り替わり、
+        続けてお祝いの表情と跳ねが入ります。跳ねの強さは実績のレアリティに連動します。
+        画像は現在の PNG を使っていて、動きだけの検証です（絵は後で差し替える前提）。
+        見るポイントは「反応として読めるか」と「強さの差が伝わるか」です。
+      </Typography>
+      <Box sx={{ mb: 5 }}>
+        <MascotReaction />
+      </Box>
 
       <Typography component="h2" sx={{ fontSize: 20, fontWeight: 800, mb: 1 }}>
         マスコット（SVG 試作・没）
