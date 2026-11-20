@@ -14,6 +14,7 @@
 
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import StyleIcon from "@mui/icons-material/Style";
 import FlagIcon from "@mui/icons-material/Flag";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
@@ -314,9 +315,25 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 1.5, md: 3 }} alignItems={{ md: "center" }}>
                 <Box sx={{ minWidth: 168 }}>
                   <TileTitle>知識カード</TileTitle>
-                  <Typography fontSize={18} fontWeight={800}>
-                    {overview.collectedCards}/{overview.totalCards} 枚を獲得
-                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: "#ccfbf1",
+                        color: "#0f766e",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <StyleIcon sx={{ fontSize: 24 }} />
+                    </Box>
+                    <Typography fontSize={18} fontWeight={800}>
+                      {overview.collectedCards}/{overview.totalCards} 枚を獲得
+                    </Typography>
+                  </Stack>
                 </Box>
                 {latestCard && latestTone && (
                   <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 }, flexShrink: 0 }}>
