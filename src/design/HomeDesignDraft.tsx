@@ -152,7 +152,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="point" alt="相棒" size="L" grounding="shadow" />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
-                        <Typography fontSize={22} fontWeight={700} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
+                        <Typography fontSize={22} fontWeight={500} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた<Box component="span" sx={{ fontWeight: 800 }}>「範囲を絞るところ」</Box>、今日は<Box component="span" sx={{ fontWeight: 800 }}>コードで確かめてみよう</Box></Typography>
                       </Box>
                       {current.nextPhase && (
                         <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>

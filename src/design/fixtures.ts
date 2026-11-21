@@ -56,7 +56,7 @@ const binarySearch = unit({
   title: "二分探索",
   group: "探索",
   status: "IN_PROGRESS",
-  completedPhases: 4,
+  completedPhases: 3,
   collectedCards: 1,
   nextPhase: "動きとコードの対応",
 });
