@@ -22,7 +22,7 @@
 | ルート | 画面 | データの出どころ | フィクスチャ |
 | --- | --- | --- | --- |
 | `/home` | ホーム | API `/home` | 済み（中盤の学習者） |
-| `/courses` | 単元一覧 | API `/courses` | 未 |
+| `/courses` | 単元一覧 | API `/courses` | 下書きあり（2026-11-21、CoursesDesignDraft） |
 | `/courses/roadmap/[courseId]` | 単元画面（概要・概念の到達マップ） | API（単元・概念到達） | 未 |
 | `/courses/roadmap/[courseId]/learn` | 学習画面（各フェーズと結果画面を含む） | 教材は front 内、進捗は API | 未（結果画面の見せ方が主対象） |
 

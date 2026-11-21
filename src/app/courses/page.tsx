@@ -15,6 +15,8 @@ import { peekClientQueryData } from "@/lib/clientQueryCache";
 import { ApiError } from "@/lib/fetcher";
 
 import { AppHeader } from "../component/appHeader";
+import { CoursesDesignDraft } from "@/design/CoursesDesignDraft";
+import { isDesignMode } from "@/design/fixtures";
 import { CourseCard } from "./component/courseCard";
 import { CourseFilter } from "./component/courseFilter";
 import { CourseSkeleton } from "./component/courseSkeleton";
@@ -94,6 +96,17 @@ export default function CoursesPage() {
 
   const recommendedCourse = courses.find((course) => course.status === "not_started") ?? courses[0];
   const continueCourse = courses.find((course) => course.status === "in_progress") ?? courses.find((course) => course.progressRate > 0);
+
+  if (isDesignMode()) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#f3f6fb" }}>
+        <AppHeader />
+        <Container maxWidth={false} sx={{ maxWidth: 1440, py: { xs: 3, md: 4 } }}>
+          <CoursesDesignDraft />
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f3f6fb" }}>
