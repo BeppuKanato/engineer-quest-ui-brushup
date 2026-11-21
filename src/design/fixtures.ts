@@ -119,6 +119,7 @@ export const homeFixture: HomeResponse = {
   },
   // 掲示板の投稿は利用者が書くものなので、ここは仮の文面（初期コンテンツの想定に合わせた典型的なつまずき）。
   questions: [
+    { id: "design-post-6", title: "真ん中より大きいのに右半分を探してしまいます", createdAt: "2026-11-20T13:05:00+09:00", href: "/quest-board/design-post-6" },
     { id: "design-post-1", title: "キューから取り出すタイミングが分かりません", createdAt: "2026-11-19T09:12:00+09:00", href: "/quest-board/design-post-1" },
     { id: "design-post-2", title: "二分探索で範囲が1つになっても終わらないのはなぜ？", createdAt: "2026-11-18T16:40:00+09:00", href: "/quest-board/design-post-2" },
     { id: "design-post-3", title: "バブルソートで交換が止まる条件が分かりません", createdAt: "2026-11-18T11:05:00+09:00", href: "/quest-board/design-post-3" },

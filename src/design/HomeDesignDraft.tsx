@@ -62,6 +62,7 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
 
 // 掲示板の行に要るタグと返信数は、ホームのAPIにまだ無いので叩き台では仮置きする。
 const POST_META: Record<string, { tag: string; replies: number }> = {
+  "design-post-6": { tag: "二分探索", replies: 0 },
   "design-post-1": { tag: "幅優先探索", replies: 3 },
   "design-post-2": { tag: "二分探索", replies: 1 },
   "design-post-3": { tag: "バブルソート", replies: 2 },
@@ -84,6 +85,8 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
+  // ホームの掲示板は、学習中の単元で絞って新着順に2件だけ出す（自分に関係ある情報にする）。
+  const boardQuestions = (current ? questions.filter((q) => POST_META[q.id]?.tag === current.title) : questions).slice(0, 2);
   // 再開先と推奨先が同じ単元なら、前回の続きは独立させず狙いの中の引用に畳む。
   const sameUnit = Boolean(resume && current && resume.id === current.id);
   const nearAchievement = today.nearAchievements[0];
@@ -111,7 +114,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   学習ステップの進捗
                 </Typography>
                 <Typography fontSize={16} fontWeight={900}>
-                  {current.completedPhases}/{current.totalPhases} ステップ
+                  {current.completedPhases} / {current.totalPhases} ステップ完了
                 </Typography>
               </Stack>
               <Box sx={{ height: 12, borderRadius: 6, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
@@ -151,25 +154,37 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
                         <Typography fontSize={22} fontWeight={700} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
                       </Box>
+                      {current.nextPhase && (
+                        <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
+                          次は『{current.nextPhase}』
+                        </Typography>
+                      )}
                       <Button
                         component={Link}
                         href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
                         variant="contained"
-                        sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                        sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
                       >
-                        {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
+                        {current.nextPhase ? "学習を再開する" : "単元を見る"}
                       </Button>
                     </Box>
                   </Box>
                 ) : (
-                  <Button
-                    component={Link}
-                    href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                    variant="contained"
-                    sx={{ mt: 3, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
-                  >
-                    {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
-                  </Button>
+                  <>
+                    {current.nextPhase && (
+                      <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
+                        次は『{current.nextPhase}』
+                      </Typography>
+                    )}
+                    <Button
+                      component={Link}
+                      href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                      variant="contained"
+                      sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                    >
+                      {current.nextPhase ? "学習を再開する" : "単元を見る"}
+                    </Button>
+                  </>
                 )}
               </Box>
             </Stack>
@@ -348,9 +363,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 </Box>
                 <Box sx={{ width: { md: 430 }, flexShrink: 0 }}>
                 {latestCard && latestTone && (
-                  <Box sx={{ bgcolor: latestTone.bgcolor, border: `2px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 } }}>
+                  <Box sx={{ bgcolor: "#ffffff", border: `1.5px solid ${latestTone.border}`, borderRadius: 2, px: 2, py: 1.5, width: { md: 360 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography fontSize={14} fontWeight={800}>
+                      <Typography fontSize={14} fontWeight={800} sx={{ color: latestTone.color }}>
                         {latestCard.label}
                       </Typography>
                       <Typography fontSize={14} fontWeight={900} sx={{ color: latestTone.color }}>
@@ -372,13 +387,13 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Stack>
             </Box>
           </Box>
-          {/* 掲示板：右の縦長の列。投稿の部分だけスクロール */}
-          {questions.length > 0 && (
-            <Box component="section" aria-label="掲示板の新着質問" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-              <TileTitle>掲示板の新着質問</TileTitle>
+          {/* 掲示板：右の縦長の列。学習中の単元で絞って新着順に2件 */}
+          {boardQuestions.length > 0 && (
+            <Box component="section" aria-label="掲示板・学習中の単元から" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
+              <TileTitle>掲示板（学習中の単元から）</TileTitle>
               <Box>
                 <Stack divider={<Divider flexItem />}>
-                  {questions.slice(0, 2).map((question) => {
+                  {boardQuestions.map((question) => {
                     const meta = POST_META[question.id];
                     return (
                       <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
@@ -404,6 +419,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   })}
                 </Stack>
               </Box>
+              <Box sx={{ flex: 1 }} />
               <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
                 掲示板へ
               </Button>
