@@ -149,7 +149,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 )}
                 {sameUnit && resume?.nextStep ? (
                   <Box sx={{ display: "flex", gap: 2, mt: 2.5, alignItems: "flex-start" }}>
-                    <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="cheer" alt="相棒" size="L" grounding="shadow" />
+                    <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="point" alt="相棒" size="L" grounding="shadow" />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
                         <Typography fontSize={18}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
