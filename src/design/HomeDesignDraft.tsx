@@ -147,19 +147,33 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 {current.nextPhase && (
                   <Typography fontSize={18} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。動きの一つひとつがコードのどこに対応するかを見ていく段階です。</Typography>
                 )}
-                {sameUnit && resume?.nextStep && (
-                  <Box sx={{ mt: 2 }}>
-                    <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+                {sameUnit && resume?.nextStep ? (
+                  <Box sx={{ display: "flex", gap: 2, mt: 2.5, alignItems: "flex-start" }}>
+                    <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="cheer" alt="相棒" size="L" grounding="shadow" />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
+                        <Typography fontSize={18}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
+                      </Box>
+                      <Button
+                        component={Link}
+                        href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                        variant="contained"
+                        sx={{ mt: 2, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                      >
+                        {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
+                      </Button>
+                    </Box>
                   </Box>
+                ) : (
+                  <Button
+                    component={Link}
+                    href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                    variant="contained"
+                    sx={{ mt: 3, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                  >
+                    {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
+                  </Button>
                 )}
-                <Button
-                  component={Link}
-                  href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                  variant="contained"
-                  sx={{ mt: 3, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
-                >
-                  {current.nextPhase ? `${current.nextPhase}へ` : "単元を見る"}
-                </Button>
               </Box>
             </Stack>
           </motion.section>
