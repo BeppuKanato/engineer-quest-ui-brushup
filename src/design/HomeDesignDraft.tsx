@@ -137,22 +137,19 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
             aria-label="今日の狙い"
-            style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 32 }}
+            style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               <Box sx={{ flex: 1, minWidth: 0, maxWidth: 780 }}>
                 <Typography component="h3" fontSize={24} fontWeight={900}>
                   {current.title}
                 </Typography>
-                {current.nextPhase && (
-                  <Typography fontSize={18} sx={{ mt: 0.75 }}>次は『{current.nextPhase}』。動きの一つひとつがコードのどこに対応するかを見ていく段階です。</Typography>
-                )}
                 {sameUnit && resume?.nextStep ? (
-                  <Box sx={{ display: "flex", gap: 2, mt: 2.5, alignItems: "flex-start" }}>
+                  <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "center" }}>
                     <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="point" alt="相棒" size="L" grounding="shadow" />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
-                        <Typography fontSize={18}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
+                        <Typography fontSize={22} fontWeight={700} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた「範囲を絞るところ」、今日はコードで確かめてみよう</Typography>
                       </Box>
                       <Button
                         component={Link}
