@@ -7,6 +7,9 @@
 // 目が自然に経路を探す。解法を描くと答えになってしまい、「自分が解く課題」として伝わらない。
 // 従来の CourseThumbnail はアルゴリズムの仕組みの図（ノード図など）で、課題の場面は描いていない。
 // まずは BFS の1単元だけ試作し、全単元へ広げるかは Kanato の判断を待つ。
+// 2026-11-22 夜：BFS に続けて DFS も試作した。Kanato の懸念「場面サムネにすると
+// BFS と DFS の違いが出なくなるか」への検証用で、同じロボット・同じ3条件で、
+// 世界だけを変えた（BFS＝倉庫・最短経路、DFS＝迷路・行き止まりだらけ）。
 // 枠の形はカードのサムネ領域（約 2.2 : 1）に合わせてある。
 
 import { Box } from "@mui/material";
@@ -99,11 +102,100 @@ export const BfsMissionThumbnail: React.FC = () => (
   </Box>
 );
 
+/** DFS：迷路を抜けたいのに、行き止まりで困っているロボット。BFS と同じ子・同じ条件で、世界だけ迷路。 */
+export const DfsMissionThumbnail: React.FC = () => (
+  <Box
+    component="svg"
+    viewBox="0 0 460 210"
+    preserveAspectRatio="xMidYMid slice"
+    sx={{ width: "100%", height: "100%", display: "block" }}
+    role="img"
+    aria-label="迷路を抜けようとして、行き止まりで困っているロボット"
+  >
+    <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+    {/* 床のグリッド */}
+    {Array.from({ length: 17 }, (_, i) => (
+      <line key={`v${i}`} x1={(i + 1) * 26} y1="0" x2={(i + 1) * 26} y2="210" stroke="#2563eb" strokeOpacity="0.06" />
+    ))}
+    {Array.from({ length: 7 }, (_, i) => (
+      <line key={`h${i}`} x1="0" y1={(i + 1) * 26} x2="460" y2={(i + 1) * 26} stroke="#2563eb" strokeOpacity="0.06" />
+    ))}
+    {/* 迷路の壁：行き止まりの部屋ができる配置 */}
+    <g fill="#5b7186">
+      <rect x="80" y="28" width="150" height="16" rx="6" />
+      <rect x="280" y="28" width="120" height="16" rx="6" />
+      <rect x="80" y="88" width="16" height="84" rx="6" />
+      <rect x="170" y="88" width="130" height="16" rx="6" />
+      <rect x="330" y="88" width="16" height="84" rx="6" />
+      <rect x="170" y="148" width="150" height="16" rx="6" />
+      <rect x="380" y="60" width="16" height="60" rx="6" />
+    </g>
+    <g stroke="#ffffff" strokeOpacity="0.28" strokeWidth="2">
+      <line x1="155" y1="28" x2="155" y2="44" />
+      <line x1="340" y1="28" x2="340" y2="44" />
+      <line x1="80" y1="36" x2="230" y2="36" />
+      <line x1="280" y1="36" x2="400" y2="36" />
+      <line x1="80" y1="130" x2="96" y2="130" />
+      <line x1="88" y1="88" x2="88" y2="172" />
+      <line x1="235" y1="88" x2="235" y2="104" />
+      <line x1="170" y1="96" x2="300" y2="96" />
+      <line x1="330" y1="130" x2="346" y2="130" />
+      <line x1="338" y1="88" x2="338" y2="172" />
+      <line x1="245" y1="148" x2="245" y2="164" />
+      <line x1="170" y1="156" x2="320" y2="156" />
+      <line x1="380" y1="90" x2="396" y2="90" />
+      <line x1="388" y1="60" x2="388" y2="120" />
+    </g>
+    {/* 出口：光る扉（遠くに見えるのに、どう行けばいいか分からない） */}
+    <g>
+      <line x1="430" y1="2" x2="430" y2="10" stroke="#d97706" strokeWidth="3" strokeLinecap="round" />
+      <line x1="414" y1="6" x2="419" y2="12" stroke="#d97706" strokeWidth="3" strokeLinecap="round" />
+      <line x1="446" y1="6" x2="441" y2="12" stroke="#d97706" strokeWidth="3" strokeLinecap="round" />
+      <rect x="412" y="16" width="36" height="46" rx="4" fill="#fef3c7" stroke="#d97706" strokeWidth="3" />
+      <path d="M420 62 L420 34 A8 8 0 0 1 436 34 L436 62 Z" fill="#f59e0b" />
+    </g>
+    {/* 足あと：左の通路から右の部屋へ入ってみたが、行き止まりで止まっている */}
+    <g fill="#94a3b8">
+      <circle cx="84" cy="196" r="3" />
+      <circle cx="108" cy="198" r="3" />
+      <circle cx="128" cy="182" r="3" />
+      <circle cx="130" cy="160" r="3" />
+      <circle cx="132" cy="136" r="3" />
+      <circle cx="160" cy="128" r="3" />
+      <circle cx="200" cy="128" r="3" />
+      <circle cx="240" cy="128" r="3" />
+      <circle cx="278" cy="128" r="3" />
+    </g>
+    {/* ロボット：汗と「？」 */}
+    <g>
+      <line x1="52" y1="142" x2="52" y2="128" stroke="#1e40af" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="52" cy="124" r="5" fill="#2563eb" />
+      <rect x="30" y="156" width="44" height="42" rx="10" fill="#2563eb" />
+      <rect x="37" y="164" width="30" height="19" rx="5" fill="#dbeafe" />
+      <circle cx="47" cy="172" r="3" fill="#1e3a8a" />
+      <circle cx="57" cy="172" r="3" fill="#1e3a8a" />
+      <path d="M47 180 Q52 177 57 180" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
+      {/* 汗 */}
+      <path d="M78 160 C78 160 72 170 72 174.5 A6 6 0 0 0 84 174.5 C84 170 78 160 78 160 Z" fill="#7dd3fc" />
+    </g>
+    {/* 「どうやって抜けるの？」の吹き出し */}
+    <g>
+      <circle cx="116" cy="132" r="16" fill="#ffffff" stroke="#2563eb" strokeWidth="2.5" />
+      <path d="M104 142 L90 154 L110 146 Z" fill="#ffffff" stroke="#2563eb" strokeWidth="2.5" strokeLinejoin="round" />
+      <text x="116" y="140" textAnchor="middle" fontSize="20" fontWeight="900" fill="#2563eb">
+        ？
+      </text>
+    </g>
+  </Box>
+);
+
 /** ミッション場面サムネがある単元はそれを、無い単元は null を返す。 */
 export const missionThumbnailFor = (courseId: string): React.ReactNode => {
   switch (courseId) {
     case "course-algorithm-breadth-first-search-v1":
       return <BfsMissionThumbnail />;
+    case "course-algorithm-depth-first-search-v1":
+      return <DfsMissionThumbnail />;
     default:
       return null;
   }
