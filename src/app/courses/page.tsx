@@ -102,7 +102,10 @@ export default function CoursesPage() {
       <Box sx={{ minHeight: "100vh", bgcolor: "#f3f6fb" }}>
         <AppHeader />
         <Container maxWidth={false} sx={{ maxWidth: 1440, py: { xs: 3, md: 4 } }}>
-          <CoursesDesignDraft />
+          <Stack spacing={3}>
+            <AppBreadcrumbs items={[{ label: "コース" }]} />
+            <CoursesDesignDraft />
+          </Stack>
         </Container>
       </Box>
     );
