@@ -1,17 +1,15 @@
 "use client";
 
-// コース一覧（/courses）のデザイン下書き v2（2026-11-22、再設計への追随）。
-// v1 からの変更は「見た目の強化」ではなく前提の更新：
-// - グループ分けを課題軸に（グラフ探索／迷路生成／並び替え／配列の検索／貪欲法）
-// - カードの顔を目標ミッションに（単元名は補助、ミッション文が主）
-// - 進捗の分母を段階6に（段階7はミッション挑戦へ分離したため）
-// - 「おすすめ」枠は置かない（単元は自由に選ぶ前提）
-// - 最下段に発展ミッションへの入口を置く
-// データは実カタログ（courses.json）とホームと同じ仮の利用者状態（homeFixture）、
-// ミッション文は missionRegistry の下書きを使う。
+// コース一覧（/courses）のデザイン下書き v3（2026-11-22）。
+// この画面の目的は「次に学ぶものを選ぶ画面」。v3 の転換点はサムネイル主役：
+// - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
+// - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
+// - 状態はサムネの上に載る印だけにする（学習中チップ／ミッション達成の旗）
+// - カード全体が単元画面へのリンク
+// グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
+// BFS のサムネだけ、目標ミッションの場面を描いた試作（MissionThumbnail）に差し替えてある。
 
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
 import FlagIcon from "@mui/icons-material/Flag";
 import Link from "next/link";
 
@@ -20,12 +18,11 @@ import type { HomeUnit } from "@/api/home.api";
 import coursesData from "@/design/data/courses.json";
 import { homeFixture } from "@/design/fixtures";
 import { findUnitMission } from "@/features/learning/app/missionRegistry";
+import { missionThumbnailFor } from "@/design/MissionThumbnail";
 
 const TEXT = "#111827";
 const PRIMARY = "#2563eb";
 const BORDER = "#dbe3ef";
-const SEG_ON = "#2563eb";
-const SEG_OFF = "#c3cede";
 
 type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
@@ -45,193 +42,136 @@ const OTHER_IDS = [
   "course-algorithm-merge-sort-v1",
 ];
 
-// 再設計後の進捗（段階は1〜6、ミッションは状態で持つ）。仮の利用者状態を
-// homeFixture の status から写したもの。実データの形が決まれば差し替える。
-type UnitProgress = { phasesDone: number; missionDone: boolean };
-const progressOf = (unit: HomeUnit): UnitProgress => {
-  if (unit.status === "COMPLETED") return { phasesDone: 6, missionDone: true };
-  if (unit.status === "IN_PROGRESS") return { phasesDone: 3, missionDone: false };
-  return { phasesDone: 0, missionDone: false };
+const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
+  if (unit.status === "COMPLETED") {
+    return (
+      <Chip
+        icon={<FlagIcon sx={{ fontSize: 16, color: "#fff !important" }} />}
+        label="ミッション達成"
+        size="small"
+        sx={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          zIndex: 1,
+          bgcolor: PRIMARY,
+          color: "#fff",
+          fontWeight: 800,
+          fontSize: 14,
+          height: 28,
+          boxShadow: "0 1px 4px rgba(15, 40, 90, 0.35)",
+        }}
+      />
+    );
+  }
+  if (unit.status === "IN_PROGRESS") {
+    return (
+      <Chip
+        label="学習中"
+        size="small"
+        sx={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          zIndex: 1,
+          bgcolor: "#fff",
+          color: PRIMARY,
+          border: `1.5px solid ${PRIMARY}`,
+          fontWeight: 800,
+          fontSize: 14,
+          height: 28,
+          boxShadow: "0 1px 4px rgba(15, 40, 90, 0.25)",
+        }}
+      />
+    );
+  }
+  return null;
 };
-
-const Segments: React.FC<{ done: number; total: number }> = ({ done, total }) => (
-  <Stack direction="row" spacing={0.5} aria-hidden="true">
-    {Array.from({ length: total }, (_, i) => (
-      <Box
-        key={i}
-        sx={{
-          flex: 1,
-          height: 10,
-          borderRadius: 999,
-          bgcolor: i < done ? SEG_ON : "#fff",
-          border: `1.5px solid ${i < done ? SEG_ON : SEG_OFF}`,
-        }}
-      />
-    ))}
-  </Stack>
-);
-
-const CardSlots: React.FC<{ owned: number; total: number }> = ({ owned, total }) => (
-  <Stack direction="row" spacing={0.5} alignItems="center" aria-hidden="true">
-    {Array.from({ length: total }, (_, i) => (
-      <Box
-        key={i}
-        sx={{
-          width: 15,
-          height: 20,
-          borderRadius: 0.75,
-          bgcolor: i < owned ? "#dbeafe" : "#fff",
-          border: `1.5px solid ${i < owned ? "#93c5fd" : "#c3cede"}`,
-        }}
-      />
-    ))}
-  </Stack>
-);
 
 const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const mission = findUnitMission(unit.id);
-  const progress = progressOf(unit);
+  const scene = missionThumbnailFor(unit.id);
   const inProgress = unit.status === "IN_PROGRESS";
-  const completed = unit.status === "COMPLETED";
   return (
     <Paper
+      component={Link}
+      href={unit.href}
       elevation={0}
       sx={{
-        p: 3,
         borderRadius: 3,
         border: inProgress ? `2px solid ${PRIMARY}` : `1px solid ${BORDER}`,
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
+        textDecoration: "none",
+        transition: "box-shadow 0.18s ease, transform 0.18s ease",
+        "&:hover": { boxShadow: "0 8px 24px rgba(30, 64, 175, 0.18)", transform: "translateY(-2px)" },
       }}
     >
-      <Box sx={{ borderRadius: 2, bgcolor: "#f6f9ff", px: 2, py: 1.5, height: 132 }}>
-        <CourseThumbnail courseId={unit.id} />
-      </Box>
-      <Typography fontSize={14} fontWeight={700} color={TEXT} sx={{ mt: 2 }}>
-        {unit.title}
-      </Typography>
-      {mission && (
-        <>
-          <Typography fontSize={18} fontWeight={900} color={TEXT} sx={{ mt: 0.5, lineHeight: 1.5 }}>
-            {mission.title}
-          </Typography>
-          <Typography
-            fontSize={14}
-            color={TEXT}
-            sx={{
-              mt: 0.75,
-              lineHeight: 1.7,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {mission.description}
-          </Typography>
-        </>
-      )}
-      <Box sx={{ mt: 2 }}>
-        <Segments done={progress.phasesDone} total={6} />
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.25 }}>
-          <Typography fontSize={14} fontWeight={700} color={TEXT}>
-            {completed
-              ? "段階 6 / 6 完了"
-              : inProgress
-                ? `段階 ${progress.phasesDone} / 6 完了`
-                : "まだ始めていません"}
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <CardSlots owned={unit.collectedCards} total={unit.totalCards} />
-            <Typography fontSize={14} color={TEXT}>
-              {unit.collectedCards}/{unit.totalCards}
-            </Typography>
-          </Stack>
-        </Stack>
-        {completed && (
-          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1 }}>
-            <FlagIcon sx={{ fontSize: 18, color: PRIMARY }} />
-            <Typography fontSize={14} fontWeight={700} color={TEXT}>
-              ミッション達成済み
-            </Typography>
-          </Stack>
+      <Box sx={{ position: "relative", height: 196, bgcolor: "#f6f9ff", flexShrink: 0 }}>
+        <StateMark unit={unit} />
+        {scene ?? (
+          <Box sx={{ position: "absolute", inset: 0, p: 1.5 }}>
+            <CourseThumbnail courseId={unit.id} />
+          </Box>
         )}
       </Box>
-      <Box sx={{ flex: 1 }} />
-      {inProgress ? (
-        <Stack spacing={1} sx={{ mt: 2.5 }}>
-          <Typography fontSize={14} fontWeight={700} color={TEXT}>
-            次は『{unit.nextPhase}』
+      <Box sx={{ p: 2.5 }}>
+        <Typography fontSize={18} fontWeight={900} color={TEXT}>
+          {unit.title}
+        </Typography>
+        {mission && (
+          <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ mt: 0.5, lineHeight: 1.6 }}>
+            {mission.title}
           </Typography>
-          <Button
-            component={Link}
-            href={unit.resumeHref}
-            variant="contained"
-            disableElevation
-            sx={{ alignSelf: "flex-start", fontSize: 16, fontWeight: 700, px: 3.5, py: 1.25, borderRadius: 2, bgcolor: PRIMARY }}
-          >
-            学習を再開する
-          </Button>
-        </Stack>
-      ) : completed ? (
-        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 2.5 }}>
-          <CheckCircleIcon sx={{ fontSize: 20, color: PRIMARY }} />
-          <Typography fontSize={14} fontWeight={700} color={TEXT}>
-            完了しています
-          </Typography>
-          <Box sx={{ flex: 1 }} />
-          <Button component={Link} href={unit.href} variant="text" sx={{ fontSize: 14, fontWeight: 700, color: PRIMARY }}>
-            単元を見る
-          </Button>
-        </Stack>
-      ) : (
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-          <Button component={Link} href={unit.href} variant="text" sx={{ fontSize: 14, fontWeight: 700, color: PRIMARY }}>
-            単元を見る
-          </Button>
-        </Stack>
-      )}
+        )}
+      </Box>
     </Paper>
   );
 };
 
 const OtherCard: React.FC<{ course: CourseInfo }> = ({ course }) => (
   <Paper
+    component={Link}
+    href={`/courses/roadmap/${course.id}`}
     elevation={0}
-    sx={{ p: 3, borderRadius: 3, border: `1px solid ${BORDER}`, height: "100%", display: "flex", flexDirection: "column" }}
+    sx={{
+      borderRadius: 3,
+      border: `1px solid ${BORDER}`,
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      textDecoration: "none",
+      transition: "box-shadow 0.18s ease, transform 0.18s ease",
+      "&:hover": { boxShadow: "0 8px 24px rgba(30, 64, 175, 0.18)", transform: "translateY(-2px)" },
+    }}
   >
-    <Box sx={{ borderRadius: 2, bgcolor: "#f6f9ff", px: 2, py: 1.5, height: 132 }}>
-      <CourseThumbnail courseId={course.id} />
+    <Box sx={{ position: "relative", height: 196, bgcolor: "#f6f9ff", flexShrink: 0 }}>
+      <Box sx={{ position: "absolute", inset: 0, p: 1.5 }}>
+        <CourseThumbnail courseId={course.id} />
+      </Box>
     </Box>
-    <Typography fontSize={18} fontWeight={900} color={TEXT} sx={{ mt: 2 }}>
-      {course.title}
-    </Typography>
-    <Typography
-      fontSize={14}
-      color={TEXT}
-      sx={{
-        mt: 0.75,
-        lineHeight: 1.7,
-        display: "-webkit-box",
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: "vertical",
-        overflow: "hidden",
-      }}
-    >
-      {course.description}
-    </Typography>
-    <Box sx={{ flex: 1 }} />
-    <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-      <Button
-        component={Link}
-        href={`/courses/roadmap/${course.id}`}
-        variant="text"
-        sx={{ fontSize: 14, fontWeight: 700, color: PRIMARY }}
+    <Box sx={{ p: 2.5 }}>
+      <Typography fontSize={18} fontWeight={900} color={TEXT}>
+        {course.title}
+      </Typography>
+      <Typography
+        fontSize={14}
+        color={TEXT}
+        sx={{
+          mt: 0.5,
+          lineHeight: 1.7,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
       >
-        コースを見る
-      </Button>
-    </Stack>
+        {course.description}
+      </Typography>
+    </Box>
   </Paper>
 );
 
@@ -258,12 +198,12 @@ export const CoursesDesignDraft: React.FC = () => {
         <Typography component="h1" fontSize={24} fontWeight={900} color={TEXT}>
           コース一覧
         </Typography>
-        <Paper elevation={0} sx={{ mt: 2, p: 3, borderRadius: 3, border: `1px solid ${BORDER}` }}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2.5} alignItems={{ md: "center" }}>
+        <Paper elevation={0} sx={{ mt: 2, px: 3, py: 2, borderRadius: 3, border: `1px solid ${BORDER}` }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
             <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ whiteSpace: "nowrap" }}>
               全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
             </Typography>
-            <Box sx={{ flex: 1, width: "100%", height: 12, borderRadius: 999, bgcolor: "#e8eef7", overflow: "hidden" }}>
+            <Box sx={{ flex: 1, width: "100%", height: 10, borderRadius: 999, bgcolor: "#e8eef7", overflow: "hidden" }}>
               <Box sx={{ width: `${ratio}%`, height: "100%", bgcolor: PRIMARY, borderRadius: 999 }} />
             </Box>
             <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ whiteSpace: "nowrap" }}>
