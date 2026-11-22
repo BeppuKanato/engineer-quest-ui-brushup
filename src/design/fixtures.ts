@@ -3,8 +3,16 @@
 // 利用者の状態（進み具合・所持・連続学習日数）だけを「学習の中盤にいる人」の仮状態にする。
 // 実データの写しは src/design/data/ にある（本体 develop 2f332c3 の seed から抽出）。
 
+import type { User } from "firebase/auth";
 import type { AuthUser, GetMeResponse } from "@/api/auth.api";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
+
+// デザインモード用の仮 Firebase ユーザー。画面側は firebaseUser の uid と
+// getIdToken だけを使う。デザインモードでは userSession がこれを渡す。
+export const designFirebaseUser = {
+  uid: "design-user",
+  getIdToken: async () => "design-token",
+} as unknown as User;
 
 export const isDesignMode = (): boolean =>
   process.env.NEXT_PUBLIC_DESIGN_MODE === "1";
@@ -187,12 +195,81 @@ const bigGoalFixture = {
   },
 };
 
+// 単元画面の下書き用：学習の進み具合（2026-11-22 の再設計で段階7はミッション挑戦に
+// 置き換わるため、進捗の段階は1〜6で数える。段階7のキー自体を進捗に入れない）。
+const phase = (phaseKey: string, status: "COMPLETED" | "NOT_STARTED", completedAt: string | null) => ({
+  phaseKey,
+  status,
+  summary: null,
+  startedAt: "2026-11-19T10:00:00+09:00",
+  completedAt,
+});
+const binarySearchProgress = {
+  courseId: "course-algorithm-binary-search-v1",
+  unit: { status: "IN_PROGRESS", lastPhaseKey: "binary-search-check", startedAt: "2026-11-16T10:00:00+09:00", completedAt: null },
+  phases: [
+    phase("binary-search-motivation", "COMPLETED", "2026-11-16T10:30:00+09:00"),
+    phase("binary-search-execution", "COMPLETED", "2026-11-17T10:30:00+09:00"),
+    phase("binary-search-check", "COMPLETED", "2026-11-19T10:30:00+09:00"),
+    phase("binary-search-code-mapping", "NOT_STARTED", null),
+    phase("binary-search-code-check", "NOT_STARTED", null),
+    phase("binary-search-consolidation", "NOT_STARTED", null),
+  ],
+};
+const bfsProgress = {
+  courseId: "course-algorithm-breadth-first-search-v1",
+  unit: { status: "IN_PROGRESS", lastPhaseKey: "bfs-consolidation", startedAt: "2026-11-10T10:00:00+09:00", completedAt: null },
+  phases: [
+    phase("bfs-motivation", "COMPLETED", "2026-11-10T10:30:00+09:00"),
+    phase("bfs-execution", "COMPLETED", "2026-11-11T10:30:00+09:00"),
+    phase("bfs-check", "COMPLETED", "2026-11-12T10:30:00+09:00"),
+    phase("bfs-code-mapping", "COMPLETED", "2026-11-13T10:30:00+09:00"),
+    phase("bfs-code-check", "COMPLETED", "2026-11-14T10:30:00+09:00"),
+    phase("bfs-consolidation", "COMPLETED", "2026-11-15T10:30:00+09:00"),
+  ],
+};
+
+// 概念の到達マップの下書き用。ラベルと問題数は本体の concepts.json からの実データで、
+// 到達の分子・初回正解率は「学習の中盤にいる人」の仮状態。
+const concept = (
+  conceptId: string, label: string,
+  state: "reached" | "in_progress" | "unconfirmed",
+  reachedQuestions: number, totalQuestions: number, answeredQuestions: number,
+  firstAttemptCorrect: number, firstAttemptQuestions: number, firstAttemptRate: number | null,
+) => ({ conceptId, label, state, reachedQuestions, totalQuestions, answeredQuestions, firstAttemptCorrect, firstAttemptQuestions, firstAttemptRate });
+const binarySearchConcepts = {
+  courseId: "course-algorithm-binary-search-v1",
+  concepts: [
+    concept("binary-search:center", "中央位置の決定", "in_progress", 2, 5, 2, 1, 2, 50),
+    concept("binary-search:range", "探索範囲の更新", "in_progress", 2, 7, 2, 2, 2, 100),
+    concept("binary-search:found", "見つかった場合の終了", "in_progress", 1, 3, 1, 1, 1, 100),
+    concept("binary-search:absent", "見つからない場合の終了", "unconfirmed", 0, 2, 0, 0, 0, null),
+    concept("binary-search:sorted", "整列済みという前提", "unconfirmed", 0, 1, 0, 0, 0, null),
+    concept("binary-search:flow", "コード全体の流れ", "unconfirmed", 0, 1, 0, 0, 0, null),
+  ],
+};
+const bfsConcepts = {
+  courseId: "course-algorithm-breadth-first-search-v1",
+  concepts: [
+    concept("bfs:order", "探索順序", "reached", 2, 2, 2, 2, 2, 100),
+    concept("bfs:queue", "キューの操作", "reached", 6, 6, 6, 5, 6, 83),
+    concept("bfs:discovered", "発見済みノードの扱い", "reached", 5, 5, 5, 5, 5, 100),
+    concept("bfs:distance", "距離の記録と更新", "reached", 5, 5, 5, 4, 5, 80),
+    concept("bfs:unreachable", "到達できないノード", "reached", 1, 1, 1, 1, 1, 100),
+    concept("bfs:flow", "コード全体の流れ", "reached", 2, 2, 2, 1, 2, 50),
+  ],
+};
+
 const fixtures: Record<string, unknown> = {
   "/auth/me": getMeFixture,
   "/auth/ensure": getMeFixture,
   "/home": homeFixture,
   "/daily-review/today": dailyReviewFixture,
   "/big-goals/current": bigGoalFixture,
+  "/learning/units/course-algorithm-binary-search-v1/progress": binarySearchProgress,
+  "/learning/units/course-algorithm-breadth-first-search-v1/progress": bfsProgress,
+  "/learning/units/course-algorithm-binary-search-v1/concept-progress": binarySearchConcepts,
+  "/learning/units/course-algorithm-breadth-first-search-v1/concept-progress": bfsConcepts,
 };
 
 // パスに対応するフィクスチャを返す。無い場合は undefined。

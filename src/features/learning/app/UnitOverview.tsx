@@ -1,7 +1,9 @@
 "use client";
 import { Alert, Box, Button, Chip, Container, LinearProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CheckIcon from "@mui/icons-material/Check";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import FlagIcon from "@mui/icons-material/Flag";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,18 +22,28 @@ import { useLearningProgress, learningErrorMessage } from "./useLearningProgress
 import { ProgressLoadingSkeleton } from "./ProgressLoadingSkeleton";
 import { ConceptProgressMap } from "./ConceptProgressMap";
 import { useLearningLog } from "./useLearningLog";
+import { findUnitMission, missionPlayUrl } from "./missionRegistry";
 
 
 // 波形の形状は unitPathGeometry に共通化（最終リザルトのミニマップと共有）。
+// 再設計（2026-11-22）：段階は1〜6で数え、波の7番目の点は「ミッション挑戦」。
+// 段階7（自分で実装）はミッション挑戦に置き換わったため、進捗の分母は6。
 
 export function UnitOverview({ courseId }: { courseId: string }) {
   const unit = findLearningUnit(courseId), router = useRouter();
   const { firebaseUser } = useUserSession();
   const { progress, loading, error, reload, authenticated } = useLearningProgress(unit?.courseId);
   const [starting, setStarting] = useState(false), [startError, setStartError] = useState<string | null>(null);
+  const [goalSet, setGoalSet] = useState(false);
   const log = useLearningLog(courseId);
+  const mission = unit ? findUnitMission(unit.courseId) : undefined;
   const next = unit && progress ? resumePhaseIndex(unit, progress) : null;
-  const completed = progress?.phases.filter(phase => unit?.phases.some(item => item.id === phase.phaseKey) && phase.status === "COMPLETED").length ?? 0;
+  const learningPhases = unit?.phases.slice(0, 6) ?? [];
+  const completed = progress?.phases.filter(phase => learningPhases.some(item => item.id === phase.phaseKey) && phase.status === "COMPLETED").length ?? 0;
+  const missionDone = progress?.unit?.status === "COMPLETED";
+  const missionReady = next === 6;
+  const waveNext = missionDone ? null : next;
+  const nextPhase = next !== null && next < 6 ? unit?.phases[next] : null;
   const start = async (reviewIndex?: number) => {
     if (!unit || !progress || !firebaseUser || starting) return;
     const index = reviewIndex ?? next ?? 0;
@@ -42,6 +54,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
       router.push(learnUrl(courseId) + (reviewIndex !== undefined ? `?phase=${encodeURIComponent(unit.phases[index].id)}` : ""));
     } catch (error) { setStartError(learningErrorMessage(error)); setStarting(false); }
   };
+  const goMission = () => { if (unit) router.push(missionPlayUrl(unit.courseId)); };
   return <Box sx={{ minHeight: "100dvh", bgcolor: tokens.background, color: tokens.text }}>
     <AppHeader />
     <Container maxWidth={false} sx={{ maxWidth: 1440, pt: { xs: 3, md: 4 } }}>
@@ -52,14 +65,55 @@ export function UnitOverview({ courseId }: { courseId: string }) {
       {!unit ? <Box sx={{ py: 6 }}><Typography>この単元は準備中です。</Typography><Typography>公開まで、ほかのコースをご覧ください。</Typography></Box> : !authenticated && !loading ? <Button component={Link} href="/auth/login">ログインして学習する</Button> : loading ? <ProgressLoadingSkeleton variant="overview" /> : error ?
         <Alert severity="error" action={<Button onClick={reload}>再読み込み</Button>}>{error}</Alert> : progress && <>
           <Typography sx={{ mt: 1.5, color: "text.secondary", lineHeight: 1.8 }}>{unit.intro}</Typography>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography sx={{ mt: 2 }}>{completed} / {unit.phases.length} 完了</Typography>
-            {progress.unit?.status === "COMPLETED" && <Chip icon={<CheckCircleIcon />} label="単元完了" size="small" sx={{ mt: 2, fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
-            {next === null && <Button variant="contained" component={Link} href={learnUrl(courseId)} sx={{ mt: 2 }}>単元の結果を見る</Button>}
+          {mission && (
+            <Box component="section" aria-label="目標ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ xs: "stretch", md: "center" }}>
+                <Box aria-hidden sx={{ width: { xs: "100%", md: 220 }, maxWidth: 280, flexShrink: 0, alignSelf: "center" }}>
+                  <CourseThumbnail courseId={unit.courseId} />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                    <Chip label="目標ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
+                    {goalSet && <Chip icon={<CheckIcon />} label="自分の目標に設定済み" size="small" sx={{ fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
+                  </Stack>
+                  <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900, mt: 1.5, lineHeight: 1.5 }}>{mission.title}</Typography>
+                  <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>{mission.description}</Typography>
+                  <Typography sx={{ mt: 1, fontSize: 14, color: "text.secondary" }}>達成の条件：{mission.successCondition}</Typography>
+                </Box>
+                <Stack spacing={1.5} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
+                  {missionDone ? (
+                    <Button variant="contained" component={Link} href={learnUrl(courseId)} sx={{ fontWeight: 800 }}>単元の結果を見る</Button>
+                  ) : missionReady ? (
+                    <Button variant="contained" onClick={goMission} sx={{ fontWeight: 800 }}>ミッションに挑戦する</Button>
+                  ) : (
+                    <>
+                      {nextPhase && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>次は『{nextPhase.formalName}』</Typography>}
+                      <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>学習を進める</Button>
+                      <Button variant="text" disabled sx={{ fontWeight: 700 }}>ミッションに挑戦する</Button>
+                      <Typography sx={{ fontSize: 13, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
+                    </>
+                  )}
+                  {!missionDone && (
+                    <Button variant="outlined" startIcon={goalSet ? <CheckIcon /> : undefined} onClick={() => setGoalSet(value => !value)} sx={{ fontWeight: 700 }}>
+                      {goalSet ? "目標に設定済み" : "目標に設定する"}
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            </Box>
+          )}
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
+            <Typography sx={{ fontWeight: 700 }}>段階 {completed} / 6 完了</Typography>
+            <Chip
+              label={missionDone ? "ミッション達成済み" : missionReady ? "ミッションに挑戦できる" : "ミッション未挑戦"}
+              size="small"
+              sx={{ fontWeight: 800, bgcolor: missionDone ? "#dcfce7" : missionReady ? "#dbeafe" : "#f1f5f9", color: missionDone ? "#15803d" : missionReady ? "#1e40af" : "#475569" }}
+            />
+            {progress.unit?.status === "COMPLETED" && <Chip icon={<CheckCircleIcon />} label="単元完了" size="small" sx={{ fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
           </Stack>
-          <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / unit.phases.length * 100} sx={{ my: 2, height: 8, borderRadius: 4 }} />
+          <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4 }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
-          <UnitPathMap unit={unit} next={next} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} />
+          <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
           <ConceptProgressMap courseId={courseId} />
           <UnitAchievements courseId={courseId} />
         </>}
@@ -67,13 +121,16 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   </Box>;
 }
 
-function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart }: {
+function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionReady, missionDone, onStart, onMission }: {
   unit: LearningUnit;
   next: number | null;
   completedIds: ReadonlySet<string>;
   hasProgress: boolean;
   starting: boolean;
+  missionReady: boolean;
+  missionDone: boolean;
   onStart: (index: number, isCurrent: boolean) => void;
+  onMission: () => void;
 }) {
   const theme = useTheme();
   const vertical = useMediaQuery(theme.breakpoints.down("sm"));
@@ -106,10 +163,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart 
         mt: 1,
       }}
     >
-      {/* 単元自身の図を薄く敷く（装飾）。サムネイル未定義の単元では何も出ない。 */}
-      <Box aria-hidden sx={{ position: "absolute", right: vertical ? -60 : 16, bottom: vertical ? 16 : 0, width: vertical ? 300 : 470, maxWidth: "55%", opacity: 0.1, pointerEvents: "none" }}>
-        <CourseThumbnail courseId={unit.courseId} />
-      </Box>
+      {/* 図はミッション帯が担うため、波の地図には敷かない（段階のラベルと重なるため）。 */}
       <svg viewBox={viewBox} width="100%" height="100%" aria-hidden style={{ position: "absolute", inset: 0 }}>
         <path d={path(1)} fill="none" stroke="#c3d4ec" strokeWidth={9} strokeLinecap="round" />
         <motion.path
@@ -133,6 +187,8 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart 
             <text x={vertical ? first.x - 52 : first.x - 6} y={vertical ? first.y - 10 : first.y - 56} textAnchor={vertical ? "end" : "start"} fontSize={24} fontWeight={700} fill={tokens.progress.next}>スタート</text>
           </g>
         )}
+        {/* ゴール旗。ミッション挑戦が現在地のときは「ここから始める」と重なるため出さない。 */}
+        {next !== count - 1 && (
         <g aria-hidden>
           <line x1={last.x} y1={last.y} x2={vertical ? last.x - 46 : last.x} y2={vertical ? last.y : last.y - 46} stroke="#475569" strokeWidth={4} strokeLinecap="round" />
           <polygon
@@ -141,13 +197,16 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart 
           />
           <text x={vertical ? last.x - 52 : last.x + 6} y={vertical ? last.y - 10 : last.y - 56} textAnchor="end" fontSize={24} fontWeight={700} fill="#d97706">ゴール</text>
         </g>
+        )}
       </svg>
       {unit.phases.map((phase, index) => {
-        const done = completedIds.has(phase.id);
+        const isMission = index === count - 1;
+        const done = isMission ? missionDone : completedIds.has(phase.id);
         const current = index === next;
         const reachable = index <= (next ?? count - 1);
-        const Icon = learningPhaseIcons[index];
-        const status = done ? "完了" : current && hasProgress ? "進行中" : "未着手";
+        const Icon = isMission ? FlagIcon : learningPhaseIcons[index];
+        const status = done ? "達成済み" : isMission ? (missionReady ? "挑戦できる" : "未着手") : current && hasProgress ? "進行中" : "未着手";
+        const label = isMission ? "ミッション挑戦" : `${phase.phase}. ${phase.shortName}`;
         const position = point(index);
         const size = current ? 118 : 102;
         return (
@@ -163,10 +222,10 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart 
               sx={{ width: "100%", height: "100%" }}
             >
             <Button
-              aria-label={`${phase.phase}. ${phase.formalName}：${status}`}
+              aria-label={`${label}：${status}`}
               aria-current={current ? "step" : undefined}
               disabled={!reachable || starting}
-              onClick={() => onStart(index, current)}
+              onClick={() => { if (isMission) onMission(); else onStart(index, current); }}
               sx={{
                 width: size, height: size, minWidth: size, borderRadius: "50%",
                 border: `3px solid ${current ? tokens.progress.next : tokens.progress.stroke}`,
@@ -195,7 +254,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, onStart 
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{phase.phase}. {phase.shortName}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. ミッション挑戦" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>

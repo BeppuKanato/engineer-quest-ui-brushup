@@ -15,7 +15,7 @@ import {
 } from "react";
 
 import { getMe, type AuthUser } from "@/api/auth.api";
-import { isDesignMode } from "@/design/fixtures";
+import { designFirebaseUser, isDesignMode } from "@/design/fixtures";
 import { auth } from "@/lib/firebase";
 import { setClientQueryCacheScope } from "@/lib/clientQueryCache";
 
@@ -48,8 +48,10 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // デザインモード：Firebase を使わず、仮のログイン済みセッションにする。
+    // firebaseUser を渡さないと、進捗など firebaseUser を要る画面が何も出ない。
     if (isDesignMode()) {
       setClientQueryCacheScope("design-user");
+      setFirebaseUser(designFirebaseUser);
       setToken("design-token");
       setStatus("authenticated");
       return;
