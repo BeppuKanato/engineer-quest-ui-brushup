@@ -1,0 +1,136 @@
+<style>
+* { box-sizing: border-box;}
+body { margin: 0; font-family: "Optimistic AI VF", system-ui, sans-serif; background: var(--hatch-widget-bg, #fff); color: var(--hatch-widget-text, #111827);}
+.wrap { padding: 10px 6px 4px;}
+h1 { font-size: 17px; font-weight: 900; margin: 2px 4px 2px;}
+.sub { font-size: 12.5px; color: var(--hatch-widget-muted, #6b7280); margin: 0 4px 6px;}
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin: 0 4px 4px; color: var(--hatch-widget-muted, #6b7280);}
+.legend span { display: inline-flex; align-items: center; gap: 5px;}
+.sw { width: 18px; height: 11px; border-radius: 3px; display: inline-block;}
+svg { width: 100%; height: auto; display: block;}
+.n rect { fill: var(--hatch-widget-surface, #f8fafc); stroke: var(--hatch-widget-border, #cbd5e1); stroke-width: 1.2;}
+.n.new rect { fill: #fff7ed; stroke: #ea580c; stroke-width: 1.8;}
+html[data-theme="dark"].n.new rect { fill: #431407;}
+.n.nourl rect { fill: var(--hatch-widget-surface-muted, #f1f5f9); stroke-dasharray: 5 4;}
+.n text.u { font-size: 12px; font-weight: 700; fill: var(--hatch-widget-text, #111827);}
+.n text.l { font-size: 11px; fill: var(--hatch-widget-muted, #64748b);}
+.n.new text.u { fill: #c2410c;}
+html[data-theme="dark"].n.new text.u { fill: #fdba74;}
+.e { stroke: var(--hatch-widget-muted, #94a3b8); stroke-width: 1.3; fill: none;}
+.e.new { stroke: #ea580c; stroke-dasharray: 6 4;}
+.el { font-size: 10.5px; fill: var(--hatch-widget-muted, #64748b);}
+</style>
+<div class="wrap">
+<h1>Engineer Quest 画面遷移図（再設計後・URL単位）</h1>
+<p class="sub">実線＝既存の遷移、破線オレンジ＝再設計で新しく生まれる遷移。ヘッダーは全画面共通のため、ホームからの代表線のみ描いている。</p>
+<div class="legend">
+<span><i class="sw" style="background:#f8fafc;border:1.2px solid #cbd5e1"></i>既存ページ</span>
+<span><i class="sw" style="background:#fff7ed;border:1.8px solid #ea580c"></i>新規ページ</span>
+<span><i class="sw" style="background:#f1f5f9;border:1.2px dashed #94a3b8"></i>URLを持たない画面（親ページ内）</span>
+</div>
+<svg viewBox="0 0 1180 880" role="img" aria-label="画面遷移図">
+<defs>
+<marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="arwN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
+</defs>
+
+<g>
+<!-- 入口 -->
+<path class="e" marker-end="url(#arw)" d="M220,40 L240,40"/>
+<path class="e" marker-end="url(#arw)" d="M430,40 L450,40"/>
+<path class="e" marker-end="url(#arw)" d="M640,40 L660,40"/>
+<path class="e" marker-end="url(#arw)" d="M545,64 L545,120"/>
+<path class="e" marker-end="url(#arw)" d="M755,64 L640,120"/>
+<path class="e" marker-end="url(#arw)" d="M125,64 L125,96 L450,132"/>
+<!-- ホームから -->
+<path class="e" marker-end="url(#arw)" d="M450,150 L125,150 L125,224"/>
+<path class="e" marker-end="url(#arw)" d="M500,168 L500,196 L335,196 L335,224"/>
+<path class="e" marker-end="url(#arw)" d="M560,168 L560,224"/>
+<path class="e" marker-end="url(#arw)" d="M600,168 L600,196 L755,196 L755,224"/>
+<path class="e" marker-end="url(#arw)" d="M640,150 L965,150 L965,224"/>
+<path class="e" marker-end="url(#arw)" d="M450,144 L14,144 L14,404 L300,404 L300,432"/>
+<path class="e" marker-end="url(#arw)" d="M660,156 L1096,156 L1096,352 L1060,352"/>
+<path class="e new" marker-end="url(#arwN)" d="M660,164 L1124,164 L1124,500 L545,500 L545,482"/>
+<!-- コース・単元 -->
+<path class="e" marker-end="url(#arw)" d="M125,272 L125,328"/>
+<path class="e" marker-end="url(#arw)" d="M200,272 L230,272 L230,352 L240,352"/>
+<path class="e new" marker-end="url(#arwN)" d="M125,376 L125,432"/>
+<path class="e" marker-end="url(#arw)" d="M220,352 L335,352 L335,432"/>
+<path class="e" marker-end="url(#arw)" d="M220,456 L240,456"/>
+<path class="e" marker-end="url(#arw)" d="M255,432 L255,404 L228,404 L228,360 L220,360"/>
+<path class="e new" marker-end="url(#arwN)" d="M125,480 L125,536"/>
+<path class="e" marker-end="url(#arw)" d="M335,480 L335,512 L125,512 L125,536"/>
+<path class="e" marker-end="url(#arw)" d="M220,560 L240,560"/>
+<path class="e new" marker-end="url(#arwN)" d="M360,432 L360,404 L360,376"/>
+<path class="e new" marker-end="url(#arwN)" d="M335,376 L335,404 L545,404 L545,432"/>
+<path class="e new" marker-end="url(#arwN)" d="M545,480 L545,520 L14,520 L14,352 L30,352"/>
+<path class="e new" marker-end="url(#arwN)" d="M125,584 L125,614 L545,614 L545,584"/>
+<!-- 掲示板・コレクション -->
+<path class="e" marker-end="url(#arw)" d="M965,272 L965,328"/>
+<path class="e" marker-end="url(#arw)" d="M1060,248 L1096,248 L1096,456 L1062,456"/>
+<path class="e" marker-end="url(#arw)" d="M755,272 L755,328"/>
+      <path class="e" marker-end="url(#arw)" d="M660,248 L642,248"/>
+<path class="e" marker-end="url(#arw)" d="M545,376 L545,420 L648,420 L648,664 L642,664"/>
+<!-- 作る・共有 -->
+<path class="e" marker-end="url(#arw)" d="M755,480 L755,536"/>
+<path class="e" marker-end="url(#arw)" d="M755,584 L755,640"/>
+      <path class="e" marker-end="url(#arw)" d="M640,456 L660,456"/>
+<path class="e" marker-end="url(#arw)" d="M30,40 L8,40 L8,768 L30,768"/>
+</g>
+<g>
+<text class="el" x="566" y="58">登録後</text>
+<text class="el" x="180" y="90">ログイン済みなら</text>
+<text class="el" x="330" y="140">再開（直接プレイヤーへ）</text>
+<text class="el" x="700" y="146">新着投稿</text>
+<text class="el" x="700" y="176">自分の目標の発展ミッション</text>
+<text class="el" x="130" y="322">単元カード</text>
+<text class="el" x="206" y="346">発展ミッション</text>
+<text class="el" x="130" y="426">提示</text>
+<text class="el" x="226" y="448">学ぶ</text>
+<text class="el" x="300" y="398">完了画面から</text>
+<text class="el" x="20" y="330">不足に気づいたら学ぶ</text>
+<text class="el" x="226" y="552">達成→結果</text>
+<text class="el" x="300" y="626">挑戦中いつでも開く支援</text>
+<text class="el" x="12" y="420">プレビュー</text>
+</g>
+
+<!-- 入口 -->
+<g class="n"><rect x="30" y="16" width="190" height="48" rx="9"/><text class="u" x="42" y="37">/</text><text class="l" x="42" y="54">トップ（未ログイン）</text></g>
+<g class="n"><rect x="240" y="16" width="190" height="48" rx="9"/><text class="u" x="252" y="37">/auth/login</text><text class="l" x="252" y="54">ログイン</text></g>
+<g class="n"><rect x="450" y="16" width="190" height="48" rx="9"/><text class="u" x="462" y="37">/auth/signup</text><text class="l" x="462" y="54">新規登録</text></g>
+<g class="n"><rect x="660" y="16" width="190" height="48" rx="9"/><text class="u" x="672" y="37">/hexad</text><text class="l" x="672" y="54">HEXADアンケート</text></g>
+<!-- 中心 -->
+<g class="n"><rect x="450" y="120" width="190" height="48" rx="9"/><text class="u" x="462" y="141">/home</text><text class="l" x="462" y="158">ホーム（再開の拠点）</text></g>
+<!-- 主要 -->
+<g class="n"><rect x="30" y="224" width="190" height="48" rx="9"/><text class="u" x="42" y="245">/courses</text><text class="l" x="42" y="262">コース一覧（単元を選ぶ）</text></g>
+<g class="n"><rect x="240" y="224" width="190" height="48" rx="9"/><text class="u" x="252" y="245">/daily-review</text><text class="l" x="252" y="262">毎日の復習（1日1問）</text></g>
+<g class="n"><rect x="450" y="224" width="190" height="48" rx="9"/><text class="u" x="462" y="245">/achievements</text><text class="l" x="462" y="262">実績</text></g>
+<g class="n"><rect x="660" y="224" width="190" height="48" rx="9"/><text class="u" x="672" y="245">/collection</text><text class="l" x="672" y="262">コレクション（実績とカードの入口）</text></g>
+<g class="n"><rect x="870" y="224" width="190" height="48" rx="9"/><text class="u" x="882" y="245">/quest-board</text><text class="l" x="882" y="262">掲示板</text></g>
+<!-- 詳細1 -->
+<g class="n"><rect x="30" y="328" width="190" height="48" rx="9"/><text class="u" x="42" y="349">/courses/roadmap/[courseId]</text><text class="l" x="42" y="366">単元画面（単元の拠点）</text></g>
+<g class="n new"><rect x="240" y="328" width="190" height="48" rx="9"/><text class="u" x="252" y="349">/missions</text><text class="l" x="252" y="366">発展ミッション一覧（旧・作る含む）</text></g>
+<g class="n"><rect x="450" y="328" width="190" height="48" rx="9"/><text class="u" x="462" y="349">/profile</text><text class="l" x="462" y="366">プロフィール</text></g>
+<g class="n"><rect x="660" y="328" width="190" height="48" rx="9"/><text class="u" x="672" y="349">/knowledge-cards</text><text class="l" x="672" y="366">知識カード詳細</text></g>
+<g class="n"><rect x="870" y="328" width="190" height="48" rx="9"/><text class="u" x="882" y="349">/quest-board/[postId]</text><text class="l" x="882" y="366">掲示板の投稿</text></g>
+<!-- 詳細2 -->
+<g class="n new"><rect x="30" y="432" width="190" height="48" rx="9"/><text class="u" x="42" y="453">.../[courseId]/mission</text><text class="l" x="42" y="470">ミッション提示</text></g>
+<g class="n"><rect x="240" y="432" width="190" height="48" rx="9"/><text class="u" x="252" y="453">.../[courseId]/learn</text><text class="l" x="252" y="470">学習プレイヤー（段階1〜6）</text></g>
+<g class="n new"><rect x="450" y="432" width="190" height="48" rx="9"/><text class="u" x="462" y="453">/missions/[missionId]</text><text class="l" x="462" y="470">発展ミッション挑戦（実装・得点）</text></g>
+<g class="n"><rect x="660" y="432" width="190" height="48" rx="9"/><text class="u" x="672" y="453">/my-works</text><text class="l" x="672" y="470">自分の作品（ミッションの成果物）</text></g>
+<g class="n"><rect x="870" y="432" width="190" height="48" rx="9"/><text class="u" x="882" y="453">/quest-board/new</text><text class="l" x="882" y="470">掲示板に投稿する</text></g>
+<!-- 詳細3 -->
+<g class="n new"><rect x="30" y="536" width="190" height="48" rx="9"/><text class="u" x="42" y="557">.../[courseId]/mission/play</text><text class="l" x="42" y="574">ミッション挑戦（自由実装）</text></g>
+<g class="n nourl"><rect x="240" y="536" width="190" height="48" rx="9"/><text class="u" x="252" y="557">learn内の画面</text><text class="l" x="252" y="574">結果・フィードバック（URLなし）</text></g>
+<g class="n nourl"><rect x="450" y="536" width="190" height="48" rx="9"/><text class="u" x="462" y="557">mission/play内の支援</text><text class="l" x="462" y="574">橋渡し支援（URLなし）</text></g>
+<g class="n"><rect x="660" y="536" width="190" height="48" rx="9"/><text class="u" x="672" y="557">/share/select</text><text class="l" x="672" y="574">共有する作品を選ぶ</text></g>
+<!-- 詳細4 -->
+<g class="n"><rect x="660" y="640" width="190" height="48" rx="9"/><text class="u" x="672" y="661">/share/main/[id]</text><text class="l" x="672" y="678">共有ページ</text></g>
+<g class="n"><rect x="450" y="640" width="190" height="48" rx="9"/><text class="u" x="462" y="661">/history</text><text class="l" x="462" y="678">学習履歴</text></g>
+<g class="n"><rect x="30" y="744" width="190" height="48" rx="9"/><text class="u" x="42" y="765">/learning-preview/[contentId]</text><text class="l" x="42" y="782">学習内容プレビュー</text></g>
+
+<text class="el" x="30" y="820">※ learn は段階7（従来の実装）を廃し、ミッション挑戦へ分離。ミッション結果は単元完了の結果画面（learn内）が吸収する。</text>
+    <text class="el" x="30" y="840">※ 発展ミッションの結果は /missions/[missionId] 内で表示。ボスは /missions 一覧内の配置で差をつけ、専用URLは作らない。</text>
+    <text class="el" x="30" y="858">※ 作るは独立セクションを廃し発展ミッションに統合（旧作るクエスト＝発展ミッション、作業画面＝挑戦画面）。作品は /my-works に残り、共有・掲示板への投稿もできる。</text>
+</svg>
+</div>
