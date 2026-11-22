@@ -30,6 +30,30 @@ export const unitMissions: Record<string, UnitMission> = {
     description: "小さい順に並んだ商品の中から、ほしいものを探す。比べる回数をできるだけ少なく見つけよう。",
     successCondition: "範囲を正しく狭めて、目的の商品を見つけたとき達成",
   },
+  "course-algorithm-maze-digging-v1": {
+    courseId: "course-algorithm-maze-digging-v1",
+    title: "壁を掘って、つながる迷路を作る",
+    description: "壁の塊から通路を掘り進める。行き止まりになったら戻って、別の場所を掘ろう。",
+    successCondition: "全部のマスが通路でつながったとき達成",
+  },
+  "course-algorithm-wall-extension-v1": {
+    courseId: "course-algorithm-wall-extension-v1",
+    title: "柱から壁を伸ばして迷路を作る",
+    description: "等間隔に立てた柱から、決まった規則で壁を伸ばす。規則どおりに伸ばして、迷路を完成させよう。",
+    successCondition: "すべての柱から壁を伸ばし終えたとき達成",
+  },
+  "course-algorithm-bubble-sort-v2": {
+    courseId: "course-algorithm-bubble-sort-v2",
+    title: "本を番号順に並べ替える",
+    description: "バラバラに並んだ本を、隣同士を比べて入れ替えながら、小さい順に並べ替えよう。",
+    successCondition: "全部の本が番号順に並んだとき達成",
+  },
+  "course-algorithm-greedy-coins-v1": {
+    courseId: "course-algorithm-greedy-coins-v1",
+    title: "お釣りを硬貨の枚数最小で払う",
+    description: "金額に合わせて、そのつど使える一番大きい硬貨を選ぶ。硬貨の合計枚数をいちばん少なく払おう。",
+    successCondition: "硬貨の合計枚数が最小のとき達成",
+  },
 };
 
 export const findUnitMission = (courseId: string): UnitMission | undefined => unitMissions[courseId];

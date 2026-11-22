@@ -1,32 +1,58 @@
 "use client";
 
-// コース一覧（/courses）のデザイン下書き（バッチ1・2画面目）。
-// データは実カタログ（courses.json）とホームと同じ仮の利用者状態（homeFixture）を使う。
+// コース一覧（/courses）のデザイン下書き v2（2026-11-22、再設計への追随）。
+// v1 からの変更は「見た目の強化」ではなく前提の更新：
+// - グループ分けを課題軸に（グラフ探索／迷路生成／並び替え／配列の検索／貪欲法）
+// - カードの顔を目標ミッションに（単元名は補助、ミッション文が主）
+// - 進捗の分母を段階6に（段階7はミッション挑戦へ分離したため）
+// - 「おすすめ」枠は置かない（単元は自由に選ぶ前提）
+// - 最下段に発展ミッションへの入口を置く
+// データは実カタログ（courses.json）とホームと同じ仮の利用者状態（homeFixture）、
+// ミッション文は missionRegistry の下書きを使う。
 
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FlagIcon from "@mui/icons-material/Flag";
 import Link from "next/link";
 
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
 import type { HomeUnit } from "@/api/home.api";
 import coursesData from "@/design/data/courses.json";
 import { homeFixture } from "@/design/fixtures";
+import { findUnitMission } from "@/features/learning/app/missionRegistry";
 
 const TEXT = "#111827";
 const PRIMARY = "#2563eb";
 const BORDER = "#dbe3ef";
 const SEG_ON = "#2563eb";
-const SEG_OFF = "#e2e8f0";
+const SEG_OFF = "#c3cede";
 
 type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
 
-const GROUP_ORDER = ["探索", "迷路生成", "並び替え", "最適化"];
+// 課題軸のグループ（2026-11-21 決定）。貪欲法は手法軸のため単独で置く。
+const GROUPS: { label: string; ids: string[] }[] = [
+  { label: "グラフ探索", ids: ["course-algorithm-breadth-first-search-v1", "course-algorithm-depth-first-search-v1"] },
+  { label: "迷路生成", ids: ["course-algorithm-maze-digging-v1", "course-algorithm-wall-extension-v1"] },
+  { label: "並び替え", ids: ["course-algorithm-bubble-sort-v2"] },
+  { label: "配列の検索", ids: ["course-algorithm-binary-search-v1"] },
+  { label: "貪欲法", ids: ["course-algorithm-greedy-coins-v1"] },
+];
+
 const OTHER_IDS = [
   "course-algorithm-kmp-v1",
   "course-algorithm-selection-sort-v1",
   "course-algorithm-merge-sort-v1",
 ];
+
+// 再設計後の進捗（段階は1〜6、ミッションは状態で持つ）。仮の利用者状態を
+// homeFixture の status から写したもの。実データの形が決まれば差し替える。
+type UnitProgress = { phasesDone: number; missionDone: boolean };
+const progressOf = (unit: HomeUnit): UnitProgress => {
+  if (unit.status === "COMPLETED") return { phasesDone: 6, missionDone: true };
+  if (unit.status === "IN_PROGRESS") return { phasesDone: 3, missionDone: false };
+  return { phasesDone: 0, missionDone: false };
+};
 
 const Segments: React.FC<{ done: number; total: number }> = ({ done, total }) => (
   <Stack direction="row" spacing={0.5} aria-hidden="true">
@@ -38,7 +64,7 @@ const Segments: React.FC<{ done: number; total: number }> = ({ done, total }) =>
           height: 10,
           borderRadius: 999,
           bgcolor: i < done ? SEG_ON : "#fff",
-          border: `1.5px solid ${i < done ? SEG_ON : "#c3cede"}`,
+          border: `1.5px solid ${i < done ? SEG_ON : SEG_OFF}`,
         }}
       />
     ))}
@@ -63,7 +89,8 @@ const CardSlots: React.FC<{ owned: number; total: number }> = ({ owned, total })
 );
 
 const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
-  const course = courseById.get(unit.id);
+  const mission = findUnitMission(unit.id);
+  const progress = progressOf(unit);
   const inProgress = unit.status === "IN_PROGRESS";
   const completed = unit.status === "COMPLETED";
   return (
@@ -81,33 +108,38 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
       <Box sx={{ borderRadius: 2, bgcolor: "#f6f9ff", px: 2, py: 1.5, height: 132 }}>
         <CourseThumbnail courseId={unit.id} />
       </Box>
-      <Typography fontSize={18} fontWeight={900} color={TEXT} sx={{ mt: 2 }}>
+      <Typography fontSize={14} fontWeight={700} color={TEXT} sx={{ mt: 2 }}>
         {unit.title}
       </Typography>
-      {course && (
-        <Typography
-          fontSize={14}
-          color={TEXT}
-          sx={{
-            mt: 0.75,
-            lineHeight: 1.7,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {course.description}
-        </Typography>
+      {mission && (
+        <>
+          <Typography fontSize={18} fontWeight={900} color={TEXT} sx={{ mt: 0.5, lineHeight: 1.5 }}>
+            {mission.title}
+          </Typography>
+          <Typography
+            fontSize={14}
+            color={TEXT}
+            sx={{
+              mt: 0.75,
+              lineHeight: 1.7,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {mission.description}
+          </Typography>
+        </>
       )}
       <Box sx={{ mt: 2 }}>
-        <Segments done={unit.completedPhases} total={unit.totalPhases} />
+        <Segments done={progress.phasesDone} total={6} />
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.25 }}>
           <Typography fontSize={14} fontWeight={700} color={TEXT}>
             {completed
-              ? "全ステップ完了"
+              ? "段階 6 / 6 完了"
               : inProgress
-                ? `${unit.completedPhases} / ${unit.totalPhases} ステップ完了`
+                ? `段階 ${progress.phasesDone} / 6 完了`
                 : "まだ始めていません"}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -117,6 +149,14 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             </Typography>
           </Stack>
         </Stack>
+        {completed && (
+          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1 }}>
+            <FlagIcon sx={{ fontSize: 18, color: PRIMARY }} />
+            <Typography fontSize={14} fontWeight={700} color={TEXT}>
+              ミッション達成済み
+            </Typography>
+          </Stack>
+        )}
       </Box>
       <Box sx={{ flex: 1 }} />
       {inProgress ? (
@@ -195,9 +235,22 @@ const OtherCard: React.FC<{ course: CourseInfo }> = ({ course }) => (
   </Paper>
 );
 
+const CardGrid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" },
+      gap: 3,
+      alignItems: "stretch",
+    }}
+  >
+    {children}
+  </Box>
+);
+
 export const CoursesDesignDraft: React.FC = () => {
   const { overview } = homeFixture;
-  const units = overview.units;
+  const unitById = new Map(overview.units.map((u) => [u.id, u]));
   const ratio = overview.totalUnits > 0 ? (overview.completedUnits / overview.totalUnits) * 100 : 0;
   return (
     <Stack spacing={4}>
@@ -220,26 +273,21 @@ export const CoursesDesignDraft: React.FC = () => {
         </Paper>
       </Box>
 
-      {GROUP_ORDER.map((group) => {
-        const groupUnits = units.filter((u) => u.group === group);
+      {GROUPS.map((group) => {
+        const groupUnits = group.ids
+          .map((id) => unitById.get(id))
+          .filter((u): u is HomeUnit => !!u);
         if (groupUnits.length === 0) return null;
         return (
-          <Box key={group} component="section" aria-label={group}>
+          <Box key={group.label} component="section" aria-label={group.label}>
             <Typography component="h2" fontSize={18} fontWeight={900} color={TEXT} sx={{ mb: 2 }}>
-              {group}
+              {group.label}
             </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" },
-                gap: 3,
-                alignItems: "stretch",
-              }}
-            >
+            <CardGrid>
               {groupUnits.map((unit) => (
                 <UnitCard key={unit.id} unit={unit} />
               ))}
-            </Box>
+            </CardGrid>
           </Box>
         );
       })}
@@ -248,20 +296,35 @@ export const CoursesDesignDraft: React.FC = () => {
         <Typography component="h2" fontSize={18} fontWeight={900} color={TEXT} sx={{ mb: 2 }}>
           その他のコース
         </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" },
-            gap: 3,
-            alignItems: "stretch",
-          }}
-        >
+        <CardGrid>
           {OTHER_IDS.map((id) => {
             const course = courseById.get(id);
             return course ? <OtherCard key={id} course={course} /> : null;
           })}
-        </Box>
+        </CardGrid>
       </Box>
+
+      <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: `1px solid ${BORDER}` }}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography fontSize={18} fontWeight={900} color={TEXT}>
+              発展ミッション
+            </Typography>
+            <Typography fontSize={14} color={TEXT} sx={{ mt: 0.75, lineHeight: 1.7 }}>
+              単元で学んだアルゴリズムを、新しい課題で選んで使う挑戦です。目指すスコアを自分で決めて挑戦できます。
+            </Typography>
+          </Box>
+          <Button
+            component={Link}
+            href="/missions"
+            variant="contained"
+            disableElevation
+            sx={{ alignSelf: { xs: "flex-start", md: "center" }, fontSize: 16, fontWeight: 700, px: 3.5, py: 1.25, borderRadius: 2, bgcolor: PRIMARY }}
+          >
+            発展ミッションを見る
+          </Button>
+        </Stack>
+      </Paper>
     </Stack>
   );
 };
