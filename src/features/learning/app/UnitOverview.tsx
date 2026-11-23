@@ -72,8 +72,12 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           {mission && (
             <Box component="section" aria-label="目標ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ xs: "stretch", md: "center" }}>
-                <Box aria-hidden sx={{ width: { xs: "100%", md: 220 }, maxWidth: 280, flexShrink: 0, alignSelf: "center" }}>
-                  {missionThumbnailFor(unit.courseId) ?? <CourseThumbnail courseId={unit.courseId} />}
+                <Box sx={{ position: "relative", width: { xs: "100%", md: 220 }, maxWidth: 280, flexShrink: 0, alignSelf: "center" }}>
+                  <Box aria-hidden>
+                    {missionThumbnailFor(unit.courseId) ?? <CourseThumbnail courseId={unit.courseId} />}
+                  </Box>
+                  {/* 旗は一覧と同じく画像の右上に置く（2026-11-23）。 */}
+                  <GoalFlag courseId={courseId} title={unit.title} absolute />
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -98,10 +102,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                       <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
                     </>
                   )}
-                  {/* 目標の操作はコース一覧と同じ旗トグルに統一する（2026-11-23）。 */}
-                  <Box sx={{ pt: 0.5 }}>
-                    <GoalFlag courseId={courseId} title={unit.title} />
-                  </Box>
+
                 </Stack>
               </Stack>
             </Box>
