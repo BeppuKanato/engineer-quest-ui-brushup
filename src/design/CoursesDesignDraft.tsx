@@ -218,6 +218,23 @@ const StateFilter: React.FC<{
   </Stack>
 );
 
+/** 表示順の優先度：学習中 → 未着手 → 完了。 */
+const STATE_ORDER: Record<string, number> = { IN_PROGRESS: 0, NOT_STARTED: 1, COMPLETED: 2 };
+
+/**
+ * 学習内容の説明（2026-11-23 追加）：イラストとミッションの題が「課題」を担い、
+ * この1行が「仕組み・特徴」を担う（GPTの役割分担提案を Kanato が採用）。
+ */
+const FEATURE_TEXT: Record<string, string> = {
+  "course-algorithm-breadth-first-search-v1": "近い場所から順に調べて、最短ルートを探す",
+  "course-algorithm-depth-first-search-v1": "一本道を深く進み、行き止まりなら戻る",
+  "course-algorithm-maze-digging-v1": "壁の中を1マスずつ掘って、通路をつなげていく",
+  "course-algorithm-wall-extension-v1": "柱から上下左右へ、壁を倒して伸ばす",
+  "course-algorithm-bubble-sort-v2": "隣り合う本を交換して、番号順に並べ替える",
+  "course-algorithm-binary-search-v1": "整列済みの商品を、半分ずつ絞って探す",
+  "course-algorithm-greedy-coins-v1": "毎回いちばん大きい硬貨から選んで払う",
+};
+
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
 const FLOW_ORDER = [
   "course-algorithm-breadth-first-search-v1",
@@ -275,7 +292,7 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
 /**
  * 状態ボタン：カード下部に置く見た目上のボタン（遷移はカード全体のリンクが担う）。
  * 色は主色にそろえ、文言だけが変わる。状態の違いは印と進捗の形が担う。
- * 例外は完了だけ：復習ボタンは完了の緑にする（色は意味で統一）。
+ * 例外は完了だけ：復習ボタンは緑のアウトラインにして主張を下げる。
  */
 const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const base = {
@@ -289,8 +306,9 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
     fontWeight: 700,
   } as const;
   if (unit.status === "COMPLETED") {
+    // 完了はアウトラインにして主張を下げる（2026-11-23、GPT指摘を受けた Kanato の判断）
     return (
-      <Box component="span" sx={{ ...base, bgcolor: GREEN, color: "#fff" }}>
+      <Box component="span" sx={{ ...base, bgcolor: "#fff", color: "#15803d", border: "2px solid #15803d" }}>
         <ReplayIcon sx={{ fontSize: 19 }} />
         復習する
       </Box>
@@ -382,6 +400,11 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             {mission.title}
           </Typography>
         )}
+        {FEATURE_TEXT[unit.id] && (
+          <Typography fontSize={16} color={TEXT} sx={{ mt: 0.5, lineHeight: 1.6 }}>
+            {FEATURE_TEXT[unit.id]}
+          </Typography>
+        )}
         <Box sx={{ mt: "auto", pt: 2 }}>
           <StateButton unit={unit} />
         </Box>
@@ -457,12 +480,16 @@ export const CoursesDesignDraft: React.FC = () => {
   for (const u of overview.units) {
     stateCounts[u.status] = (stateCounts[u.status] ?? 0) + 1;
   }
-  const visibleUnits = FLOW_ORDER.map((id) => unitById.get(id)).filter(
-    (u): u is HomeUnit =>
-      !!u &&
-      (axis === "すべて" || FILTER_GROUP[u.id] === axis) &&
-      (stateFilter === "ALL" || u.status === stateFilter),
-  );
+  const visibleUnits = FLOW_ORDER.map((id) => unitById.get(id))
+    .filter(
+      (u): u is HomeUnit =>
+        !!u &&
+        (axis === "すべて" || FILTER_GROUP[u.id] === axis) &&
+        (stateFilter === "ALL" || u.status === stateFilter),
+    )
+    // 表示順（2026-11-23、GPT提案を Kanato が採用）：学習中 → 未着手 → 完了。
+    // 同じ状態の中では FLOW_ORDER（軸の隣接順）を保つ。
+    .sort((a, b) => STATE_ORDER[a.status] - STATE_ORDER[b.status]);
   return (
     <Stack spacing={4}>
       <Box>
@@ -477,16 +504,23 @@ export const CoursesDesignDraft: React.FC = () => {
             <Box sx={{ flex: 1, width: "100%", height: 10, borderRadius: 999, bgcolor: "#e8eef7", overflow: "hidden" }}>
               <Box sx={{ width: `${ratio}%`, height: "100%", bgcolor: GREEN, borderRadius: 999 }} />
             </Box>
-            <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ whiteSpace: "nowrap" }}>
-              知識カード {overview.collectedCards}/{overview.totalCards} 枚
-            </Typography>
           </Stack>
         </Paper>
       </Box>
 
       <Stack spacing={1.25}>
-        <StateFilter value={stateFilter} onChange={setStateFilter} counts={stateCounts} />
-        <AxisFilter value={axis} onChange={setAxis} />
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Typography fontSize={14} fontWeight={800} color={TEXT} sx={{ width: 64, flexShrink: 0 }}>
+            学習状況
+          </Typography>
+          <StateFilter value={stateFilter} onChange={setStateFilter} counts={stateCounts} />
+        </Stack>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Typography fontSize={14} fontWeight={800} color={TEXT} sx={{ width: 64, flexShrink: 0 }}>
+            カテゴリ
+          </Typography>
+          <AxisFilter value={axis} onChange={setAxis} />
+        </Stack>
       </Stack>
 
       <Box component="section" aria-label="単元">
