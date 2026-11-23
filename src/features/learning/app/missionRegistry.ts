@@ -58,6 +58,33 @@ export const unitMissions: Record<string, UnitMission> = {
 
 export const findUnitMission = (courseId: string): UnitMission | undefined => unitMissions[courseId];
 
+// 発展ミッションとの接続の下書き（2026-11-23）：単元画面の波マップのゴールの先に、
+// この単元で挑戦できるようになる発展ミッションをノードとして付ける。
+// 題は旧「作る」クエストの流用。状態はダミーの学習状況に合わせた仮置き。
+export type DevelopmentMissionLink = {
+  title: string;
+  /** ノードの下に出す状態（挑戦できる／この単元を終えると挑戦できる、など）。 */
+  status: string;
+  ready: boolean;
+};
+
+export const developmentLinks: Record<string, DevelopmentMissionLink[]> = {
+  "course-algorithm-breadth-first-search-v1": [
+    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
+    { title: "ゲームのスキルツリー", status: "挑戦できる", ready: true },
+  ],
+  "course-algorithm-depth-first-search-v1": [
+    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
+    { title: "ゲームのスキルツリー", status: "挑戦できる", ready: true },
+  ],
+  "course-algorithm-binary-search-v1": [
+    { title: "ショップの商品検索", status: "この単元を終えると挑戦できる", ready: false },
+    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
+  ],
+};
+
+export const findDevelopmentLinks = (courseId: string): DevelopmentMissionLink[] => developmentLinks[courseId] ?? [];
+
 /** ミッション提示の URL（遷移図の想定）。ページ自体は次の下書き。 */
 export const missionUrl = (courseId: string) => `/courses/roadmap/${encodeURIComponent(courseId)}/mission`;
 /** ミッション挑戦の URL（遷移図の想定）。ページ自体は次の下書き。 */

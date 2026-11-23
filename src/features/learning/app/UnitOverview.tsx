@@ -25,7 +25,7 @@ import { useLearningProgress, learningErrorMessage } from "./useLearningProgress
 import { ProgressLoadingSkeleton } from "./ProgressLoadingSkeleton";
 import { ConceptProgressMap } from "./ConceptProgressMap";
 import { useLearningLog } from "./useLearningLog";
-import { findUnitMission, missionPlayUrl } from "./missionRegistry";
+import { findDevelopmentLinks, findUnitMission, missionPlayUrl, type DevelopmentMissionLink } from "./missionRegistry";
 
 
 // 波形の形状は unitPathGeometry に共通化（最終リザルトのミニマップと共有）。
@@ -116,18 +116,12 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           </Stack>
           <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 4 } }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
-          <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
-          {completed === 6 && (
-            <Box component="section" aria-label="発展ミッション" sx={{ mt: 3, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: 3 }}>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between">
-                <Box>
-                  <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900 }}>発展ミッション</Typography>
-                  <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>この単元で学んだことを使って解く課題です。解き方は1つではありません。</Typography>
-                </Box>
-                <Button variant="outlined" component={Link} href="/missions" sx={{ fontWeight: 700, flexShrink: 0 }}>
-                  発展ミッションを見る
-                </Button>
-              </Stack>
+          <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} devLinks={findDevelopmentLinks(courseId)} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
+          {findDevelopmentLinks(courseId).length > 0 && (
+            <Box sx={{ mt: 1, textAlign: "right" }}>
+              <Link href="/missions" style={{ color: "#2563eb", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+                発展ミッション一覧へ
+              </Link>
             </Box>
           )}
           <ConceptProgressMap courseId={courseId} />
@@ -137,7 +131,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   </Box>;
 }
 
-function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionReady, missionDone, onStart, onMission }: {
+function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionReady, missionDone, devLinks, onStart, onMission }: {
   unit: LearningUnit;
   next: number | null;
   completedIds: ReadonlySet<string>;
@@ -145,6 +139,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   starting: boolean;
   missionReady: boolean;
   missionDone: boolean;
+  devLinks: DevelopmentMissionLink[];
   onStart: (index: number, isCurrent: boolean) => void;
   onMission: () => void;
 }) {
@@ -162,7 +157,11 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
     if (!vertical) return full;
     return full.replace(/([ML])([\d.]+),([\d.]+)/g, (_, cmd, x, y) => `${cmd}${y},${x}`);
   };
-  const viewBox = vertical ? `0 0 ${WAVE.height} ${WAVE.width}` : `0 0 ${WAVE.width} ${WAVE.height}`;
+  // 発展ミッションのノードがある単元は、箱の下に余白を足して扇の置き場所にする。
+  const extH = devLinks.length > 0 ? WAVE.height + 120 : WAVE.height;
+  const xDen = vertical ? extH : WAVE.width;
+  const yDen = vertical ? WAVE.width : extH;
+  const viewBox = vertical ? `0 0 ${extH} ${WAVE.width}` : `0 0 ${WAVE.width} ${extH}`;
   // 任意フェーズの置き場所（波の座標系でのずらし）：1.5 は本線の上、6.5 は本線の下に逃がし、
   // 破線で本線とつなぐ。本線の上に置くと前後の段階ラベルと重なるため。
   const optionals =
@@ -176,6 +175,13 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
     const wave = wavePoint(o.t);
     return vertical ? { x: wave.y + o.dy, y: wave.x + o.dx } : { x: wave.x + o.dx, y: wave.y + o.dy };
   };
+  // 発展ミッションのノード：ゴールの左下に扇状に付ける（最大2つ。残りは一覧へのリンクで受ける）。
+  const goalWave = wavePoint(1);
+  const devPos = (i: number) => {
+    const wx = goalWave.x - (i === 0 ? 205 : 45);
+    const wy = goalWave.y + 195;
+    return vertical ? { x: wy, y: wx } : { x: wx, y: wy };
+  };
   const doneUntil = next === null ? 1 : count === 1 ? 0 : next / (count - 1);
   const first = point(0), last = point(count - 1);
   return (
@@ -185,7 +191,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
       sx={{
         position: "relative",
         width: "100%",
-        aspectRatio: vertical ? `${WAVE.height} / ${WAVE.width}` : `${WAVE.width} / ${WAVE.height}`,
+        aspectRatio: vertical ? `${extH} / ${WAVE.width}` : `${WAVE.width} / ${extH}`,
         border: `1px solid ${tokens.border}`,
         borderRadius: "24px",
         overflow: "hidden",
@@ -234,6 +240,11 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           const to = optionalPos(o);
           return <line key={o.label} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={tokens.progress.next} strokeWidth={2.5} strokeDasharray="5 6" />;
         })}
+        {/* 発展ミッションのノードとゴールをつなぐ破線 */}
+        {devLinks.slice(0, 2).map((d, i) => {
+          const to = devPos(i);
+          return <line key={d.title} x1={last.x} y1={last.y} x2={to.x} y2={to.y} stroke={d.ready ? tokens.progress.next : "#94a3b8"} strokeWidth={2.5} strokeDasharray="5 6" />;
+        })}
       </svg>
       {unit.phases.map((phase, index) => {
         const isMission = index === count - 1;
@@ -248,7 +259,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
         return (
           <Box
             key={phase.id}
-            sx={{ position: "absolute", left: `${(position.x / (vertical ? WAVE.height : WAVE.width)) * 100}%`, top: `${(position.y / (vertical ? WAVE.width : WAVE.height)) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
+            sx={{ position: "absolute", left: `${(position.x / xDen) * 100}%`, top: `${(position.y / yDen) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
           >
             <Box
               component={motion.div}
@@ -308,7 +319,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           <Box
             key={o.label}
             aria-label={`任意フェーズ：${o.label}`}
-            sx={{ position: "absolute", left: `${(pos.x / (vertical ? WAVE.height : WAVE.width)) * 100}%`, top: `${(pos.y / (vertical ? WAVE.width : WAVE.height)) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
+            sx={{ position: "absolute", left: `${(pos.x / xDen) * 100}%`, top: `${(pos.y / yDen) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
           >
             <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${tokens.progress.next}`, bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: tokens.progress.next }}>
               <Icon sx={{ fontSize: 30 }} />
@@ -326,6 +337,49 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
             >
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{o.label}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>任意</Typography>
+            </Box>
+          </Box>
+        );
+      })}
+      {/* 発展ミッションのノード（2026-11-23）：ゴールの先にノードとして付ける。
+          ボタンの帯ではなく、流れの続きとして見せるのが「接続」の形。 */}
+      {devLinks.slice(0, 2).map((d, i) => {
+        const pos = devPos(i);
+        const size = 64;
+        return (
+          <Box
+            key={d.title}
+            component={Link}
+            href="/missions"
+            aria-label={`発展ミッション：${d.title}（${d.status}）`}
+            sx={{
+              position: "absolute",
+              left: `${(pos.x / xDen) * 100}%`,
+              top: `${(pos.y / yDen) * 100}%`,
+              transform: "translate(-50%, -50%)",
+              width: size,
+              height: size,
+              textDecoration: "none",
+            }}
+          >
+            <Box
+              sx={{
+                width: size,
+                height: size,
+                borderRadius: "50%",
+                border: d.ready ? `2.5px solid ${tokens.progress.next}` : "2.5px solid #cbd5e1",
+                bgcolor: d.ready ? "#fff" : "#f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: d.ready ? tokens.progress.next : "#94a3b8",
+              }}
+            >
+              <EmojiEventsIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Box sx={{ position: "absolute", top: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", width: 180, textAlign: "center", pointerEvents: "none" }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "text.primary" }}>{d.title}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{d.status}</Typography>
             </Box>
           </Box>
         );
