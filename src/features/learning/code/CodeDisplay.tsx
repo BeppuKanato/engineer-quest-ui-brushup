@@ -17,8 +17,8 @@ export function CodeDisplay({ code, label, activeLineId, blank, lineHeight = 1.8
       const hole = blank?.lineId === line.id ? blank : undefined;
       return <Box component="li" key={line.id} data-code-line-id={line.id} aria-current={active ? "step" : undefined}
         sx={{ display: "flex", whiteSpace: "pre", color: active ? playerTokens.surface : playerTokens.text,
-          bgcolor: active ? playerTokens.focus : "transparent", opacity: !activeLineId || active ? 1 : 0.55,
-          transition: "background-color 600ms, opacity 600ms", "@media (prefers-reduced-motion: reduce)": { transition: "none" } }}>
+          bgcolor: active ? playerTokens.focus : "transparent",
+          transition: "background-color 600ms", "@media (prefers-reduced-motion: reduce)": { transition: "none" } }}>
         <Box component="span" aria-hidden sx={{ width: "3ch", pr: 1, textAlign: "right", flexShrink: 0 }}>{index + 1}</Box>
         <Box component="code">{hole ? <>{line.text.slice(0, hole.start)}<Box component="span" role="img" aria-label="空欄"
           sx={{ display: "inline-block", minWidth: "6ch", lineHeight: 1.5, textAlign: "center", color: playerTokens.focus,
