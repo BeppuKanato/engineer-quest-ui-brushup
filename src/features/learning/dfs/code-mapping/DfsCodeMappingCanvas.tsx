@@ -18,7 +18,7 @@ export function DfsCodeMappingCanvas({ canvas }: { canvas: DfsCodeMappingCanvasS
     observer.observe(host.current);
     return () => observer.disconnect();
   }, []);
-  const codeWidth = Math.max(620, width * 0.52);
+  const codeWidth = Math.min(860, Math.max(620, width * 0.52));
   const graphWidth = Math.max(Math.min(width, 480), width - codeWidth);
   const index = dfsCodeMappingContent.steps.findIndex(step => step.canvas === canvas);
   const rows = codeVariableRows(canvas.state.variables, dfsCodeMappingContent.steps[index - 1]?.canvas.state.variables);

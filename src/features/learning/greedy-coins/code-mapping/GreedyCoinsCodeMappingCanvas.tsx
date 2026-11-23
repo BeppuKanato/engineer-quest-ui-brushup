@@ -23,7 +23,7 @@ export function GreedyCoinsCodeMappingCanvas({ canvas }: { canvas: GreedyCoinsCo
     return () => observer.disconnect();
   }, []);
   // BFS・二分探索フェーズ4と同じ割り付け: コード幅を優先して確保し、図は比率を保って縮小する。
-  const codeWidth = Math.max(620, size.width * 0.48);
+  const codeWidth = Math.min(860, Math.max(620, size.width * 0.48));
   const graphWidth = Math.max(Math.min(size.width, 480), size.width - codeWidth);
   const { execution, variables } = canvas.state;
   const activeLineId = canvas.highlights[0].id;

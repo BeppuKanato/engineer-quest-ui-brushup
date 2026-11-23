@@ -24,7 +24,7 @@ export function BfsCodeMappingCanvas({ canvas }: { canvas: CodeMappingCanvasStat
   }, []);
   // 文字の可読性を優先してコード幅を確保し、図は共通SVGの比率を保って縮小する。
   // 390px級では図＋コード領域内だけの横スクロールを維持する。
-  const codeWidth = Math.max(620, size.width * 0.48);
+  const codeWidth = Math.min(860, Math.max(620, size.width * 0.48));
   const graphWidth = Math.max(Math.min(size.width, 480), size.width - codeWidth);
   const { execution, variables } = canvas.state;
   const activeLineId = canvas.highlights[0].id;
