@@ -53,7 +53,7 @@ const GROUP_LABEL: Record<string, string> = {
 
 /** 軸のアイコン（24×24、線と点の最小限の絵）。色は使わず、形で軸を区別する。 */
 const GroupGlyph: React.FC<{ label: string }> = ({ label }) => {
-  const common = { width: 16, height: 16, viewBox: "0 0 24 24", "aria-hidden": true } as const;
+  const common = { width: 20, height: 20, viewBox: "0 0 24 24", "aria-hidden": true } as const;
   switch (label) {
     case "グラフ探索":
       return (
@@ -106,14 +106,14 @@ const GroupChip: React.FC<{ label: string }> = ({ label }) => (
       alignItems: "center",
       gap: 0.75,
       alignSelf: "flex-start",
-      px: 1.25,
-      py: 0.625,
+      px: 1.5,
+      py: 0.75,
       mb: 1,
       border: `1px solid ${BORDER}`,
       borderRadius: 999,
       bgcolor: "#fff",
       color: TEXT,
-      fontSize: 14,
+      fontSize: 18,
       fontWeight: 700,
       lineHeight: 1,
     }}
