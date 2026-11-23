@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -49,6 +50,7 @@ export function DfsCheckPreview({ embedded = false, active = true, onLearningEve
     <Box component="section" aria-label="DFSの動きの確認問題"
       sx={{ width: embedded ? "100%" : { xs: "100%", sm: "84vw" }, maxWidth: "100%", minWidth: 0, height: embedded ? "100%" : "84dvh", minHeight: embedded ? 0 : 500,
         p: 1, boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      {!complete && <AssessmentProgress position={session.position ?? 0} total={dfsCheckContent.questions.length} />}
       <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true"
         sx={{ color: playerTokens.text, fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)",
           minHeight: "3em", flexShrink: 0, display: "grid", alignItems: "center", mb: 1, outline: "none" }}>{caption}</Typography>

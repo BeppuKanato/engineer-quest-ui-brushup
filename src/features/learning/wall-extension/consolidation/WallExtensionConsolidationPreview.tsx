@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
@@ -96,6 +97,7 @@ export function WallExtensionConsolidationPreview({ embedded = false, onLearning
         minHeight: embedded ? 0 : 500, p: 1, display: "flex", flexDirection: "column" }}>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column",
         ...(question?.kind === "parsons" ? parsonsQuestionBodySx : {}) }}>
+        {!complete && <AssessmentProgress position={session.position ?? 0} total={content.questions.length} />}
         <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true" sx={{
           color: playerTokens.text, fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)",
           minHeight: "3em", flexShrink: 0, display: "grid", alignItems: "center", mb: 1, outline: "none",

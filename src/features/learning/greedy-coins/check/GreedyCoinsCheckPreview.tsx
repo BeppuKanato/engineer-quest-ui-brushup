@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -63,6 +64,7 @@ export function GreedyCoinsCheckPreview({ embedded = false, onLearningEvent, act
       {/* 3段組（#298）: 中央はスクロール領域。本文（問題文・図・指示・選択肢）はここに上から流れ、
           図の高さは min(54dvh, 600px) の固定で、テキスト量や通知では変わらない。 */}
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        {!complete && <AssessmentProgress position={session.position ?? 0} total={greedyCoinsCheckContent.questions.length} />}
         <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true" sx={{
           color: playerTokens.text, fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)",
           minHeight: "3em", flexShrink: 0, display: "grid", alignItems: "center", mb: 1, outline: "none",

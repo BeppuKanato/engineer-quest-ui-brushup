@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -66,6 +67,7 @@ export function DfsCodeCheckPreview({ embedded = false, active = true, onLearnin
     sx={{ minHeight: embedded ? 0 : "100dvh", height: embedded ? "100%" : undefined, minWidth: 0, display: "grid", placeItems: "center", bgcolor: playerTokens.background, color: playerTokens.text }}>
     <Box component="section" aria-label={complete ? "コードの確認問題の結果" : "DFSのコードの確認問題"}
       sx={{ width: embedded ? "100%" : "84vw", minWidth: 0, minHeight: embedded ? 0 : "84dvh", p: 1, boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      {!complete && <AssessmentProgress position={session.position ?? 0} total={content.questions.length} />}
       <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true"
         sx={{ fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)", mb: 2, outline: "none" }}>
         {complete ? `初回の正解は${content.questions.length}問中${firstCorrect}問でした。` : question?.prompt}

@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -71,6 +72,7 @@ export function BfsCodeCheckPreview({ embedded = false, onLearningEvent, active 
       {/* 3段組（#298）: 中央はスクロール領域。問題文とコード窓はここに置き、
           コード窓の高さは 320px の固定（#321 の残り高さ方式から変更）。窓の内側スクロールと空欄への寄せは維持する。 */}
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        {!complete && <AssessmentProgress position={session.position ?? 0} total={content.questions.length} />}
         <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true" sx={{
           color: playerTokens.text, fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)", mb: 2, outline: "none", flexShrink: 0,
         }}>{complete ? content.completion.caption : `${retry ? "もう一度、" : ""}${question?.prompt ?? ""}`}</Typography>

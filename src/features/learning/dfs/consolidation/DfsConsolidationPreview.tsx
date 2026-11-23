@@ -1,5 +1,6 @@
 "use client";
 import { assessmentEvidence } from "../../assessment/assessment";
+import { AssessmentProgress } from "../../assessment/AssessmentProgress";
 
 import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -60,6 +61,7 @@ export function DfsConsolidationPreview({ embedded = false, active = true, onLea
       sx={{ width: embedded ? "100%" : "84vw", height: embedded ? "100%" : "84dvh", minWidth: 0, boxSizing: "border-box", p: 1, display: "flex", flexDirection: "column" }}>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column",
         ...(question?.kind === "parsons" ? parsonsQuestionBodySx : {}) }}>
+        {!complete && <AssessmentProgress position={session.position ?? 0} total={content.questions.length} />}
         <Typography ref={captionRef} component="p" tabIndex={-1} aria-live="polite" aria-atomic="true"
           sx={{ fontWeight: 700, textAlign: "center", fontSize: "clamp(18px, 1.5vw, 30px)", flexShrink: 0,
             minHeight: question?.kind === "parsons" ? 0 : "3em", display: "grid", alignItems: "center", mb: 1, outline: "none" }}>
