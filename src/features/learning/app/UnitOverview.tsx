@@ -169,7 +169,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
     count >= 7
       ? [
           { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const, timing: "任意・いつでも", needsGoal: false },
-          { t: 5.5 / (count - 1), dx: -20, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const, timing: "任意・段階6のあと", needsGoal: true },
+          { t: 5.5 / (count - 1), dx: -95, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const, timing: "任意・段階6のあと", needsGoal: true },
         ]
       : [];
   const optionalPos = (o: (typeof optionals)[number]) => {
@@ -304,7 +304,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
                 {hasProgress ? "現在地" : "ここから始める"}
               </Box>
             )}
-            <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: isMission ? "translateX(-66%)" : "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
+            <Box sx={{ position: "absolute", top: "calc(100% + 8px)", width: vertical ? 150 : 190, maxWidth: "38vw", pointerEvents: "none", ...(isMission ? { right: 0, textAlign: "right" as const } : { left: "50%", transform: "translateX(-50%)", textAlign: "center" as const }) }}>
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "最終チャレンジ" : `${phase.phase}. ${phase.shortName}`}</Typography>
               {/* 最終チャレンジが帯の単元ミッションと同一物だと分かるよう、題をそのまま出す
                   （2026-11-23、GPTレビュー9：ミッションと進捗のつながり）。 */}
