@@ -45,7 +45,7 @@ export const unitMissions: Record<string, UnitMission> = {
   "course-algorithm-bubble-sort-v2": {
     courseId: "course-algorithm-bubble-sort-v2",
     title: "本を番号順に並べ替える",
-    description: "バラバラに並んだ本を、隣同士を比べて入れ替えながら、小さい順に並べ替えよう。",
+    description: "バラバラに並んだ本を番号順に並べ替えて、探したい本がすぐ見つかる棚にしよう。",
     successCondition: "全部の本が番号順に並んだとき達成",
   },
   "course-algorithm-greedy-coins-v1": {
