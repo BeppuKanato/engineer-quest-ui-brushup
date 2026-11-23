@@ -98,7 +98,9 @@ type ResultTier = "perfect" | "corrected" | "remaining";
 
 /**
  * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
- * 数字と事実はシステム文（ドット＋事実文）が担うので、台詞は共感だけにする
+ * 数字と事実はシステム文（ドット＋事実文）が担い、「何がどう良かったか」は
+ * 第2段の文章側 praise 要素が根拠つきで担う。台詞は純粋な反応だけにし、
+ * 内容を先回りして言わない（重複とネタバレの回避。2026-11-23 構造改訂）
  * （同じ内容を2回言わない）。動きも担う：成績の点灯中は小さく揺れて待ち、
  * 点き終わった瞬間に反応する。熱量は出来事の大きさで変える：
  * 全問初回正解＝驚き→お祝い＋大きな跳躍、全部直し切った＝応援＋小さい跳び、
@@ -133,9 +135,9 @@ function ResultMascotReaction({ tier, reacted, remainingCount }: {
       transition={{ duration: 0.35, delay: 0.15 }} style={{ margin: 0 }}>
       <Typography component="span" sx={{ display: "block", fontSize: 18, fontWeight: 700 }}>
         {tier === "perfect"
-          ? "すごい…！一問も止まらずに解き切ったね！"
+          ? "すごい…！ほんとにすごいよ！"
           : tier === "corrected"
-            ? "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"
+            ? "おつかれさま。最後までやり切ったね。"
             : `残った${remainingCount}問は、あとで見直せるよ。ここまでよく進めたね。`}
       </Typography>
     </motion.p>}

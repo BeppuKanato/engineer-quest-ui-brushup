@@ -99,11 +99,18 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
   }, [stage]);
   const f = result?.feedback;
   const failed = error || result?.status === "FAILED";
+  // 文章の構造（2026-11-23 改訂）: praise（根拠のある称賛）→ strength / improvement
+  // （Feed Back を強みと改善点に分割）→ nextGoal（Feed Up）。旧形式
+  // （currentState / explanation）もそのまま表示できるよう残す。
   const sections: ReadonlyArray<readonly [string, string]> = f ? [
-    ["現在の状態", f.currentState],
-    ...(f.explanation ? [["フィードバック", f.explanation] as const] : []),
+    ...(f.strength ? [["できていること", f.strength] as const]
+      : f.currentState ? [["現在の状態", f.currentState] as const] : []),
+    ...(f.improvement ? [["改善点", f.improvement] as const]
+      : !f.strength && f.explanation ? [["フィードバック", f.explanation] as const] : []),
     ["次の目標", f.nextGoal],
   ] : [];
+  const praise = f?.praise ?? null;
+  const rowOffset = praise ? 1 : 0;
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
     <AnimatePresence mode="wait" initial={false}>
@@ -140,12 +147,19 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
               <FeedbackDelivery />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               <Box sx={{ mt: 1.5 }}>
+                {praise && <RevealRow index={0}>
+                  {/* 主役: praise は根拠のある称賛。画面で1つだけの強調面（2px 枠）で出す */}
+                  <Box sx={{ bgcolor: "#fff", border: `2px solid ${playerTokens.focus}`, borderRadius: "16px", px: "22px", py: "20px" }}>
+                    <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>あなたの学び</Typography>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.8 }}>{praise}</Typography>
+                  </Box>
+                </RevealRow>}
                 {sections.map(([label, body], i) => (
-                  <RevealRow key={label} index={i}>
+                  <RevealRow key={label} index={i + rowOffset}>
                     <FeedbackCard label={label} body={body} />
                   </RevealRow>
                 ))}
-                <RevealRow index={sections.length} last>
+                <RevealRow index={sections.length + rowOffset} last>
                   <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>次の一歩</Typography>
                   <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
                 </RevealRow>
