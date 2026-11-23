@@ -137,6 +137,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
             </Stack>
           : !f ? <FeedbackGenerating />
           : <Box sx={{ width: "100%", maxWidth: 760 }}>
+              <FeedbackDelivery />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               <Box sx={{ mt: 1.5 }}>
                 {sections.map(([label, body], i) => (
@@ -145,13 +146,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
                   </RevealRow>
                 ))}
                 <RevealRow index={sections.length} last>
-                  {/* 案内役：次の一歩はマスコットが「つなぐ」（中身は変えない。2026-11-20 方針の場面表） */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                    <MascotFigure mascotId="red-panda" alt="相棒" size="S" state="point" grounding="shadow" />
-                    <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
-                      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>次の一歩、持ってきたよ。</Typography>
-                    </Box>
-                  </Box>
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>次の一歩</Typography>
                   <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
                 </RevealRow>
               </Box>
@@ -168,6 +163,24 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
       </Button>
     </Stack>
   </Box>;
+}
+
+/**
+ * フィードバックの受け渡し（案内役。2026-11-20 方針の場面表を 2026-11-23 に改訂）。
+ * 仲介の対象は「次の一歩」の提案だけではなく、機械が出した文章全体。
+ * 到着の場面でマスコットが全体を手渡すことで、「システムの文書を読む」から
+ * 「相棒が持ってきたものを受け取る」に変える。本文には一切触れない。
+ */
+function FeedbackDelivery() {
+  const reduce = useReducedMotion();
+  return <motion.div initial={reduce ? false : { opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.35 }}
+    style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+    <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="point" motion="float" grounding="shadow" />
+    <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
+      <Typography sx={{ fontSize: 18, fontWeight: 700 }}>フィードバック、持ってきたよ。</Typography>
+    </Box>
+  </motion.div>;
 }
 
 /**
