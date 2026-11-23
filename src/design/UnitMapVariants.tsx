@@ -47,7 +47,7 @@ export function UnitPreviewShell({ children }: { children: ReactNode }) {
               </Box>
             )}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Chip label="目標ミッション" color="primary" size="small" sx={{ fontWeight: 700 }} />
+              <Chip label="単元ミッション" color="primary" size="small" sx={{ fontWeight: 700 }} />
               <Typography component="h2" sx={{ mt: 1, fontSize: 18, fontWeight: 900 }}>
                 {mission.title}
               </Typography>

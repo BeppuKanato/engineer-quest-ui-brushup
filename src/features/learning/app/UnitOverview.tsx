@@ -71,14 +71,14 @@ export function UnitOverview({ courseId }: { courseId: string }) {
         <Alert severity="error" action={<Button onClick={reload}>再読み込み</Button>}>{error}</Alert> : progress && <>
           <Typography sx={{ mt: 1.5, lineHeight: 1.8 }}>{unit.intro}</Typography>
           {mission && (
-            <Box component="section" aria-label="目標ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
+            <Box component="section" aria-label="単元ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ xs: "stretch", md: "center" }}>
                 <Box aria-hidden sx={{ width: { xs: "100%", md: 220 }, maxWidth: 280, flexShrink: 0, alignSelf: "center" }}>
                   {missionThumbnailFor(unit.courseId) ?? <CourseThumbnail courseId={unit.courseId} />}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                    <Chip label="目標ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
+                    <Chip label="単元ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
                     {/* 旗は画像に被せず、見出し行に置く（一覧と同UI、2026-11-23）。 */}
                     <GoalFlag courseId={courseId} title={unit.title} />
                   </Stack>
@@ -236,7 +236,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
         const reachable = index <= (next ?? count - 1);
         const Icon = isMission ? FlagIcon : learningPhaseIcons[index];
         const status = done ? "達成済み" : isMission ? (missionReady ? "挑戦できる" : "未着手") : current && hasProgress ? "進行中" : "未着手";
-        const label = isMission ? "目標ミッション" : `${phase.phase}. ${phase.shortName}`;
+        const label = isMission ? "単元ミッション" : `${phase.phase}. ${phase.shortName}`;
         const position = point(index);
         const size = current ? 118 : 102;
         return (
@@ -291,7 +291,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "目標ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "単元ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
