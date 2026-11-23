@@ -26,7 +26,9 @@ import { learningPhaseIcons } from "./learningPhaseIcons";
 import { WAVE, wavePath, wavePoint } from "./unitPathGeometry";
 import { useLearningProgress, learningErrorMessage } from "./useLearningProgress";
 import { ProgressLoadingSkeleton } from "./ProgressLoadingSkeleton";
-import { ConceptProgressMap } from "./ConceptProgressMap";
+import StyleIcon from "@mui/icons-material/Style";
+import knowledgeCardsData from "../../../design/data/knowledgeCards.json";
+import { knowledgeCardTones, uncollectedTone } from "../../../components/rewards/rarity.tokens";
 import { useLearningLog } from "./useLearningLog";
 import { findDevelopmentLinks, findUnitMission, missionPlayUrl } from "./missionRegistry";
 
@@ -123,8 +125,10 @@ export function UnitOverview({ courseId }: { courseId: string }) {
               </Link>
             </Box>
           )}
-          <ConceptProgressMap courseId={courseId} />
+          {/* 概念の確認状況は出さない（2026-11-23決定）：概念名はカリキュラム側の語彙で、
+              学習者の行動につながらない。代わりに実績と知識カードの提示を置く。 */}
           <UnitAchievements courseId={courseId} />
+          <UnitKnowledgeCards courseId={courseId} completedCount={completed} missionDone={missionDone} />
         </>}
     </Container>
   </Box>;
@@ -262,14 +266,15 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
                 // 完了ノードはプレイヤーの状態色（灰）ではなく意味色の緑にする。完了は押して
                 // 復習できるのに、灰色だと「押せない」と誤読されるため（2026-11-23 Kanato）。
                 border: `3px solid ${current ? tokens.progress.next : done ? "#16a34a" : tokens.progress.stroke}`,
-                bgcolor: done ? "#f0fdf4" : current ? tokens.progress.next : tokens.progress.idle,
-                color: current ? tokens.surface : done ? "#15803d" : tokens.text,
+                // 緑は枠線だけ（2026-11-23 Kanato）：面とアイコンは通常色に戻す。
+                bgcolor: done ? "#fff" : current ? tokens.progress.next : tokens.progress.idle,
+                color: current ? tokens.surface : tokens.text,
                 position: "relative",
                 boxShadow: current
                   ? `0 0 0 5px ${tokens.background}, 0 0 0 9px #93c5fd, 0 12px 24px rgba(37, 99, 235, 0.35)`
                   : reachable ? "0 8px 18px rgba(15, 23, 42, 0.16)" : "none",
                 transition: "background-color 200ms, transform 200ms",
-                "&:hover": { transform: "translateY(-3px)", bgcolor: done ? "#dcfce7" : current ? tokens.progress.next : tokens.progress.idle },
+                "&:hover": { transform: "translateY(-3px)", bgcolor: done ? "#f0fdf4" : current ? tokens.progress.next : tokens.progress.idle },
               }}
             >
               <Icon sx={{ fontSize: 44 }} />
@@ -347,6 +352,41 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
 }
 
 /** その単元に関連する実績（courseId が一致するもの）のプレビュー。取得できなくても画面は壊さない。 */
+function UnitKnowledgeCards({ courseId, completedCount, missionDone }: { courseId: string; completedCount: number; missionDone: boolean }) {
+  const cards = (knowledgeCardsData as { id: string; courseId: string; label: string; title: string; description: string; rarity: string; sortOrder: number }[])
+    .filter(card => card.courseId === courseId)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  if (cards.length === 0) return null;
+  // 獲得スロットは単元内の並び順（1枚目=段階2、2枚目=段階5、3枚目=最終チャレンジ）。
+  // sortOrder はカタログ通し番号なので使わない。
+  const ownedOf = (slot: number) => slot === 0 ? completedCount >= 2 : slot === 1 ? completedCount >= 5 : missionDone;
+  const slotHint = (slot: number) => slot === 0 ? "段階2で獲得できます" : slot === 1 ? "段階5で獲得できます" : "最終チャレンジで獲得できます";
+  return (
+    <Box component="section" aria-label="この単元の知識カード" sx={{ mt: 4 }}>
+      <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2 }}>
+        <StyleIcon sx={{ color: "#2563eb" }} />
+        <Typography component="h2" variant="h6" fontWeight={950}>この単元の知識カード</Typography>
+      </Stack>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, gap: 2 }}>
+        {cards.map((card, slot) => {
+          const owned = ownedOf(slot);
+          const tone = knowledgeCardTones[card.rarity as keyof typeof knowledgeCardTones];
+          return (
+            <Box key={card.id} sx={{ p: 2, border: `1.5px solid ${owned ? tone.border : tokens.border}`, borderRadius: 2, bgcolor: owned ? tokens.surface : uncollectedTone.background }}>
+              <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                <Typography sx={{ fontSize: 14, fontWeight: 800, color: owned ? tone.color : uncollectedTone.color }}>{tone.label}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, color: owned ? "#15803d" : "text.secondary" }}>{owned ? "獲得済み" : "未獲得"}</Typography>
+              </Stack>
+              <Typography sx={{ fontWeight: 700, fontSize: 15, mt: 1 }}>{owned ? card.title : "？？？"}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary", mt: 0.5 }}>{owned ? card.description : slotHint(slot)}</Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
 function UnitAchievements({ courseId }: { courseId: string }) {
   const { firebaseUser } = useUserSession();
   const [items, setItems] = useState<AchievementItem[] | null>(null);

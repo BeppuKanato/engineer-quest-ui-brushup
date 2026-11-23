@@ -6,6 +6,7 @@
 import type { User } from "firebase/auth";
 import type { AuthUser, GetMeResponse } from "@/api/auth.api";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
+import achievementsData from "./data/achievements.json";
 
 // デザインモード用の仮 Firebase ユーザー。画面側は firebaseUser の uid と
 // getIdToken だけを使う。デザインモードでは userSession がこれを渡す。
@@ -331,7 +332,49 @@ const wallExtensionConcepts = {
   ],
 };
 
+// 実績の仮状態：BFS・DFSの単元実績（各3件）と全体実績3件が達成済み（合計9件、ペルソナと一致）。
+const designAchievedIds = new Set([
+  "ach-unit-bfs-complete", "ach-phase-bfs-implementation-clear", "ach-phase-bfs-implementation-nohint",
+  "ach-unit-dfs-complete", "ach-phase-dfs-implementation-clear", "ach-phase-dfs-implementation-nohint",
+  "ach-unit-count-lv1", "ach-knowledge-lv1", "ach-streak-3",
+]);
+const achievementsFixture = {
+  groups: [{
+    category: "ALL",
+    label: "すべて",
+    achievements: (achievementsData as { id: string; title: string; description: string; category: string; conditionType: string; conditionValue: number | null; rarity: string; iconKey: string; isSecret: boolean; courseId?: string }[]).map(a => {
+      const achieved = designAchievedIds.has(a.id);
+      const goal = a.conditionValue ?? 1;
+      return {
+        id: a.id,
+        category: a.category,
+        conditionType: a.conditionType,
+        conditionValue: a.conditionValue,
+        courseId: a.courseId ?? null,
+        seriesKey: "",
+        seriesTitle: "",
+        level: 1,
+        status: achieved ? "achieved" : a.isSecret ? "secret_locked" : "visible_locked",
+        title: a.title,
+        description: a.description,
+        conditionLabel: null,
+        goal,
+        progress: achieved ? goal : 0,
+        href: "/achievements",
+        actionLabel: "",
+        achievedAt: achieved ? "2026-11-20T00:00:00+09:00" : null,
+        rarity: a.rarity,
+        iconKey: a.iconKey,
+        isProfileSelected: false,
+      };
+    }),
+  }],
+  targetAchievementId: null,
+  profileAchievementId: null,
+};
+
 const fixtures: Record<string, unknown> = {
+  "/achievements": achievementsFixture,
   "/auth/me": getMeFixture,
   "/auth/ensure": getMeFixture,
   "/home": homeFixture,
