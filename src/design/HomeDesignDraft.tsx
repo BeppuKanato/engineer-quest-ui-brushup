@@ -30,6 +30,8 @@ import knowledgeCardsData from "@/design/data/knowledgeCards.json";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
 
 const PRIMARY = "#2563eb";
+// 完了した量（進捗ゲージ）の色。アプリ全体で緑に統一する（2026-11-23）。
+const GREEN = "#16a34a";
 const STREAK_ORANGE = "#ea580c";
 
 const S1 = { bgcolor: "#fff", borderRadius: 3, p: { xs: 3, md: 4 }, boxShadow: "none" } as const;
@@ -118,7 +120,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 </Typography>
               </Stack>
               <Box sx={{ height: 12, borderRadius: 6, bgcolor: "#e7edf5", mt: 1, overflow: "hidden" }}>
-                <Box sx={{ height: "100%", width: `${(current.completedPhases / current.totalPhases) * 100}%`, bgcolor: PRIMARY, borderRadius: 5 }} />
+                <Box sx={{ height: "100%", width: `${(current.completedPhases / current.totalPhases) * 100}%`, bgcolor: GREEN, borderRadius: 5 }} />
               </Box>
             </Box>
           </Stack>

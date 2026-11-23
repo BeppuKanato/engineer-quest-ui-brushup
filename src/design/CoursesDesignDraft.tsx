@@ -176,7 +176,7 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}
             sx={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 6, bgcolor: "#dbe3ef", zIndex: 1 }}
           >
-            <Box sx={{ width: `${(unit.completedPhases / unit.totalPhases) * 100}%`, height: "100%", bgcolor: PRIMARY }} />
+            <Box sx={{ width: `${(unit.completedPhases / unit.totalPhases) * 100}%`, height: "100%", bgcolor: GREEN }} />
           </Box>
         )}
       </Box>
@@ -270,7 +270,7 @@ export const CoursesDesignDraft: React.FC = () => {
               全{overview.totalUnits}単元中 {overview.completedUnits}単元完了
             </Typography>
             <Box sx={{ flex: 1, width: "100%", height: 10, borderRadius: 999, bgcolor: "#e8eef7", overflow: "hidden" }}>
-              <Box sx={{ width: `${ratio}%`, height: "100%", bgcolor: PRIMARY, borderRadius: 999 }} />
+              <Box sx={{ width: `${ratio}%`, height: "100%", bgcolor: GREEN, borderRadius: 999 }} />
             </Box>
             <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ whiteSpace: "nowrap" }}>
               知識カード {overview.collectedCards}/{overview.totalCards} 枚
