@@ -79,7 +79,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
   }, [onUnavailable]);
   useEffect(() => {
     if (!header || stage !== "celebration" || reduce) return;
-    const timer = setTimeout(advance, 2100);
+    // 称賛の順序演出（✓描画→成績の点灯→マスコットの反応、約2.2秒）が
+    // 済んで、眺める間を置いてから進む。
+    const timer = setTimeout(advance, 3400);
     return () => clearTimeout(timer);
   }, [header, stage, reduce, advance]);
   useEffect(() => {
@@ -110,10 +112,13 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
         exit={reduce ? { opacity: 0 } : { opacity: 0, y: -24 }} transition={{ duration: 0.4 }}
         style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
         {header}
-        <Button variant="text" onClick={advance}
-          sx={{ minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control }}>
-          フィードバックを見る
-        </Button>
+        <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ delay: reduce ? 0 : 2.6, duration: 0.4 }} style={{ display: "flex" }}>
+          <Button variant="text" onClick={advance}
+            sx={{ minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control }}>
+            フィードバックを見る
+          </Button>
+        </motion.div>
       </motion.div>
     ) : (
       <motion.div key="feedback" initial={header && !reduce ? { opacity: 0, y: 24 } : false} animate={{ opacity: 1, y: 0 }}

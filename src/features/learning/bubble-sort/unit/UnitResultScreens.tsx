@@ -34,9 +34,11 @@ const nextButtonSx = {
 
 /**
  * フェーズ完了の称賛ブロック（2026-11-23 再設計）。
- * フィードバック画面の頭に置き、称賛とフィードバックを1画面にする。
- * 中身は「終わった」事実と成果だけ：紙吹雪＋見出し、正解数（ドットと事実文）、
- * マスコットの反応、実績の解除。完成図は結果の棒グラフと誤読されるため出さない。
+ * フィードバック画面の第1段（称賛だけの段）に置く。
+ * 称賛は同時に出さず、順序で出す：①終わった（紙吹雪＋✓描画＋見出し）→
+ * ②成績（ドットが1つずつ点灯し、点き終わってから事実文が出る）→
+ * ③マスコットの反応（表情遷移＋跳躍＋共感の台詞）。
+ * 完成図は結果の棒グラフと誤読されるため出さない。
  * フィードバックが無い場合の独立結果画面（UnitResultScreen）もこのブロックを使う。
  */
 export function PhaseResultHeader({ phase, summary, achievements, goalAchievement }: {
@@ -47,16 +49,38 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus(); }, []);
+  const reduce = useReducedMotion();
+  const total = summary?.totalQuestions;
+  const first = summary?.firstAttemptCorrect;
+  // 成績の点灯数。②の拍：✓の描画が終わる頃から1つずつ点ける。
+  const [tally, setTally] = useState(() => (reduce ? (total ?? 0) : 0));
+  useEffect(() => {
+    if (reduce || total === undefined) return;
+    let count = 0;
+    let interval: number | undefined;
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        count += 1;
+        setTally(count);
+        if (count >= total) window.clearInterval(interval);
+      }, 115);
+    }, 500);
+    return () => { window.clearTimeout(start); if (interval !== undefined) window.clearInterval(interval); };
+  }, [reduce, total]);
+  const reacted = total !== undefined && tally >= total;
   if (!phase.result) return null;
   return <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: "100%" }}>
     <UnitResultCelebration heading={phase.result.heading} headingRef={headingRef} preset={goalAchievement ? "final" : "phase"} />
-    {summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined && (
+    {total !== undefined && first !== undefined && (
       <>
-        <ResultScoreDots total={summary.totalQuestions} firstAttemptCorrect={summary.firstAttemptCorrect} />
-        <Typography component="p" sx={{ textAlign: "center", fontSize: 22, fontWeight: 900 }}>
-          全{summary.totalQuestions}問に正解しました（初回で{summary.firstAttemptCorrect}問正解）。
-        </Typography>
-        <ResultMascotReaction perfect={summary.firstAttemptCorrect === summary.totalQuestions} />
+        <ResultScoreDots total={total} firstAttemptCorrect={first} revealed={tally} />
+        {reacted && <motion.p initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }} style={{ margin: 0 }}>
+          <Typography component="span" sx={{ display: "block", textAlign: "center", fontSize: 22, fontWeight: 900 }}>
+            全{total}問に正解しました（初回で{first}問正解）。
+          </Typography>
+        </motion.p>}
+        <ResultMascotReaction perfect={first === total} reacted={reacted} />
       </>
     )}
     {achievements}
@@ -67,28 +91,36 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
 /**
  * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
  * 数字と事実はシステム文（ドット＋事実文）が担うので、台詞は共感だけにする
- * （同じ内容を2回言わない）。熱量は出来事で変える：全問初回正解のときだけ
- * 驚き→お祝いの表情遷移を入れ、それ以外は応援の反応に留める。
+ * （同じ内容を2回言わない）。動きも担う：成績の点灯中は小さく揺れて待ち、
+ * 点き終わった瞬間に表情遷移（全問初回正解のときだけ驚き→お祝い）と
+ * 跳躍で反応する。台詞は反応と同時に出す。
  */
-function ResultMascotReaction({ perfect }: { perfect: boolean }) {
+function ResultMascotReaction({ perfect, reacted }: { perfect: boolean; reacted: boolean }) {
   const reduce = useReducedMotion();
-  const [celebrating, setCelebrating] = useState(false);
-  useEffect(() => {
-    if (!perfect || reduce) return;
-    const timer = setTimeout(() => setCelebrating(true), 750);
-    return () => clearTimeout(timer);
-  }, [perfect, reduce]);
-  const state = perfect ? (celebrating || reduce ? "celebrate" : "surprise") : "cheer";
+  const [jumped, setJumped] = useState(false);
+  const state = perfect ? (reacted ? "celebrate" : "surprise") : "cheer";
+  const jumping = reacted && !jumped && !reduce;
   return <Box sx={{ display: "flex", alignItems: "center", gap: 2, maxWidth: 640 }}>
-    <motion.div key={state} initial={reduce ? false : { opacity: 0, scale: 0.85, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.3 }}>
-      <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="bounce" grounding="shadow" state={state} />
+    <motion.div
+      animate={reduce ? { y: 0, rotate: 0 }
+        : jumping ? { y: [0, -38, 0, -14, 0], rotate: [0, -3, 3, 0, 0] }
+        : { y: [0, -5, 0], rotate: 0 }}
+      transition={jumping ? { duration: 0.85, ease: "easeOut" }
+        : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+      onAnimationComplete={() => { if (reacted && !jumped) setJumped(true); }}>
+      <motion.div key={state} initial={reduce ? false : { opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+        <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="none" grounding="shadow" state={state} />
+      </motion.div>
     </motion.div>
-    <Typography component="p" sx={{ fontSize: 18, fontWeight: 700 }}>
-      {perfect
-        ? "すごい…！一問も止まらずに解き切ったね！"
-        : "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"}
-    </Typography>
+    {reacted && <motion.p initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.15 }} style={{ margin: 0 }}>
+      <Typography component="span" sx={{ display: "block", fontSize: 18, fontWeight: 700 }}>
+        {perfect
+          ? "すごい…！一問も止まらずに解き切ったね！"
+          : "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"}
+      </Typography>
+    </motion.p>}
   </Box>;
 }
 
