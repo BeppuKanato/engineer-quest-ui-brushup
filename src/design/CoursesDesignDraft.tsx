@@ -5,8 +5,9 @@
 // - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
 // - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
 // - 状態は2か所で表す：サムネの上の印（学習中チップ／ミッション達成の旗）と、
-//   題の下の状態行（未着手＝学習を始める／学習中＝段階の形＋続きから学ぶ／完了＝復習する）。
-//   状態行は全カード同じ位置に置き、3状態の違いが並べて分かるようにする（2026-11-23 Kanato）
+//   カード下部の状態ボタン。ボタンは文字を読まなくても色と形で状態が分かること
+//   （2026-11-23 Kanato）：未着手＝青地＋▶、学習中＝青地＋段階の目盛り、完了＝淡色地＋✓。
+//   ボタンはカード全体リンクの中の見た目上のボタン（遷移はカード全体が担う）。
 // - カード全体が単元画面へのリンク
 // グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
 // BFS のサムネだけ、目標ミッションの場面を描いた試作（MissionThumbnail）に差し替えてある。
@@ -92,42 +93,55 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   return null;
 };
 
-/** 状態行：3状態の違いを、題の下の同じ位置で表す。学習中だけ段階の形（n/総数）を添える。 */
-const StateRow: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
+/**
+ * 状態ボタン：カード下部に置く見た目上のボタン（遷移はカード全体のリンクが担う）。
+ * 文字を読まなくても状態が分かるように、色と形で分ける：
+ * 未着手＝青地＋▶／学習中＝青地＋段階の目盛り（白）／完了＝淡色地＋✓。
+ */
+const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
+  const base = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 1,
+    height: 42,
+    borderRadius: 2,
+    fontSize: 15,
+    fontWeight: 700,
+  } as const;
   if (unit.status === "COMPLETED") {
     return (
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
-        <CheckCircleIcon sx={{ fontSize: 19, color: PRIMARY }} />
-        <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
-          復習する
-        </Typography>
-      </Stack>
+      <Box component="span" sx={{ ...base, bgcolor: "#e8eef7", color: PRIMARY }}>
+        <CheckCircleIcon sx={{ fontSize: 19 }} />
+        復習する
+      </Box>
     );
   }
   if (unit.status === "IN_PROGRESS") {
     return (
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.5 }}>
+      <Box component="span" sx={{ ...base, bgcolor: PRIMARY, color: "#fff" }}>
         <Stack direction="row" spacing={0.5} aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}>
           {Array.from({ length: unit.totalPhases }, (_, i) => (
             <Box
               key={i}
-              sx={{ width: 16, height: 6, borderRadius: 999, bgcolor: i < unit.completedPhases ? PRIMARY : "#dbe3ef" }}
+              sx={{
+                width: 14,
+                height: 6,
+                borderRadius: 999,
+                bgcolor: i < unit.completedPhases ? "#fff" : "rgba(255,255,255,0.35)",
+              }}
             />
           ))}
         </Stack>
-        <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
-          続きから学ぶ
-        </Typography>
-      </Stack>
+        続きから学ぶ
+      </Box>
     );
   }
   return (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
-      <PlayArrowIcon sx={{ fontSize: 19, color: PRIMARY }} />
-      <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
-        学習を始める
-      </Typography>
-    </Stack>
+    <Box component="span" sx={{ ...base, bgcolor: PRIMARY, color: "#fff" }}>
+      <PlayArrowIcon sx={{ fontSize: 19 }} />
+      学習を始める
+    </Box>
   );
 };
 
@@ -160,7 +174,7 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
           </Box>
         )}
       </Box>
-      <Box sx={{ p: 2.5 }}>
+      <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", flex: 1 }}>
         <Typography fontSize={18} fontWeight={900} color={TEXT}>
           {unit.title}
         </Typography>
@@ -169,7 +183,9 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             {mission.title}
           </Typography>
         )}
-        <StateRow unit={unit} />
+        <Box sx={{ mt: "auto", pt: 2 }}>
+          <StateButton unit={unit} />
+        </Box>
       </Box>
     </Paper>
   );
