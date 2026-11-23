@@ -161,6 +161,254 @@ export const DfsMissionThumbnail: React.FC = () => (
   </Box>
 );
 
+/** 困っているロボット（頭の左上基準）。場面サムネ共通の主人公。 */
+const TroubledRobot: React.FC<{ x: number; y: number }> = ({ x, y }) => (
+  <g transform={`translate(${x} ${y})`}>
+    <line x1="22" y1="-14" x2="22" y2="-28" stroke="#1e40af" strokeWidth="3.5" strokeLinecap="round" />
+    <circle cx="22" cy="-32" r="5" fill="#2563eb" />
+    <rect x="0" y="0" width="44" height="42" rx="10" fill="#2563eb" />
+    <rect x="7" y="8" width="30" height="19" rx="5" fill="#dbeafe" />
+    <circle cx="17" cy="16" r="3" fill="#1e3a8a" />
+    <circle cx="27" cy="16" r="3" fill="#1e3a8a" />
+    <path d="M17 24 Q22 21 27 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
+    <path d="M52 6 C52 6 46 16 46 20.5 A6 6 0 0 0 58 20.5 C58 16 52 6 52 6 Z" fill="#7dd3fc" />
+  </g>
+);
+
+/** 「？」の吹き出し。 */
+const QuestionBubble: React.FC<{ x: number; y: number; tail: string }> = ({ x, y, tail }) => (
+  <g>
+    <circle cx={x} cy={y} r="16" fill="#ffffff" stroke="#2563eb" strokeWidth="2.5" />
+    <path d={tail} fill="#ffffff" stroke="#2563eb" strokeWidth="2.5" strokeLinejoin="round" />
+    <text x={x} y={y + 8} textAnchor="middle" fontSize="20" fontWeight="900" fill="#2563eb">
+      ？
+    </text>
+  </g>
+);
+
+/** 穴掘り法：岩盤の前で掘り進めなくて困っているロボット。掘った部分だけが通路になっている。 */
+export const DiggingMissionThumbnail: React.FC = () => (
+  <Box
+    component="svg"
+    viewBox="0 0 460 210"
+    preserveAspectRatio="xMidYMid slice"
+    sx={{ width: "100%", height: "100%", display: "block" }}
+    role="img"
+    aria-label="岩盤を掘って迷路を作ろうとして、固い岩の前で困っているロボット"
+  >
+    <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+    {/* 岩盤の塊 */}
+    <rect x="10" y="6" width="440" height="198" rx="10" fill="#8d6e63" />
+    <g fill="#6d4c41" opacity="0.55">
+      <rect x="252" y="52" width="13" height="13" rx="2" />
+      <rect x="336" y="52" width="13" height="13" rx="2" />
+      <rect x="252" y="140" width="13" height="13" rx="2" />
+      <rect x="336" y="140" width="13" height="13" rx="2" />
+      <rect x="392" y="96" width="13" height="13" rx="2" />
+    </g>
+    <path d="M282 66 l10 8 l-6 8 M356 158 l10 8 l-6 8" stroke="#5d4037" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    {/* 掘った通路：入口から入って、途中で岩にぶつかっている */}
+    <path
+      d="M4 160 L96 160 L96 88 L172 88"
+      fill="none"
+      stroke="#e9dcc3"
+      strokeWidth="36"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    />
+    {/* 掘り出した土の山 */}
+    <ellipse cx="34" cy="198" rx="28" ry="9" fill="#6d4c41" />
+    <ellipse cx="66" cy="202" rx="18" ry="6" fill="#795548" />
+    <TroubledRobot x={140} y={70} />
+    {/* シャベル：岩の面に向けている */}
+    <g>
+      <line x1="190" y1="98" x2="216" y2="78" stroke="#6d4c41" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M216 78 L234 70 L237 82 L222 88 Z" fill="#b0bec5" />
+    </g>
+    <QuestionBubble x={104} y={44} tail="M94 56 L82 70 L100 60 Z" />
+  </Box>
+);
+
+/** 棒倒し法：柱の並ぶ広場で、どの柱からどう壁を伸ばすか困っているロボット。 */
+export const WallExtensionMissionThumbnail: React.FC = () => (
+  <Box
+    component="svg"
+    viewBox="0 0 460 210"
+    preserveAspectRatio="xMidYMid slice"
+    sx={{ width: "100%", height: "100%", display: "block" }}
+    role="img"
+    aria-label="柱の並ぶ広場で、壁の伸ばし方に困っているロボット"
+  >
+    <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+    <rect x="0" y="172" width="460" height="38" fill="#e2eedd" />
+    {/* 伸ばし済みの壁 */}
+    <g stroke="#5b7186" strokeWidth="13">
+      <line x1="108" y1="44" x2="188" y2="44" />
+      <line x1="188" y1="44" x2="188" y2="104" />
+      <line x1="268" y1="104" x2="348" y2="104" />
+      <line x1="348" y1="104" x2="348" y2="164" />
+      <line x1="108" y1="164" x2="188" y2="164" />
+    </g>
+    {/* 柱 */}
+    <g fill="#5b7186">
+      {[100, 180, 260, 340, 404].map((x) =>
+        [36, 96, 156].map((y) => <rect key={`${x}-${y}`} x={x} y={y} width="16" height="16" rx="3" />),
+      )}
+    </g>
+    <TroubledRobot x={22} y={126} />
+    {/* 手に持った壁のパネル */}
+    <rect x="70" y="136" width="46" height="13" rx="3" fill="#5b7186" />
+    <QuestionBubble x={98} y={100} tail="M88 112 L74 124 L94 116 Z" />
+  </Box>
+);
+
+/** バブルソート：番号がバラバラの本棚の前で困っているロボット。 */
+export const BubbleSortMissionThumbnail: React.FC = () => {
+  const books: { x: number; h: number; color: string; num: number }[] = [
+    { x: 44, h: 64, color: "#7d8ca3", num: 7 },
+    { x: 84, h: 84, color: "#a3826d", num: 3 },
+    { x: 124, h: 56, color: "#7da383", num: 9 },
+    { x: 164, h: 76, color: "#8d7da3", num: 1 },
+    { x: 204, h: 60, color: "#a37d7d", num: 8 },
+    { x: 244, h: 88, color: "#7d8ca3", num: 2 },
+    { x: 284, h: 66, color: "#a3826d", num: 5 },
+    { x: 324, h: 80, color: "#7da383", num: 4 },
+    { x: 364, h: 58, color: "#8d7da3", num: 6 },
+  ];
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="番号がバラバラに並んだ本棚の前で困っているロボット"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      {/* 本棚の脚 */}
+      <rect x="26" y="126" width="9" height="58" fill="#8d6e63" />
+      <rect x="425" y="126" width="9" height="58" fill="#8d6e63" />
+      {/* 本 */}
+      {books.map((b) => (
+        <g key={b.x}>
+          <rect x={b.x} y={126 - b.h} width="36" height={b.h} rx="3" fill={b.color} />
+          <text x={b.x + 18} y={126 - b.h / 2 + 7} textAnchor="middle" fontSize="18" fontWeight="900" fill="#ffffff">
+            {b.num}
+          </text>
+        </g>
+      ))}
+      {/* 棚板 */}
+      <rect x="22" y="126" width="416" height="9" rx="3" fill="#8d6e63" />
+      <TroubledRobot x={28} y={150} />
+      {/* 手に持った本 */}
+      <rect x="76" y="162" width="26" height="36" rx="3" fill="#7d8ca3" />
+      <text x="89" y="187" textAnchor="middle" fontSize="15" fontWeight="900" fill="#ffffff">
+        3
+      </text>
+      <QuestionBubble x={126} y={168} tail="M114 158 L100 148 L112 166 Z" />
+    </Box>
+  );
+};
+
+/** 二分探索：番号順に並んだ長い箱の列の前で、探し物に困っているロボット。 */
+export const BinarySearchMissionThumbnail: React.FC = () => {
+  const boxes = [3, 7, 12, 19, 25, 31, 42, 50, 58, 66];
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="番号順に並んだ長い箱の列の前で、探し物に困っているロボット"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      {/* 箱の列 */}
+      {boxes.map((num, i) => {
+        const x = 24 + i * 43;
+        return (
+          <g key={num}>
+            <rect x={x} y="76" width="38" height="42" rx="3" fill="#cbb489" />
+            <line x1={x} y1="88" x2={x + 38} y2="88" stroke="#a98f5f" strokeWidth="2.5" />
+            <rect x={x + 9} y="94" width="20" height="15" rx="2" fill="#ffffff" />
+            <text x={x + 19} y="106" textAnchor="middle" fontSize="11" fontWeight="700" fill="#5d4a26">
+              {num}
+            </text>
+          </g>
+        );
+      })}
+      {/* 棚板 */}
+      <rect x="16" y="118" width="428" height="9" rx="3" fill="#8d6e63" />
+      {/* 足あと：端から1つずつ見て歩いた跡が、ずっと先まで続いている */}
+      <g fill="#94a3b8">
+        {Array.from({ length: 11 }, (_, i) => (
+          <circle key={i} cx={128 + i * 22} cy="196" r="3" opacity={1 - i * 0.06} />
+        ))}
+      </g>
+      <TroubledRobot x={20} y={146} />
+      {/* 探し物のメモ */}
+      <g transform="rotate(-6 84 172)">
+        <rect x="70" y="152" width="29" height="38" rx="2" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+        <text x="84" y="176" textAnchor="middle" fontSize="14" fontWeight="900" fill="#1e3a8a">
+          19
+        </text>
+      </g>
+      <QuestionBubble x={122} y={146} tail="M110 156 L96 166 L114 160 Z" />
+    </Box>
+  );
+};
+
+/** 貪欲法：お釣りの硬貨の選び方で困っているレジのロボット。 */
+export const GreedyMissionThumbnail: React.FC = () => {
+  const coins: { x: number; y: number; r: number; label: string }[] = [
+    { x: 282, y: 136, r: 15, label: "500" },
+    { x: 320, y: 144, r: 13, label: "100" },
+    { x: 350, y: 138, r: 12, label: "50" },
+    { x: 376, y: 146, r: 11, label: "10" },
+    { x: 400, y: 140, r: 10, label: "5" },
+    { x: 422, y: 148, r: 9, label: "1" },
+  ];
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="お釣りの硬貨の選び方で困っているレジのロボット"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      <TroubledRobot x={50} y={98} />
+      {/* 手に持った硬貨 */}
+      <circle cx="106" cy="122" r="11" fill="#f2c94c" stroke="#c9962e" strokeWidth="2" />
+      {/* レジ */}
+      <g>
+        <rect x="150" y="92" width="92" height="58" rx="6" fill="#5b7186" />
+        <rect x="160" y="100" width="72" height="24" rx="3" fill="#dbeafe" />
+        <text x="196" y="118" textAnchor="middle" fontSize="15" fontWeight="900" fill="#1e3a8a">
+          786円
+        </text>
+        <circle cx="172" cy="138" r="4" fill="#dbeafe" />
+        <circle cx="190" cy="138" r="4" fill="#dbeafe" />
+        <circle cx="208" cy="138" r="4" fill="#dbeafe" />
+      </g>
+      {/* カウンター */}
+      <rect x="0" y="148" width="460" height="62" fill="#a3826d" />
+      <rect x="0" y="148" width="460" height="6" fill="#8d6e63" />
+      {/* 並んだ硬貨（お釣りの候補） */}
+      {coins.map((c) => (
+        <g key={c.label}>
+          <circle cx={c.x} cy={c.y} r={c.r} fill="#f2c94c" stroke="#c9962e" strokeWidth="2" />
+          <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize="10" fontWeight="900" fill="#7c5a10">
+            {c.label}
+          </text>
+        </g>
+      ))}
+      <QuestionBubble x={124} y={58} tail="M114 70 L100 86 L118 74 Z" />
+    </Box>
+  );
+};
+
 // ── 手法に完全に焦点を当てた版（2026-11-23、場面版との比較用に試作） ──
 // 同じノード配置のグラフで、たどり方だけを描く。BFS＝波が同心円状に広がる、
 // DFS＝一本の道が奥まで潜って行き止まりから引き返す。
@@ -271,13 +519,23 @@ export const DfsMethodThumbnail: React.FC = () => {
   );
 };
 
-/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。比較のため手法版を表示中。 */
+/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。BFS/DFS は比較のため手法版を表示中。 */
 export const missionThumbnailFor = (courseId: string): React.ReactNode => {
   switch (courseId) {
     case "course-algorithm-breadth-first-search-v1":
       return <BfsMethodThumbnail />;
     case "course-algorithm-depth-first-search-v1":
       return <DfsMethodThumbnail />;
+    case "course-algorithm-maze-digging-v1":
+      return <DiggingMissionThumbnail />;
+    case "course-algorithm-wall-extension-v1":
+      return <WallExtensionMissionThumbnail />;
+    case "course-algorithm-bubble-sort-v2":
+      return <BubbleSortMissionThumbnail />;
+    case "course-algorithm-binary-search-v1":
+      return <BinarySearchMissionThumbnail />;
+    case "course-algorithm-greedy-coins-v1":
+      return <GreedyMissionThumbnail />;
     default:
       return null;
   }
