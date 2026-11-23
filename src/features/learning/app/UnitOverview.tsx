@@ -91,7 +91,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                   ) : (
                     <>
                       {nextPhase && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>次は『{nextPhase.formalName}』</Typography>}
-                      <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>学習を進める</Button>
+                      <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>{progress.unit ? "学習を進める" : "学習を始める"}</Button>
                       <Button variant="text" disabled sx={{ fontWeight: 700 }}>ミッションに挑戦する</Button>
                       <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
                     </>

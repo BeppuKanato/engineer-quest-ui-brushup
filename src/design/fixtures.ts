@@ -232,6 +232,39 @@ const bfsProgress = {
     phase("bfs-consolidation", "COMPLETED", "2026-11-15T10:30:00+09:00"),
   ],
 };
+// DFS は「ミッション達成済み」の状態確認用（2026-11-23）：段階6つ完了＋単元COMPLETED。
+const dfsProgress = {
+  courseId: "course-algorithm-depth-first-search-v1",
+  unit: { status: "COMPLETED", lastPhaseKey: "dfs-consolidation", startedAt: "2026-11-03T10:00:00+09:00", completedAt: "2026-11-09T15:00:00+09:00" },
+  phases: [
+    phase("dfs-motivation", "COMPLETED", "2026-11-03T10:30:00+09:00"),
+    phase("dfs-execution", "COMPLETED", "2026-11-04T10:30:00+09:00"),
+    phase("dfs-check", "COMPLETED", "2026-11-05T10:30:00+09:00"),
+    phase("dfs-code-mapping", "COMPLETED", "2026-11-06T10:30:00+09:00"),
+    phase("dfs-code-check", "COMPLETED", "2026-11-07T10:30:00+09:00"),
+    phase("dfs-consolidation", "COMPLETED", "2026-11-08T10:30:00+09:00"),
+  ],
+};
+
+// 未着手（バブルソート）と学習中（棒倒し法）の状態確認用（2026-11-23）。
+// 進捗フィクスチャが無い単元は単元画面がエラー表示になるため、明示的に置く。
+const bubbleSortProgress = {
+  courseId: "course-algorithm-bubble-sort-v2",
+  unit: null,
+  phases: [],
+};
+const wallExtensionProgress = {
+  courseId: "course-algorithm-wall-extension-v1",
+  unit: { status: "IN_PROGRESS", lastPhaseKey: "wall-extension-execution", startedAt: "2026-11-18T10:00:00+09:00", completedAt: null },
+  phases: [
+    phase("wall-extension-motivation", "COMPLETED", "2026-11-18T10:30:00+09:00"),
+    phase("wall-extension-execution", "COMPLETED", "2026-11-19T10:30:00+09:00"),
+    phase("wall-extension-check", "NOT_STARTED", null),
+    phase("wall-extension-code-mapping", "NOT_STARTED", null),
+    phase("wall-extension-code-check", "NOT_STARTED", null),
+    phase("wall-extension-consolidation", "NOT_STARTED", null),
+  ],
+};
 
 // 概念の到達マップの下書き用。ラベルと問題数は本体の concepts.json からの実データで、
 // 到達の分子・初回正解率は「学習の中盤にいる人」の仮状態。
@@ -263,6 +296,40 @@ const bfsConcepts = {
     concept("bfs:flow", "コード全体の流れ", "reached", 2, 2, 2, 1, 2, 50),
   ],
 };
+const dfsConcepts = {
+  courseId: "course-algorithm-depth-first-search-v1",
+  concepts: [
+    concept("dfs:order", "探索順序", "reached", 3, 3, 3, 3, 3, 100),
+    concept("dfs:stack", "スタックの操作", "reached", 6, 6, 6, 5, 6, 83),
+    concept("dfs:visited", "訪問済みの扱い", "reached", 5, 5, 5, 5, 5, 100),
+    concept("dfs:backtrack", "行き止まりでの巻き戻し", "reached", 4, 4, 4, 3, 4, 75),
+    concept("dfs:unreachable", "到達できないノード", "reached", 2, 2, 2, 2, 2, 100),
+    concept("dfs:flow", "コード全体の流れ", "reached", 3, 3, 3, 2, 3, 67),
+  ],
+};
+// 概念は段階3・5・6の問題だけを数えるため、未着手・序盤の単元はすべて未確認になる。
+const bubbleSortConcepts = {
+  courseId: "course-algorithm-bubble-sort-v2",
+  concepts: [
+    concept("bubble-sort:compare", "隣同士の比較", "unconfirmed", 0, 3, 0, 0, 0, null),
+    concept("bubble-sort:swap", "交換の条件", "unconfirmed", 0, 5, 0, 0, 0, null),
+    concept("bubble-sort:pass", "一巡の結果", "unconfirmed", 0, 5, 0, 0, 0, null),
+    concept("bubble-sort:finish", "並び替えの終了", "unconfirmed", 0, 3, 0, 0, 0, null),
+    concept("bubble-sort:cost", "比べる回数の考え方", "unconfirmed", 0, 2, 0, 0, 0, null),
+    concept("bubble-sort:flow", "コード全体の流れ", "unconfirmed", 0, 3, 0, 0, 0, null),
+  ],
+};
+const wallExtensionConcepts = {
+  courseId: "course-algorithm-wall-extension-v1",
+  concepts: [
+    concept("wall-extension:pillar", "柱の役割", "unconfirmed", 0, 3, 0, 0, 0, null),
+    concept("wall-extension:rule", "壁を伸ばす規則", "unconfirmed", 0, 6, 0, 0, 0, null),
+    concept("wall-extension:direction", "伸ばす方向の決め方", "unconfirmed", 0, 5, 0, 0, 0, null),
+    concept("wall-extension:connect", "迷路のつながり", "unconfirmed", 0, 4, 0, 0, 0, null),
+    concept("wall-extension:unreachable", "囲まれる場所", "unconfirmed", 0, 2, 0, 0, 0, null),
+    concept("wall-extension:flow", "コード全体の流れ", "unconfirmed", 0, 3, 0, 0, 0, null),
+  ],
+};
 
 const fixtures: Record<string, unknown> = {
   "/auth/me": getMeFixture,
@@ -274,6 +341,12 @@ const fixtures: Record<string, unknown> = {
   "/learning/units/course-algorithm-breadth-first-search-v1/progress": bfsProgress,
   "/learning/units/course-algorithm-binary-search-v1/concept-progress": binarySearchConcepts,
   "/learning/units/course-algorithm-breadth-first-search-v1/concept-progress": bfsConcepts,
+  "/learning/units/course-algorithm-depth-first-search-v1/progress": dfsProgress,
+  "/learning/units/course-algorithm-depth-first-search-v1/concept-progress": dfsConcepts,
+  "/learning/units/course-algorithm-bubble-sort-v2/progress": bubbleSortProgress,
+  "/learning/units/course-algorithm-bubble-sort-v2/concept-progress": bubbleSortConcepts,
+  "/learning/units/course-algorithm-wall-extension-v1/progress": wallExtensionProgress,
+  "/learning/units/course-algorithm-wall-extension-v1/concept-progress": wallExtensionConcepts,
 };
 
 // パスに対応するフィクスチャを返す。無い場合は undefined。
