@@ -14,9 +14,8 @@
 // 並び（2026-11-23 Kanato の案を採用）：グループごとに行を変えるのはやめ、全単元を
 // 3列で流す。行分けだと単元数によって空きマスだらけになり、増えた時にも直らないため。
 // 課題軸の区別は、カードに付けた「アイコン＋グループ名」のチップで付ける。
-// チップの形は共通で、枠と文字の色を軸ごとに変える（色分けはチップの中だけに閉じる。
-// 状態の色とは混ざらない色相を選ぶ）。同じ軸の単元は隣り合う順序に並べ、
-// 組が行の途中で割れないようにする。
+// チップは形も色も全軸共通（軸ごとの色分けは、種類が増えた時に枯渇・衝突する
+// ためしない）。同じ軸は、同じアイコンと名前、隣り合う並び順で表す。
 // BFS と DFS のサムネは、目標ミッションの場面を描いた試作（MissionThumbnail）。
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
@@ -98,43 +97,35 @@ const GroupGlyph: React.FC<{ label: string }> = ({ label }) => {
   }
 };
 
-// 軸の色：チップの枠と文字だけに使う小さな色分け。状態の色（青・緑・橙・金）とは
-// 混ざらない色相を選ぶ。色が尽きたらアイコンの形でも区別できる（二重の手がかり）。
-const GROUP_COLOR: Record<string, string> = {
-  "グラフ探索": "#7c3aed",
-  "迷路生成": "#0f766e",
-  "並び替え": "#be185d",
-  "配列の検索": "#9a3412",
-};
-
-/** グループチップ：共通の形＋軸の色の枠。同じ色の枠の並びで「同じ軸」が一目で分かる。 */
-const GroupChip: React.FC<{ label: string }> = ({ label }) => {
-  const color = GROUP_COLOR[label] ?? TEXT;
-  return (
-    <Box
-      component="span"
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.75,
-        alignSelf: "flex-start",
-        px: 1.5,
-        py: 0.75,
-        mb: 1,
-        border: `2px solid ${color}`,
-        borderRadius: 999,
-        bgcolor: "#fff",
-        color,
-        fontSize: 18,
-        fontWeight: 700,
-        lineHeight: 1,
-      }}
-    >
-      <GroupGlyph label={label} />
-      {label}
-    </Box>
-  );
-};
+/**
+ * グループチップ：形も色も全軸共通（本文色の太枠）。軸ごとの色分けはしない
+ * ——軸が何種類になるか分からず、色が枯渇・衝突するため（2026-11-23 Kanato）。
+ * 「同じ軸」は、同じアイコンの形と名前、それと隣り合う並び順で表す。
+ */
+const GroupChip: React.FC<{ label: string }> = ({ label }) => (
+  <Box
+    component="span"
+    sx={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 0.75,
+      alignSelf: "flex-start",
+      px: 1.5,
+      py: 0.75,
+      mb: 1,
+      border: `2px solid ${TEXT}`,
+      borderRadius: 999,
+      bgcolor: "#fff",
+      color: TEXT,
+      fontSize: 18,
+      fontWeight: 700,
+      lineHeight: 1,
+    }}
+  >
+    <GroupGlyph label={label} />
+    {label}
+  </Box>
+);
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
 const FLOW_ORDER = [
