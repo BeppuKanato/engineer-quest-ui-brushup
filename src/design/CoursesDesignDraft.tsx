@@ -44,7 +44,8 @@ type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
 
 // 課題軸のグループ（2026-11-21 決定）。カードのラベルに使う。
-// 貪欲法は手法軸で単独＝単元名自体がグループ名になるため、ラベルは付けない。
+// 貪欲法は手法の名前なので、解く問題の側の名前「最適化問題」をカテゴリにする
+// （2026-11-23、GPTの分類粒度の指摘を受けた Kanato の判断。カテゴリは問題軸で統一）。
 const GROUP_LABEL: Record<string, string> = {
   "course-algorithm-breadth-first-search-v1": "グラフ探索",
   "course-algorithm-depth-first-search-v1": "グラフ探索",
@@ -52,6 +53,7 @@ const GROUP_LABEL: Record<string, string> = {
   "course-algorithm-wall-extension-v1": "迷路生成",
   "course-algorithm-bubble-sort-v2": "並び替え",
   "course-algorithm-binary-search-v1": "配列の検索",
+  "course-algorithm-greedy-coins-v1": "最適化問題",
 };
 
 /** 軸のアイコン（24×24、線と点の最小限の絵）。色は使わず、形で軸を区別する。 */
@@ -95,7 +97,7 @@ const GroupGlyph: React.FC<{ label: string }> = ({ label }) => {
           <path d="M14.8 14.8 L20 20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
         </svg>
       );
-    case "貪欲法":
+    case "最適化問題":
       return (
         <svg {...common}>
           <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -137,12 +139,12 @@ const GroupChip: React.FC<{ label: string }> = ({ label }) => (
   </Box>
 );
 
-/** 絞り込み用の軸（貪欲法も1つの軸として含む）。 */
+/** 絞り込み用の軸（最適化問題＝貪欲法の単元も1つの軸として含む）。 */
 const FILTER_GROUP: Record<string, string> = {
   ...GROUP_LABEL,
-  "course-algorithm-greedy-coins-v1": "貪欲法",
+  "course-algorithm-greedy-coins-v1": "最適化問題",
 };
-const AXES = ["すべて", "グラフ探索", "迷路生成", "並び替え", "配列の検索", "貪欲法"];
+const AXES = ["すべて", "グラフ探索", "迷路生成", "並び替え", "配列の検索", "最適化問題"];
 
 /** 軸の検索欄：軸のチップを選んで単元を絞り込む。選択中だけ主色で塗る。 */
 const AxisFilter: React.FC<{ value: string; onChange: (axis: string) => void }> = ({ value, onChange }) => (
