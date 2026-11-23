@@ -106,7 +106,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                   )}
                   {/* ストーリーの入口（選ぶ動機・見直し）：帯からいつでも開ける（2026-11-23）。 */}
                   <Button variant="text" startIcon={<PlayCircleOutlineIcon />} onClick={() => setStoryOpen(true)} sx={{ fontWeight: 700 }}>
-                    ストーリーを見る
+                    どんな問題を解く？
                   </Button>
                 </Stack>
               </Stack>
