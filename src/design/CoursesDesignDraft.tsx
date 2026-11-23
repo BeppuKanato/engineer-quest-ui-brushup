@@ -18,7 +18,9 @@
 // ためしない）。同じ軸は、同じアイコンと名前、隣り合う並び順で表す。
 // BFS と DFS のサムネは、目標ミッションの場面を描いた試作（MissionThumbnail）。
 
-import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+
+import { Box, Button, ButtonBase, Chip, Paper, Stack, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Link from "next/link";
@@ -92,6 +94,13 @@ const GroupGlyph: React.FC<{ label: string }> = ({ label }) => {
           <path d="M14.8 14.8 L20 20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
         </svg>
       );
+    case "貪欲法":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -125,6 +134,46 @@ const GroupChip: React.FC<{ label: string }> = ({ label }) => (
     <GroupGlyph label={label} />
     {label}
   </Box>
+);
+
+/** 絞り込み用の軸（貪欲法も1つの軸として含む）。 */
+const FILTER_GROUP: Record<string, string> = {
+  ...GROUP_LABEL,
+  "course-algorithm-greedy-coins-v1": "貪欲法",
+};
+const AXES = ["すべて", "グラフ探索", "迷路生成", "並び替え", "配列の検索", "貪欲法"];
+
+/** 軸の検索欄：軸のチップを選んで単元を絞り込む。選択中だけ主色で塗る。 */
+const AxisFilter: React.FC<{ value: string; onChange: (axis: string) => void }> = ({ value, onChange }) => (
+  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap aria-label="軸で絞り込む">
+    {AXES.map((axis) => {
+      const selected = axis === value;
+      return (
+        <ButtonBase
+          key={axis}
+          onClick={() => onChange(axis)}
+          aria-pressed={selected}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.75,
+            px: 1.75,
+            py: 1,
+            borderRadius: 999,
+            border: `1px solid ${selected ? PRIMARY : BORDER}`,
+            bgcolor: selected ? PRIMARY : "#fff",
+            color: selected ? "#fff" : TEXT,
+            fontSize: 16,
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          {axis !== "すべて" && <GroupGlyph label={axis} />}
+          {axis}
+        </ButtonBase>
+      );
+    })}
+  </Stack>
 );
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
@@ -352,6 +401,10 @@ export const CoursesDesignDraft: React.FC = () => {
   const { overview } = homeFixture;
   const unitById = new Map(overview.units.map((u) => [u.id, u]));
   const ratio = overview.totalUnits > 0 ? (overview.completedUnits / overview.totalUnits) * 100 : 0;
+  const [axis, setAxis] = useState("すべて");
+  const visibleUnits = FLOW_ORDER.map((id) => unitById.get(id)).filter(
+    (u): u is HomeUnit => !!u && (axis === "すべて" || FILTER_GROUP[u.id] === axis),
+  );
   return (
     <Stack spacing={4}>
       <Box>
@@ -373,13 +426,13 @@ export const CoursesDesignDraft: React.FC = () => {
         </Paper>
       </Box>
 
+      <AxisFilter value={axis} onChange={setAxis} />
+
       <Box component="section" aria-label="単元">
         <CardGrid>
-          {FLOW_ORDER.map((id) => unitById.get(id))
-            .filter((u): u is HomeUnit => !!u)
-            .map((unit) => (
-              <UnitCard key={unit.id} unit={unit} />
-            ))}
+          {visibleUnits.map((unit) => (
+            <UnitCard key={unit.id} unit={unit} />
+          ))}
         </CardGrid>
       </Box>
 
