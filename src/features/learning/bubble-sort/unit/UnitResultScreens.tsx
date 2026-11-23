@@ -4,7 +4,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MascotFigure } from "@/app/component/mascotFigure";
 
@@ -56,19 +56,39 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
         <Typography component="p" sx={{ textAlign: "center", fontSize: 20, fontWeight: 800 }}>
           全{summary.totalQuestions}問に正解しました（初回で{summary.firstAttemptCorrect}問正解）。
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, maxWidth: 640 }}>
-          <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="bounce" grounding="shadow"
-            state={summary.firstAttemptCorrect === summary.totalQuestions ? "happy" : "cheer"} />
-          <Typography component="p" sx={{ fontSize: 17, fontWeight: 700 }}>
-            {summary.firstAttemptCorrect === summary.totalQuestions
-              ? "全部、初回で正解だったよ。"
-              : "見直して直せた問題があったね。"}
-          </Typography>
-        </Box>
+        <ResultMascotReaction perfect={summary.firstAttemptCorrect === summary.totalQuestions} />
       </>
     )}
     {achievements}
     {goalAchievement}
+  </Box>;
+}
+
+/**
+ * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
+ * 数字と事実はシステム文（ドット＋事実文）が担うので、台詞は共感だけにする
+ * （同じ内容を2回言わない）。熱量は出来事で変える：全問初回正解のときだけ
+ * 驚き→お祝いの表情遷移を入れ、それ以外は応援の反応に留める。
+ */
+function ResultMascotReaction({ perfect }: { perfect: boolean }) {
+  const reduce = useReducedMotion();
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (!perfect || reduce) return;
+    const timer = setTimeout(() => setCelebrating(true), 750);
+    return () => clearTimeout(timer);
+  }, [perfect, reduce]);
+  const state = perfect ? (celebrating || reduce ? "celebrate" : "surprise") : "cheer";
+  return <Box sx={{ display: "flex", alignItems: "center", gap: 2, maxWidth: 640 }}>
+    <motion.div key={state} initial={reduce ? false : { opacity: 0, scale: 0.85, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="bounce" grounding="shadow" state={state} />
+    </motion.div>
+    <Typography component="p" sx={{ fontSize: 17, fontWeight: 700 }}>
+      {perfect
+        ? "すごい…！一問も止まらずに解き切ったね！"
+        : "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"}
+    </Typography>
   </Box>;
 }
 

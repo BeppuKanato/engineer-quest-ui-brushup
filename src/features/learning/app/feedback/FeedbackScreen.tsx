@@ -11,6 +11,7 @@ import {
   type FeedbackV1Kind,
 } from "@/app/component/feedbackV1";
 import { feedbackCandidates } from "@/api/feedbackV1.api";
+import { MascotFigure } from "@/app/component/mascotFigure";
 import { playerTokens } from "../../player/player.tokens";
 
 const headingSx = {
@@ -98,6 +99,13 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
               </RevealRow>
             ))}
             <RevealRow index={sections.length} last>
+              {/* 案内役：次の一歩はマスコットが「つなぐ」（中身は変えない。2026-11-20 方針の場面表） */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                <MascotFigure mascotId="red-panda" alt="相棒" size="S" state="point" grounding="shadow" />
+                <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700 }}>次の一歩、持ってきたよ。</Typography>
+                </Box>
+              </Box>
               <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
             </RevealRow>
           </Box>
