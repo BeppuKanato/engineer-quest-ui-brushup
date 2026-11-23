@@ -168,7 +168,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   const optionals =
     count >= 7
       ? [
-          { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const, timing: "任意・いつでも", needsGoal: false },
+          { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const, timing: "任意・予想してみよう", needsGoal: false },
           { t: 5.5 / (count - 1), dx: -95, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const, timing: "任意・段階6のあと", needsGoal: true },
         ]
       : [];
@@ -282,7 +282,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               {/* 完了バッジはチェックではなく「復習できる」の↻にする（一覧の復習ボタンと同じ形・同じ意味）。 */}
               {done && (
                 <Box component="span" aria-hidden sx={{ position: "absolute", right: -2, bottom: -2, width: 30, height: 30, borderRadius: "50%", bgcolor: "#fff", border: "2.5px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ReplayIcon sx={{ fontSize: 17, color: "#16a34a" }} />
+                  <ReplayIcon sx={{ fontSize: 19, color: "#16a34a" }} />
                 </Box>
               )}
               {/* 現在地ノードは「押せる」ことが見た目で分かるように、再生バッジを常時出す
@@ -334,6 +334,13 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
             <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${locked ? "#cbd5e1" : tokens.progress.next}`, bgcolor: locked ? "#f8fafc" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: locked ? "#94a3b8" : tokens.progress.next }}>
               <Icon sx={{ fontSize: 30 }} />
             </Box>
+            {/* 取り組める任意ノードにも、本線の現在地と同じ再生バッジを付けて「押せる」を形で示す
+                （2026-11-23、GPTレビュー10のクリック可能性の指摘を採用）。 */}
+            {!locked && (
+              <Box component="span" aria-hidden sx={{ position: "absolute", right: -2, bottom: -2, width: 24, height: 24, borderRadius: "50%", bgcolor: "#fff", border: `2px solid ${tokens.progress.next}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PlayArrowIcon sx={{ fontSize: 14, color: tokens.progress.next }} />
+              </Box>
+            )}
             <Box
               sx={{
                 position: "absolute",
