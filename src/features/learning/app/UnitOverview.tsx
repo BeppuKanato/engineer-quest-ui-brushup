@@ -1,10 +1,9 @@
 "use client";
 import { Alert, Box, Button, Chip, Container, LinearProgress, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CheckIcon from "@mui/icons-material/Check";
+
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
-import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ScienceIcon from "@mui/icons-material/Science";
 import BuildIcon from "@mui/icons-material/Build";
 import { motion, useReducedMotion } from "framer-motion";
@@ -16,7 +15,7 @@ import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { AppHeader } from "@/app/component/appHeader";
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
-import { goalStore, useGoalCourseId } from "@/design/goalStore";
+import { GoalFlag } from "@/design/GoalFlag";
 import { useUserSession } from "@/app/component/userSession";
 import { startLearningUnit } from "@/api/learning.api";
 import { appLearningTokens as tokens } from "./appLearning.tokens";
@@ -39,9 +38,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   const { firebaseUser } = useUserSession();
   const { progress, loading, error, reload, authenticated } = useLearningProgress(unit?.courseId);
   const [starting, setStarting] = useState(false), [startError, setStartError] = useState<string | null>(null);
-  // 目標は共有状態（コース一覧の旗トグルと同じものを見る）。目標は1つだけ。
-  const goalCourseId = useGoalCourseId();
-  const goalSet = goalCourseId === courseId;
+
   const log = useLearningLog(courseId);
   const mission = unit ? findUnitMission(unit.courseId) : undefined;
   const next = unit && progress ? resumePhaseIndex(unit, progress) : null;
@@ -81,7 +78,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                     <Chip label="目標ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
-                    {goalSet && <Chip icon={<CheckIcon />} label="自分の目標に設定済み" size="small" sx={{ fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
+
                   </Stack>
                   <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900, mt: 1.5, lineHeight: 1.5 }}>{mission.title}</Typography>
                   {/* 学習開始後は説明文を畳む（2026-11-23決定）：未着手と、挑戦・結果が主役の状態では全文を出す。 */}
@@ -101,11 +98,10 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                       <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
                     </>
                   )}
-                  {!missionDone && (
-                    <Button variant="outlined" startIcon={goalSet ? <FlagIcon /> : <FlagOutlinedIcon />} onClick={() => goalStore.toggle(courseId)} sx={{ fontWeight: 700 }}>
-                      {goalSet ? "目標に設定済み" : "目標に設定する"}
-                    </Button>
-                  )}
+                  {/* 目標の操作はコース一覧と同じ旗トグルに統一する（2026-11-23）。 */}
+                  <Box sx={{ pt: 0.5 }}>
+                    <GoalFlag courseId={courseId} title={unit.title} />
+                  </Box>
                 </Stack>
               </Stack>
             </Box>
