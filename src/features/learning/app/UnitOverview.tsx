@@ -4,6 +4,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckIcon from "@mui/icons-material/Check";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
+import ScienceIcon from "@mui/icons-material/Science";
+import BuildIcon from "@mui/icons-material/Build";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,6 +117,19 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 4 } }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
           <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
+          {completed === 6 && (
+            <Box component="section" aria-label="発展ミッション" sx={{ mt: 3, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: 3 }}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between">
+                <Box>
+                  <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900 }}>発展ミッション</Typography>
+                  <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>この単元で学んだことを使って解く課題です。解き方は1つではありません。</Typography>
+                </Box>
+                <Button variant="outlined" component={Link} href="/missions" sx={{ fontWeight: 700, flexShrink: 0 }}>
+                  発展ミッションを見る
+                </Button>
+              </Stack>
+            </Box>
+          )}
           <ConceptProgressMap courseId={courseId} />
           <UnitAchievements courseId={courseId} />
         </>}
@@ -148,6 +163,19 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
     return full.replace(/([ML])([\d.]+),([\d.]+)/g, (_, cmd, x, y) => `${cmd}${y},${x}`);
   };
   const viewBox = vertical ? `0 0 ${WAVE.height} ${WAVE.width}` : `0 0 ${WAVE.width} ${WAVE.height}`;
+  // 任意フェーズの置き場所（波の座標系でのずらし）：1.5 は本線の上、6.5 は本線の下に逃がし、
+  // 破線で本線とつなぐ。本線の上に置くと前後の段階ラベルと重なるため。
+  const optionals =
+    count >= 7
+      ? [
+          { t: 0.5 / (count - 1), dx: -14, dy: -76, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const },
+          { t: 5.5 / (count - 1), dx: 0, dy: 118, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const },
+        ]
+      : [];
+  const optionalPos = (o: (typeof optionals)[number]) => {
+    const wave = wavePoint(o.t);
+    return vertical ? { x: wave.y + o.dy, y: wave.x + o.dx } : { x: wave.x + o.dx, y: wave.y + o.dy };
+  };
   const doneUntil = next === null ? 1 : count === 1 ? 0 : next / (count - 1);
   const first = point(0), last = point(count - 1);
   return (
@@ -199,6 +227,13 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           <text x={vertical ? last.x - 52 : last.x + 6} y={vertical ? last.y - 10 : last.y - 56} textAnchor="end" fontSize={24} fontWeight={700} fill="#d97706">ゴール</text>
         </g>
         )}
+        {/* 任意フェーズと本線をつなぐ破線 */}
+        {optionals.map((o) => {
+          const wave = wavePoint(o.t);
+          const from = vertical ? { x: wave.y, y: wave.x } : { x: wave.x, y: wave.y };
+          const to = optionalPos(o);
+          return <line key={o.label} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={tokens.progress.next} strokeWidth={2.5} strokeDasharray="5 6" />;
+        })}
       </svg>
       {unit.phases.map((phase, index) => {
         const isMission = index === count - 1;
@@ -258,6 +293,39 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. ミッション挑戦" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
+            </Box>
+          </Box>
+        );
+      })}
+      {/* 任意フェーズ（2026-11-23「置く」と決定）：1.5＝予測・実験（段階1と2の間）、
+          6.5＝実装の橋渡し（段階6とミッション挑戦の間）。本線から少し離して破線でつなぎ、
+          本線の円より小さく破線の輪で「任意」を表す。進捗の分母（6）には入れない。 */}
+      {optionals.map((o) => {
+        const pos = optionalPos(o);
+        const size = 56;
+        const Icon = o.Icon;
+        return (
+          <Box
+            key={o.label}
+            aria-label={`任意フェーズ：${o.label}`}
+            sx={{ position: "absolute", left: `${(pos.x / (vertical ? WAVE.height : WAVE.width)) * 100}%`, top: `${(pos.y / (vertical ? WAVE.width : WAVE.height)) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
+          >
+            <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${tokens.progress.next}`, bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: tokens.progress.next }}>
+              <Icon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box
+              sx={{
+                position: "absolute",
+                ...(o.labelSide === "above" ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }),
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 150,
+                textAlign: "center",
+                pointerEvents: "none",
+              }}
+            >
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{o.label}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>任意</Typography>
             </Box>
           </Box>
         );
