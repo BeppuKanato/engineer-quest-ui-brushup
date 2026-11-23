@@ -235,23 +235,27 @@ function FeedbackCard({ label, body }: { label: string; body: string }) {
  */
 function RevealRow({ children, index = 0, last = false }: { children: ReactNode; index?: number; last?: boolean }) {
   const reduce = useReducedMotion();
-  const delay = Math.min(index * 0.12, 0.36);
+  // 読み進める順に1つずつ出す（2026-11-23 改訂）。以前は全行がほぼ同時に出て
+  // 「いっぺんに出すだけ」だった。タップは不要で、全コンテンツは最初から
+  // DOM にある。受け渡し（0〜0.35s）のあと praise から 0.55s 間隔で続き、
+  // 左の線も同じ歩調で上から満ちていく。全行が出そろうまで約3秒。
+  const delay = reduce ? 0 : 0.3 + index * 0.55;
   return <Box sx={{ display: "flex", gap: 2 }}>
     <Box sx={{ width: 20, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <motion.div initial={{ scale: reduce ? 1 : 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, margin: "-30px" }}
+      <motion.div initial={{ scale: reduce ? 1 : 0 }} animate={{ scale: 1 }}
         transition={{ duration: 0.25, delay }} style={{ marginTop: 24, display: "flex" }}>
         <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${playerTokens.focus}` }} />
       </motion.div>
       {!last && <Box sx={{ position: "relative", width: 2, flex: 1, minHeight: 12, mt: 0.75 }}>
         <Box sx={{ position: "absolute", left: 0, top: 0, bottom: -32, width: 2, bgcolor: "#dbe3ef" }}>
-          <motion.div initial={{ scaleY: reduce ? 1 : 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true, margin: "-30px" }}
-            transition={{ duration: 0.45, delay: delay + 0.1 }}
+          <motion.div initial={{ scaleY: reduce ? 1 : 0 }} animate={{ scaleY: 1 }}
+            transition={{ duration: 0.5, delay: delay + 0.15 }}
             style={{ position: "absolute", inset: 0, backgroundColor: playerTokens.focus, transformOrigin: "top" }} />
         </Box>
       </Box>}
     </Box>
-    <motion.div initial={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }} transition={{ duration: 0.35, delay }}
+    <motion.div initial={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
       style={{ flex: 1, minWidth: 0, paddingBottom: last ? 4 : 18 }}>
       {children}
     </motion.div>
