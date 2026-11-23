@@ -82,6 +82,10 @@ const wallExtension = unit({
   id: "course-algorithm-wall-extension-v1",
   title: "棒倒し法",
   group: "迷路生成",
+  status: "IN_PROGRESS",
+  completedPhases: 2,
+  collectedCards: 1,
+  nextPhase: "動きの確認問題",
 });
 const mazeDigging = unit({
   id: "course-algorithm-maze-digging-v1",
