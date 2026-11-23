@@ -38,7 +38,7 @@ export function UnitPreviewShell({ children }: { children: ReactNode }) {
         <Typography component="h1" sx={{ mt: 2, fontSize: 24, fontWeight: 900 }}>
           {unit.title}
         </Typography>
-        <Typography sx={{ mt: 1, lineHeight: 1.9 }}>{unit.description}</Typography>
+        <Typography sx={{ mt: 1, lineHeight: 1.9 }}>{unit.intro}</Typography>
         <Box sx={{ mt: 3, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: `2px solid ${tokens.progress.next}`, borderRadius: 3 }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
             {Scene && (
