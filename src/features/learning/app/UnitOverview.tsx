@@ -302,7 +302,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           本線の円より小さく破線の輪で「任意」を表す。進捗の分母（6）には入れない。 */}
       {optionals.map((o) => {
         const pos = optionalPos(o);
-        const size = 56;
+        const size = 80;
         const Icon = o.Icon;
         return (
           <Box
@@ -311,7 +311,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
             sx={{ position: "absolute", left: `${(pos.x / (vertical ? WAVE.height : WAVE.width)) * 100}%`, top: `${(pos.y / (vertical ? WAVE.width : WAVE.height)) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
           >
             <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${tokens.progress.next}`, bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: tokens.progress.next }}>
-              <Icon sx={{ fontSize: 24 }} />
+              <Icon sx={{ fontSize: 30 }} />
             </Box>
             <Box
               sx={{
