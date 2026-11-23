@@ -4,18 +4,18 @@
 // この画面の目的は「次に学ぶものを選ぶ画面」。v3 の転換点はサムネイル主役：
 // - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
 // - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
-// - 状態は2か所で表す：サムネの上の印（学習中チップ／ミッション達成の旗）と、
+// - 状態は2か所で表す：サムネの上の印（学習中チップ／完了＝メダルのバッジ）と、
 //   カード下部の状態ボタン。ボタンは文字を読まなくても色と形で状態が分かること
-//   （2026-11-23 Kanato）：未着手＝青地＋▶、学習中＝青地＋段階の目盛り、完了＝淡色地＋✓。
+//   （2026-11-23 Kanato）：未着手＝青＋▶、学習中＝青＋段階の目盛り、完了＝緑＋円の矢印。
+//   グレーは操作できない状態だけに使う（完了に淡色を使うと「押せない」と読まれる）。
 //   ボタンはカード全体リンクの中の見た目上のボタン（遷移はカード全体が担う）。
 // - カード全体が単元画面へのリンク
 // グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
 // BFS のサムネだけ、目標ミッションの場面を描いた試作（MissionThumbnail）に差し替えてある。
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import FlagIcon from "@mui/icons-material/Flag";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ReplayIcon from "@mui/icons-material/Replay";
 import Link from "next/link";
 
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
@@ -47,27 +47,33 @@ const OTHER_IDS = [
   "course-algorithm-merge-sort-v1",
 ];
 
+/** 完了バッジ：メダル（円＋リボン＋✓）。達成したことを称える印。文字に頼らない。 */
+const CompletionBadge: React.FC = () => (
+  <Box
+    component="svg"
+    viewBox="0 0 52 60"
+    aria-label="ミッション達成"
+    sx={{
+      position: "absolute",
+      top: 8,
+      right: 10,
+      zIndex: 1,
+      width: 50,
+      height: 58,
+      transform: "rotate(-8deg)",
+      filter: "drop-shadow(0 2px 4px rgba(15, 40, 90, 0.35))",
+    }}
+  >
+    <polygon points="15,32 9,56 21,49 25,38" fill="#1e40af" />
+    <polygon points="37,32 43,56 31,49 27,38" fill="#1e40af" />
+    <circle cx="26" cy="24" r="19" fill="#2563eb" stroke="#ffffff" strokeWidth="3" />
+    <path d="M17 24 l6.5 6.5 L35 18" fill="none" stroke="#ffffff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+  </Box>
+);
+
 const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   if (unit.status === "COMPLETED") {
-    return (
-      <Chip
-        icon={<FlagIcon sx={{ fontSize: 16, color: "#fff !important" }} />}
-        label="ミッション達成"
-        size="small"
-        sx={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          zIndex: 1,
-          bgcolor: PRIMARY,
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: 14,
-          height: 28,
-          boxShadow: "0 1px 4px rgba(15, 40, 90, 0.35)",
-        }}
-      />
-    );
+    return <CompletionBadge />;
   }
   if (unit.status === "IN_PROGRESS") {
     return (
@@ -95,9 +101,12 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
 
 /**
  * 状態ボタン：カード下部に置く見た目上のボタン（遷移はカード全体のリンクが担う）。
- * 文字を読まなくても状態が分かるように、色と形で分ける：
- * 未着手＝青地＋▶／学習中＝青地＋段階の目盛り（白）／完了＝淡色地＋✓。
+ * 文字を読まなくても状態が分かるように、一般的なマークと色の役割で分ける：
+ * 未着手＝青＋▶／学習中＝青＋段階の目盛り（白）／完了＝緑＋円の矢印。
+ * グレーは操作できない状態だけに使うので、完了には使わない。
  */
+const REVIEW_GREEN = "#16a34a";
+
 const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const base = {
     display: "flex",
@@ -111,8 +120,8 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   } as const;
   if (unit.status === "COMPLETED") {
     return (
-      <Box component="span" sx={{ ...base, bgcolor: "#e8eef7", color: PRIMARY }}>
-        <CheckCircleIcon sx={{ fontSize: 19 }} />
+      <Box component="span" sx={{ ...base, bgcolor: REVIEW_GREEN, color: "#fff" }}>
+        <ReplayIcon sx={{ fontSize: 19 }} />
         復習する
       </Box>
     );
@@ -125,8 +134,8 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             <Box
               key={i}
               sx={{
-                width: 14,
-                height: 6,
+                width: 18,
+                height: 8,
                 borderRadius: 999,
                 bgcolor: i < unit.completedPhases ? "#fff" : "rgba(255,255,255,0.35)",
               }}
