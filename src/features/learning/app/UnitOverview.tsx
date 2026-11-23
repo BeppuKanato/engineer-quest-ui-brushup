@@ -5,6 +5,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ReplayIcon from "@mui/icons-material/Replay";
 import ScienceIcon from "@mui/icons-material/Science";
 import BuildIcon from "@mui/icons-material/Build";
 import { motion, useReducedMotion } from "framer-motion";
@@ -236,7 +237,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
         const reachable = index <= (next ?? count - 1);
         const Icon = isMission ? FlagIcon : learningPhaseIcons[index];
         const status = done ? "達成済み" : isMission ? (missionReady ? "挑戦できる" : "未着手") : current && hasProgress ? "進行中" : "未着手";
-        const label = isMission ? "単元ミッション" : `${phase.phase}. ${phase.shortName}`;
+        const label = isMission ? "最終チャレンジ" : `${phase.phase}. ${phase.shortName}`;
         const position = point(index);
         const size = current ? 118 : 102;
         return (
@@ -258,19 +259,26 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               onClick={() => { if (isMission) onMission(); else onStart(index, current); }}
               sx={{
                 width: size, height: size, minWidth: size, borderRadius: "50%",
-                border: `3px solid ${current ? tokens.progress.next : tokens.progress.stroke}`,
-                bgcolor: done ? tokens.progress.completed : current ? tokens.progress.next : tokens.progress.idle,
-                color: current ? tokens.surface : tokens.text,
+                // 完了ノードはプレイヤーの状態色（灰）ではなく意味色の緑にする。完了は押して
+                // 復習できるのに、灰色だと「押せない」と誤読されるため（2026-11-23 Kanato）。
+                border: `3px solid ${current ? tokens.progress.next : done ? "#16a34a" : tokens.progress.stroke}`,
+                bgcolor: done ? "#f0fdf4" : current ? tokens.progress.next : tokens.progress.idle,
+                color: current ? tokens.surface : done ? "#15803d" : tokens.text,
                 position: "relative",
                 boxShadow: current
                   ? `0 0 0 5px ${tokens.background}, 0 0 0 9px #93c5fd, 0 12px 24px rgba(37, 99, 235, 0.35)`
                   : reachable ? "0 8px 18px rgba(15, 23, 42, 0.16)" : "none",
                 transition: "background-color 200ms, transform 200ms",
-                "&:hover": { transform: "translateY(-3px)", bgcolor: done ? tokens.progress.completed : current ? tokens.progress.next : tokens.progress.idle },
+                "&:hover": { transform: "translateY(-3px)", bgcolor: done ? "#dcfce7" : current ? tokens.progress.next : tokens.progress.idle },
               }}
             >
               <Icon sx={{ fontSize: 44 }} />
-              {done && <CheckCircleIcon aria-hidden sx={{ position: "absolute", right: 0, bottom: 0, fontSize: 28 }} />}
+              {/* 完了バッジはチェックではなく「復習できる」の↻にする（一覧の復習ボタンと同じ形・同じ意味）。 */}
+              {done && (
+                <Box component="span" aria-hidden sx={{ position: "absolute", right: -2, bottom: -2, width: 30, height: 30, borderRadius: "50%", bgcolor: "#fff", border: "2.5px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ReplayIcon sx={{ fontSize: 17, color: "#16a34a" }} />
+                </Box>
+              )}
               {/* 現在地ノードは「押せる」ことが見た目で分かるように、再生バッジを常時出す
                   （2026-11-23、Kanato：ホバーで出るだけでは足りない）。完了のチェックと対の位置。 */}
               {current && (
@@ -291,7 +299,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "単元ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "最終チャレンジ" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
