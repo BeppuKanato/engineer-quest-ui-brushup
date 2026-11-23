@@ -118,13 +118,14 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 4 } }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
           <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
-          {findDevelopmentLinks(courseId).length > 0 && (
-            <Box sx={{ mt: 1, textAlign: "right" }}>
+          <Box sx={{ mt: 1, display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, flexWrap: "wrap" }}>
+            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>任意フェーズは、学習段階の進捗には数えません。</Typography>
+            {findDevelopmentLinks(courseId).length > 0 && (
               <Link href="/missions" style={{ color: "#2563eb", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
                 発展ミッション一覧へ
               </Link>
-            </Box>
-          )}
+            )}
+          </Box>
           {/* 概念の確認状況は出さない（2026-11-23決定）：概念名はカリキュラム側の語彙で、
               学習者の行動につながらない。代わりに実績と知識カードの提示を置く。 */}
           <UnitAchievements courseId={courseId} />
@@ -303,8 +304,11 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
                 {hasProgress ? "現在地" : "ここから始める"}
               </Box>
             )}
-            <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
+            <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: isMission ? "translateX(-66%)" : "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "最終チャレンジ" : `${phase.phase}. ${phase.shortName}`}</Typography>
+              {/* 最終チャレンジが帯の単元ミッションと同一物だと分かるよう、題をそのまま出す
+                  （2026-11-23、GPTレビュー9：ミッションと進捗のつながり）。 */}
+              {isMission && <Typography sx={{ fontSize: 14 }}>{findUnitMission(unit.courseId)?.title}</Typography>}
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
@@ -372,7 +376,7 @@ function UnitKnowledgeCards({ courseId, completedCount, missionDone }: { courseI
           const owned = ownedOf(slot);
           const tone = knowledgeCardTones[card.rarity as keyof typeof knowledgeCardTones];
           return (
-            <Box key={card.id} sx={{ p: 2, border: `1.5px solid ${owned ? tone.border : tokens.border}`, borderRadius: 2, bgcolor: owned ? tokens.surface : uncollectedTone.background }}>
+            <Box key={card.id} sx={{ p: 2, border: `1.5px solid ${owned ? tone.border : tokens.border}`, borderRadius: 2, bgcolor: owned ? tone.bgcolor : uncollectedTone.background }}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                 <Typography sx={{ fontSize: 14, fontWeight: 800, color: owned ? tone.color : uncollectedTone.color }}>{tone.label}</Typography>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, color: owned ? "#15803d" : "text.secondary" }}>{owned ? "獲得済み" : "未獲得"}</Typography>
