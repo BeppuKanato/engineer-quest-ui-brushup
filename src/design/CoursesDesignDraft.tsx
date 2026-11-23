@@ -223,17 +223,17 @@ const STATE_ORDER: Record<string, number> = { IN_PROGRESS: 0, NOT_STARTED: 1, CO
 
 /**
  * 学習内容の説明（2026-11-23 追加）：役割分担は、ミッションの題＝この単元で挑む課題（場面）、
- * この説明＝アルゴリズムの目的と特徴。文は「〜するのが目的です。」で目的を明記し、
- * 体言止めにせず文として終える（Kanato の指定）。
+ * この説明＝どうやって解決するかの仕組みを学ぶ、という文（GPT案を Kanato が採用）。
+ * 目的を説明側にも書くと題と重なるため、説明は仕組み＋学びに寄せる。
  */
 const FEATURE_TEXT: Record<string, string> = {
-  "course-algorithm-breadth-first-search-v1": "いちばん短いルートを見つけるのが目的です。近い場所から順に、広げながら調べていきます",
-  "course-algorithm-depth-first-search-v1": "出口までの道を見つけるのが目的です。一本道を深く進み、行き止まりなら戻ります",
-  "course-algorithm-maze-digging-v1": "全体がつながる迷路を作るのが目的です。壁を掘って、通路を伸ばしていきます",
-  "course-algorithm-wall-extension-v1": "全体がつながる迷路を作るのが目的です。柱から壁を倒して、伸ばしていきます",
-  "course-algorithm-bubble-sort-v2": "バラバラな並びを順番どおりに整えるのが目的です。隣同士を比べて、交換していきます",
-  "course-algorithm-binary-search-v1": "探しものを速く見つけるのが目的です。調べる範囲を半分ずつに絞っていきます",
-  "course-algorithm-greedy-coins-v1": "いちばんよい答えを見つけるのが目的です。その場で最良の選択を繰り返していきます",
+  "course-algorithm-breadth-first-search-v1": "近い場所から順に調べていくことで、最短ルートを見つける仕組みを学びます",
+  "course-algorithm-depth-first-search-v1": "一本道を深く進み、行き止まりで戻ることで、道を見つける仕組みを学びます",
+  "course-algorithm-maze-digging-v1": "壁を掘って通路を伸ばしていくことで、迷路を作る仕組みを学びます",
+  "course-algorithm-wall-extension-v1": "柱から壁を倒して伸ばすことで、迷路を作る仕組みを学びます",
+  "course-algorithm-bubble-sort-v2": "隣同士を比べて交換を繰り返すことで、並べ替える仕組みを学びます",
+  "course-algorithm-binary-search-v1": "調べる範囲を半分ずつ絞り込むことで、効率よく探す仕組みを学びます",
+  "course-algorithm-greedy-coins-v1": "その場で最良の選択を繰り返すことで、答えを出す考え方を学びます",
 };
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
