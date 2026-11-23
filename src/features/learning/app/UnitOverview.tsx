@@ -168,8 +168,8 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   const optionals =
     count >= 7
       ? [
-          { t: 0.5 / (count - 1), dx: -14, dy: -76, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const },
-          { t: 5.5 / (count - 1), dx: 0, dy: 118, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const },
+          { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const },
+          { t: 5.5 / (count - 1), dx: -6, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const },
         ]
       : [];
   const optionalPos = (o: (typeof optionals)[number]) => {
