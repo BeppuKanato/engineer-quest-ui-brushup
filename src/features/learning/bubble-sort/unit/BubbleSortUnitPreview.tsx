@@ -23,7 +23,7 @@ import { BubbleSortImplementationPreview } from "../implementation/BubbleSortImp
 import { BubbleSortMotivationPreview } from "../motivation/BubbleSortMotivationPreview";
 import { bubbleSortUnitPhases, nextPhaseLabel, bubbleSortUnitText, bubbleSortUnitTitle, type BubbleSortUnitPhase } from "./unit.content";
 import type { BubbleSortUnitPhaseSummary } from "./unit.types";
-import { PhaseResultHeader, UnitFinalResult, UnitResultScreen } from "./UnitResultScreens";
+import { PhaseResultHeader, PhaseResultSummaryLine, UnitFinalResult, UnitResultScreen } from "./UnitResultScreens";
 import { FeedbackPositionFigure } from "../../app/feedback/FeedbackPositionFigure";
 
 type Screen = { kind: "phase"; index: number } | { kind: "result"; index: number } | { kind: "bridge"; index: number } | { kind: "final" } | { kind: "feedback"; index: number } | { kind: "unitFeedback" };
@@ -66,7 +66,7 @@ export type BubbleSortUnitPreviewProps = {
   onCheckPhaseCompleted?: (phaseKey: string, nextPhaseKey: string | null) => void;
   /** フィードバックがこの学習者に適用される見込みがあるか。false の間は結果画面の前進が従来のブリッジへ向かう。 */
   feedbackEnabled?: boolean;
-  renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode }) => ReactNode;
+  renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode }) => ReactNode;
   renderUnitFeedbackScreen?: (nav: { goBack: () => void; figure: ReactNode }) => ReactNode;
 };
 export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0, initialFurthestIndex, initialUnitComplete = false, initialCompletedPhases = [], initialSummaries = {}, codeDraftBaseKey, onCodeDraftError, onPhaseComplete, onFinalResult, onLearningEvent, rewards, renderRewards, renderPhaseAchievements, renderNewAchievements, renderPhaseGoalAchievement, renderFinalGoalAchievement, onCheckPhaseCompleted, feedbackEnabled = false, renderPhaseFeedbackScreen, renderUnitFeedbackScreen }: BubbleSortUnitPreviewProps = {}) {
@@ -303,6 +303,9 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
             <PhaseResultHeader phase={bubbleSortUnitPhases[screen.index]} summary={summaries[screen.index]}
               achievements={renderPhaseAchievements?.(bubbleSortUnitPhases[screen.index].id)}
               goalAchievement={renderPhaseGoalAchievement?.(bubbleSortUnitPhases[screen.index].id)} />
+          ) : undefined,
+          summary: isCheckPhase(bubbleSortUnitPhases[screen.index]) ? (
+            <PhaseResultSummaryLine summary={summaries[screen.index]} />
           ) : undefined,
         })}
         {screen.kind === "bridge" && (

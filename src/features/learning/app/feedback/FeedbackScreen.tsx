@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import confetti from "canvas-confetti";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -38,16 +39,21 @@ const primaryButtonSx = {
  * 出さない（位置はフェーズチップが担い、概念はカリキュラム側の記録で
  * 学習者の行動の手がかりにならないため）。
  * 推薦する行動が画面の主ボタンで、「そのまま次へ」の副次的な出口は
- * 生成中・失敗時を含め常時置く（着手は学習者の任意のまま）。
+ * 生成中・失敗時を含め常時置く（着手は学習者の任意のまま）。ただし推薦先が
+ * 次のフェーズそのものの場合は出口を二重に出さず、推薦を次の学習として出す。
  * フィードバックが適用されない学習者（割り当てなし等）では、
  * 称賛の段が終わるのを待ってから onUnavailable で本来の導線へ進める。
  */
-export function FeedbackScreen({ kind, eventId, heading, header, onAction, onProceed, proceedLabel, onUnavailable, children }: {
+export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPhaseKey, onAction, onProceed, proceedLabel, onUnavailable, children }: {
   kind: Extract<FeedbackV1Kind, "phase" | "unit">;
   eventId: string;
   heading: string;
   /** 称賛ブロック。ある場合は見出しの代わりに画面の頭になる。 */
   header?: ReactNode;
+  /** 第1段の結果の要約。第2段の頭に小さく引き継ぐ（連続性）。 */
+  summary?: ReactNode;
+  /** 次のフェーズのキー。推薦先がこれと一致する場合は「選択」ではなく次そのものとして出す。 */
+  nextPhaseKey?: string | null;
   // Called when the recommended action is clicked. Return true to handle the
   // navigation in-app (e.g. moving between phases) instead of following the link.
   onAction?: (href: string | null) => boolean;
@@ -93,10 +99,13 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
   }, [unavailable, header, onUnavailable]);
   useEffect(() => {
     if (stage === "feedback") {
+      // 祝福の紙吹雪は段の切り替わりで収束させる（第2段は振り返りの場で、
+      // 紙吹雪を持ち越すと演出の切り替わりが曖昧になる。GPT レビュー §4）。
+      if (header) confetti.reset();
       scrollRef.current?.scrollTo({ top: 0 });
       headingRef.current?.focus();
     }
-  }, [stage]);
+  }, [stage, header]);
   const f = result?.feedback;
   const failed = error || result?.status === "FAILED";
   // 文章の構造（2026-11-23 改訂）: praise（根拠のある称賛）→ strength / improvement
@@ -111,6 +120,10 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
   ] : [];
   const praise = f?.praise ?? null;
   const rowOffset = praise ? 1 : 0;
+  // 推薦先が次のフェーズそのものなら、それは「選べる候補」ではなく次の学習
+  // そのもの（GPT レビュー §5）。選択の体裁と二重の進むボタンをやめる。
+  const actionPhase = f?.actionHref ? new URL(f.actionHref, "http://localhost").searchParams.get("phase") : null;
+  const actionIsNext = !!actionPhase && !!nextPhaseKey && actionPhase === nextPhaseKey;
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
     <AnimatePresence mode="wait" initial={false}>
@@ -121,9 +134,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
         {header}
         <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ delay: reduce ? 0 : 2.6, duration: 0.4 }} style={{ display: "flex" }}>
-          <Button variant="text" onClick={advance}
-            sx={{ minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control }}>
-            フィードバックを見る
+          {/* 第1段の出口は画面の主CTAにする（GPT レビュー §1①）。自動遷移の先回り用でもある */}
+          <Button variant="contained" onClick={advance} sx={primaryButtonSx}>
+            今回の学びを振り返る
           </Button>
         </motion.div>
       </motion.div>
@@ -137,6 +150,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
           <Typography ref={headingRef} component="h2" tabIndex={-1} sx={{ fontSize: 18, fontWeight: 900, outline: "none" }}>あなたへの学習フィードバック</Typography>
           <Typography sx={{ fontSize: 14, mt: 0.5 }}>今回の取り組みをもとに作成されました。</Typography>
         </Box>}
+        {summary && !unavailable && <Box sx={{ display: "flex", justifyContent: "center" }}>{summary}</Box>}
         {unavailable ? <Typography role="status" color="text.secondary">フィードバックはありません。次へ進みます。</Typography>
           : failed && !retrying ? <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 640 }}>
               <Alert severity="warning">フィードバックを生成できませんでした。学習は続けられます。</Alert>
@@ -161,7 +175,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
                 ))}
                 <RevealRow index={sections.length + rowOffset} last>
                   <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>次の一歩</Typography>
-                  <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
+                  <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} />
                 </RevealRow>
               </Box>
             </Box>}
@@ -170,12 +184,12 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
       </motion.div>
     )}
     </AnimatePresence>
-    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ justifyContent: "center", mt: 1, flexShrink: 0 }}>
+    {!actionIsNext && <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ justifyContent: "center", mt: 1, flexShrink: 0 }}>
       <Button data-feedback-skip variant={f?.actionHref ? "text" : "contained"} onClick={onProceed}
         sx={f?.actionHref ? { minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control } : primaryButtonSx}>
         {proceedLabel}
       </Button>
-    </Stack>
+    </Stack>}
   </Box>;
 }
 

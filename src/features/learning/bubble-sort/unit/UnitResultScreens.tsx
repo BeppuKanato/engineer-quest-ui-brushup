@@ -98,9 +98,10 @@ type ResultTier = "perfect" | "corrected" | "remaining";
 
 /**
  * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
- * 数字と事実はシステム文（ドット＋事実文）が担い、「何がどう良かったか」は
- * 第2段の文章側 praise 要素が根拠つきで担う。台詞は純粋な反応だけにし、
- * 内容を先回りして言わない（重複とネタバレの回避。2026-11-23 構造改訂）
+ * 数字と事実はシステム文（ドット＋事実文）が担い、詳しい根拠は第2段の
+ * 文章側 praise 要素が担う。台詞は反応に加えて一言だけ内容に触れ、
+ * フィードバックで振り返る期待を作る（GPT レビュー §1②。praise との
+ * 重複は許容する——自分の学習記録に「ネタバレ」はない。2026-11-23 改訂）
  * （同じ内容を2回言わない）。動きも担う：成績の点灯中は小さく揺れて待ち、
  * 点き終わった瞬間に反応する。熱量は出来事の大きさで変える：
  * 全問初回正解＝驚き→お祝い＋大きな跳躍、全部直し切った＝応援＋小さい跳び、
@@ -135,12 +136,30 @@ function ResultMascotReaction({ tier, reacted, remainingCount }: {
       transition={{ duration: 0.35, delay: 0.15 }} style={{ margin: 0 }}>
       <Typography component="span" sx={{ display: "block", fontSize: 18, fontWeight: 700 }}>
         {tier === "perfect"
-          ? "すごい…！ほんとにすごいよ！"
+          ? "すごい…！一問も止まらずに解き切ったね。フィードバックで振り返ってみよう。"
           : tier === "corrected"
-            ? "おつかれさま。最後までやり切ったね。"
-            : `残った${remainingCount}問は、あとで見直せるよ。ここまでよく進めたね。`}
+            ? "つまずいても、見直して自分の力で直せたね。そこをフィードバックで振り返ろう。"
+            : `残った${remainingCount}問は、あとで見直せるよ。どこで止まったか、フィードバックで確認しよう。`}
       </Typography>
     </motion.p>}
+  </Box>;
+}
+
+/**
+ * 第2段（フィードバック）の頭に引き継ぐ結果の要約（2026-11-23 連続性対応）。
+ * 第1段で見た事実を小さく残し、祝福から振り返りへ切れ目なく移るため。
+ */
+export function PhaseResultSummaryLine({ summary }: { summary?: BubbleSortUnitPhaseSummary }) {
+  const total = summary?.totalQuestions;
+  const first = summary?.firstAttemptCorrect;
+  if (total === undefined || first === undefined) return null;
+  const eventual = summary?.eventuallyCorrect ?? first;
+  const text = eventual >= total
+    ? `全${total}問に正解（初回で${first}問正解）`
+    : `${total}問中${eventual}問正解（初回で${first}問正解）`;
+  return <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+    <ResultScoreDots total={total} firstAttemptCorrect={first} eventuallyCorrect={summary?.eventuallyCorrect} />
+    <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{text}</Typography>
   </Box>;
 }
 
