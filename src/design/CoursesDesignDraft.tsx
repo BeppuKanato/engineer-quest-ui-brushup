@@ -427,7 +427,7 @@ const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoa
             <Box
               component="button"
               type="button"
-              aria-label={`${unit.title}のミッションを見る`}
+              aria-label={`${unit.title}のストーリーを見る`}
               onClick={(event) => { event.preventDefault(); event.stopPropagation(); onShowStory(unit); }}
               sx={{
                 display: "inline-flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 0,
@@ -436,7 +436,7 @@ const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoa
               }}
             >
               <PlayCircleOutlineIcon sx={{ fontSize: 20 }} />
-              ミッションを見る
+              ストーリーを見る
             </Box>
           )}
           <StateButton unit={unit} />
