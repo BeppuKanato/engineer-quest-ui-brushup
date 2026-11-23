@@ -76,6 +76,8 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   const reduce = useReducedMotion();
   // ページ遷移なしの2段構成（header がある場合のみ）：称賛の段 → フィードバックの段。
   const [stage, setStage] = useState<"celebration" | "feedback">(header ? "celebration" : "feedback");
+  // 第2段の出現演出をタップで即時完了させる（繰り返し見る際の待ち時間対策）。
+  const [fastForward, setFastForward] = useState(false);
   const advance = useCallback(() => {
     // フィードバックが無い場合は、称賛の段を終えてから本来の導線へ進める。
     if (unavailableRef.current) {
@@ -115,12 +117,12 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   // 文章の構造（2026-11-23 改訂）: praise（根拠のある称賛）→ strength / improvement
   // （Feed Back を強みと改善点に分割）→ nextGoal（Feed Up）。旧形式
   // （currentState / explanation）もそのまま表示できるよう残す。
-  const sections: ReadonlyArray<readonly [string, string]> = f ? [
-    ...(f.strength ? [["できていること", f.strength] as const]
-      : f.currentState ? [["現在の状態", f.currentState] as const] : []),
-    ...(f.improvement ? [["改善点", f.improvement] as const]
-      : !f.strength && f.explanation ? [["フィードバック", f.explanation] as const] : []),
-    ["次の目標", f.nextGoal],
+  const sections: ReadonlyArray<{ label: string; body: string; headline?: string | null }> = f ? [
+    ...(f.strength ? [{ label: "できていること", body: f.strength, headline: f.strengthHeadline }]
+      : f.currentState ? [{ label: "現在の状態", body: f.currentState }] : []),
+    ...(f.improvement ? [{ label: "改善点", body: f.improvement, headline: f.improvementHeadline }]
+      : !f.strength && f.explanation ? [{ label: "フィードバック", body: f.explanation }] : []),
+    { label: "次の目標", body: f.nextGoal },
   ] : [];
   const praise = f?.praise ?? null;
   const rowOffset = praise ? 1 : 0;
@@ -146,7 +148,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
       </motion.div>
     ) : (
       <motion.div key="feedback" initial={header && !reduce ? { opacity: 0, y: 24 } : false} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
+        transition={{ duration: 0.45 }} onClick={() => setFastForward(true)}
         style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
         {!header && <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{heading}</Typography>}
         <Box ref={scrollRef} sx={{ flex: 1, minHeight: 0, overflowY: "auto", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, pb: 2 }}>
@@ -165,23 +167,26 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
               <FeedbackDelivery />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               <Box sx={{ mt: 1.5 }}>
-                {praise && <RevealRow index={0}>
+                {praise && <RevealRow key={`praise-${fastForward}`} index={0} fast={fastForward}>
                   {/* 主役: praise は根拠のある称賛。画面で1つだけの強調面（2px 枠）で出し、
-                      出現時に枠が一度だけ光って気づきへ注意を引く（常時の発光はしない） */}
+                      出現時に枠が一度だけ光って気づきへ注意を引く（常時の発光はしない）。
+                      見出し（生成側の praiseHeadline）があれば、結論を先に置いて
+                      本文を「根拠の確認」として読ませる見出し先行の形にする */}
                   <motion.div initial={false}
-                    animate={reduce ? undefined : { boxShadow: ["0 0 0 0 rgba(37,99,235,0)", "0 0 0 8px rgba(37,99,235,0.16)", "0 0 0 0 rgba(37,99,235,0)"] }}
+                    animate={reduce || fastForward ? undefined : { boxShadow: ["0 0 0 0 rgba(37,99,235,0)", "0 0 0 8px rgba(37,99,235,0.16)", "0 0 0 0 rgba(37,99,235,0)"] }}
                     transition={{ duration: 1.2, delay: 0.55, times: [0, 0.35, 1] }}
                     style={{ backgroundColor: "#fff", border: `2px solid ${playerTokens.focus}`, borderRadius: 16, padding: "20px 22px" }}>
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>あなたの学び</Typography>
-                    <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.8 }}>{praise}</Typography>
+                    {f?.praiseHeadline && <Typography sx={{ fontSize: 22, fontWeight: 900, lineHeight: 1.5, mb: 1 }}>{f.praiseHeadline}</Typography>}
+                    <Typography sx={{ fontSize: 18, fontWeight: f?.praiseHeadline ? 500 : 700, lineHeight: 1.8 }}>{praise}</Typography>
                   </motion.div>
                 </RevealRow>}
-                {sections.map(([label, body], i) => (
-                  <RevealRow key={label} index={i + rowOffset}>
-                    <FeedbackCard label={label} body={body} />
+                {sections.map((section, i) => (
+                  <RevealRow key={`${section.label}-${fastForward}`} index={i + rowOffset} fast={fastForward}>
+                    <FeedbackCard label={section.label} body={section.body} headline={section.headline} />
                   </RevealRow>
                 ))}
-                <RevealRow index={sections.length + rowOffset} last>
+                <RevealRow key={`next-${fastForward}`} index={sections.length + rowOffset} last fast={fastForward}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
                     <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
@@ -251,14 +256,16 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   "次の目標": <FlagIcon sx={{ fontSize: 20, color: playerTokens.focus }} />,
 };
 
-/** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。 */
-function FeedbackCard({ label, body }: { label: string; body: string }) {
+/** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。
+ *  headline（生成側の要点文）があれば、ラベルの下に太字で先に置く（見出し先行）。 */
+function FeedbackCard({ label, body, headline }: { label: string; body: string; headline?: string | null }) {
   const icon = SECTION_ICONS[label];
   return <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "16px", px: 2.75, py: 2.25 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
       {icon}
       <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>{label}</Typography>
     </Box>
+    {headline && <Typography sx={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, mb: 0.5 }}>{headline}</Typography>}
     <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>
   </Box>;
 }
@@ -269,29 +276,33 @@ function FeedbackCard({ label, body }: { label: string; body: string }) {
  * 本文は常時DOMにあり、演出は出現の動きだけ（読めない状態は作らない）。
  * OSの「動きを減らす」設定では全て即時表示にする。
  */
-function RevealRow({ children, index = 0, last = false }: { children: ReactNode; index?: number; last?: boolean }) {
+function RevealRow({ children, index = 0, last = false, fast = false }: { children: ReactNode; index?: number; last?: boolean; fast?: boolean }) {
   const reduce = useReducedMotion();
   // 読み進める順に1つずつ出す（2026-11-23 改訂）。以前は全行がほぼ同時に出て
   // 「いっぺんに出すだけ」だった。タップは不要で、全コンテンツは最初から
   // DOM にある。受け渡し（0〜0.35s）のあと praise から 0.95s 間隔で続く
   // （0.55s では出現の速さが読む速さを追い越す、という GPT レビューの指摘で
   // 延長）。左の線も同じ歩調で上から満ちていく。全行が出そろうまで約5秒。
-  const delay = reduce ? 0 : 0.3 + index * 0.95;
+  // fast（画面タップ）では残りを即時に出す——繰り返し見る学習者の待ち時間をなくす。
+  const delay = reduce || fast ? 0 : 0.3 + index * 0.95;
+  // fast のときは呼び出し側が key を変えて再マウントするので、初期値を最終状態にして即時表示にする
+  // （進行中の遅延アニメーションは transition の差し替えだけでは止まらないため）。
+  const instant = reduce || fast;
   return <Box sx={{ display: "flex", gap: 2 }}>
     <Box sx={{ width: 20, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <motion.div initial={{ scale: reduce ? 1 : 0 }} animate={{ scale: 1 }}
+      <motion.div initial={{ scale: instant ? 1 : 0 }} animate={{ scale: 1 }}
         transition={{ duration: 0.25, delay }} style={{ marginTop: 24, display: "flex" }}>
         <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${playerTokens.focus}` }} />
       </motion.div>
       {!last && <Box sx={{ position: "relative", width: 2, flex: 1, minHeight: 12, mt: 0.75 }}>
         <Box sx={{ position: "absolute", left: 0, top: 0, bottom: -32, width: 2, bgcolor: "#dbe3ef" }}>
-          <motion.div initial={{ scaleY: reduce ? 1 : 0 }} animate={{ scaleY: 1 }}
+          <motion.div initial={{ scaleY: instant ? 1 : 0 }} animate={{ scaleY: 1 }}
             transition={{ duration: 0.5, delay: delay + 0.15 }}
             style={{ position: "absolute", inset: 0, backgroundColor: playerTokens.focus, transformOrigin: "top" }} />
         </Box>
       </Box>}
     </Box>
-    <motion.div initial={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 }} animate={{ opacity: 1, y: 0 }}
+    <motion.div initial={{ opacity: instant ? 1 : 0, y: instant ? 0 : 18 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
       style={{ flex: 1, minWidth: 0, paddingBottom: last ? 4 : 18 }}>
       {children}

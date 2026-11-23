@@ -467,8 +467,11 @@ function designFeedbackResult() {
     },
     feedback: {
       praise: "最初の問題で次のペアの位置を一度取り違えたあと、動きを見直して、自分の力で正しく直せました。つまずいたところを自分で立て直せたのが、今回いちばんの収穫です。",
+      praiseHeadline: "間違いに気づき、自分で修正できた！",
       strength: "比べるペアの進み方と、大きい値の行き先は追えています。周の終わりに右端のマスが確定することと、比べる範囲が狭くなって並び替えが終わることも、初回で正しく判断できています。",
+      strengthHeadline: "ペアの進み方と、大きい値の行き先は追えている",
       improvement: "次のペアの位置は、初回では取り違えました。比べ終わった直後に、視線をどちらのマスへ移すかが決め手です。次の段階でも、比べた直後の動きを意識してみましょう。",
+      improvementHeadline: "比べ終わった直後、視線を移す先が決め手",
       nextGoal: "図で見た動きを、コードの行に対応づける",
       nextStep, reason, actionLabel: "動きとコードの対応へ進む", actionHref,
       recommendations: [{ candidateId: "candidate-1", nextStep, reason, actionLabel: "動きとコードの対応へ進む", actionHref }],
