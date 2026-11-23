@@ -161,13 +161,123 @@ export const DfsMissionThumbnail: React.FC = () => (
   </Box>
 );
 
-/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。 */
+// ── 手法に完全に焦点を当てた版（2026-11-23、場面版との比較用に試作） ──
+// 同じノード配置のグラフで、たどり方だけを描く。BFS＝波が同心円状に広がる、
+// DFS＝一本の道が奥まで潜って行き止まりから引き返す。
+
+const METHOD_NODES: { x: number; y: number }[] = [
+  { x: 70, y: 45 }, { x: 150, y: 45 }, { x: 230, y: 45 }, { x: 310, y: 45 }, { x: 390, y: 45 },
+  { x: 70, y: 105 }, { x: 150, y: 105 }, { x: 230, y: 105 }, { x: 310, y: 105 }, { x: 390, y: 105 },
+  { x: 70, y: 165 }, { x: 150, y: 165 }, { x: 230, y: 165 }, { x: 310, y: 165 }, { x: 390, y: 165 },
+];
+
+const MethodEdges: React.FC = () => (
+  <g stroke="#c7d6ea" strokeWidth="3">
+    {[0, 1, 2].map((row) =>
+      [0, 1, 2, 3].map((col) => {
+        const a = METHOD_NODES[row * 5 + col];
+        const b = METHOD_NODES[row * 5 + col + 1];
+        return <line key={`h${row}-${col}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+      }),
+    )}
+    {[0, 1].map((row) =>
+      [0, 1, 2, 3, 4].map((col) => {
+        const a = METHOD_NODES[row * 5 + col];
+        const b = METHOD_NODES[(row + 1) * 5 + col];
+        return <line key={`v${row}-${col}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+      }),
+    )}
+  </g>
+);
+
+/** 手法版 BFS：スタートから波が層状に広がっていく。色の濃さ＝スタートからの距離。 */
+export const BfsMethodThumbnail: React.FC = () => {
+  const start = METHOD_NODES[10]; // 左下
+  const layerFill = ["#1e40af", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"];
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="スタートから波のように広がって探索する幅優先探索の図"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      {/* 広がる波の輪 */}
+      <g fill="none" stroke="#2563eb" strokeOpacity="0.16" strokeWidth="12">
+        <circle cx={start.x} cy={start.y} r="46" />
+        <circle cx={start.x} cy={start.y} r="96" />
+        <circle cx={start.x} cy={start.y} r="146" />
+        <circle cx={start.x} cy={start.y} r="196" />
+      </g>
+      <MethodEdges />
+      {METHOD_NODES.map((n, i) => {
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        const d = col + (2 - row);
+        return <circle key={i} cx={n.x} cy={n.y} r="13" fill={layerFill[d]} stroke="#ffffff" strokeWidth="2.5" />;
+      })}
+      {/* スタートの印 */}
+      <circle cx={start.x} cy={start.y} r="5" fill="#ffffff" />
+    </Box>
+  );
+};
+
+/** 手法版 DFS：一本の道が奥まで潜り、行き止まりから引き返している。 */
+export const DfsMethodThumbnail: React.FC = () => {
+  // 潜っていく順路（ノード番号）：左下→上→右へ蛇行して右下の行き止まりへ
+  const pathIdx = [10, 5, 0, 1, 6, 7, 2, 3, 8, 13, 14];
+  const pathPoints = pathIdx.map((i) => `${METHOD_NODES[i].x},${METHOD_NODES[i].y}`).join(" ");
+  const visited = new Set(pathIdx);
+  const deadEnd = METHOD_NODES[14];
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="一本の道を奥までたどり、行き止まりから引き返す深さ優先探索の図"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      <MethodEdges />
+      {/* 引き返し（点線）：行き止まりから2つ手前まで戻った */}
+      <polyline
+        points={`${METHOD_NODES[14].x},${METHOD_NODES[14].y} ${METHOD_NODES[13].x},${METHOD_NODES[13].y} ${METHOD_NODES[8].x},${METHOD_NODES[8].y}`}
+        fill="none"
+        stroke="#f59e0b"
+        strokeWidth="4"
+        strokeDasharray="7 6"
+        strokeLinecap="round"
+      />
+      {/* 潜った道 */}
+      <polyline points={pathPoints} fill="none" stroke="#2563eb" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" />
+      {METHOD_NODES.map((n, i) =>
+        visited.has(i) ? (
+          <circle key={i} cx={n.x} cy={n.y} r="11" fill="#2563eb" stroke="#ffffff" strokeWidth="2.5" />
+        ) : (
+          <circle key={i} cx={n.x} cy={n.y} r="11" fill="#dbeafe" stroke="#ffffff" strokeWidth="2.5" />
+        ),
+      )}
+      {/* スタートの印 */}
+      <circle cx={METHOD_NODES[10].x} cy={METHOD_NODES[10].y} r="4.5" fill="#ffffff" />
+      {/* 行き止まりの印 */}
+      <g stroke="#dc2626" strokeWidth="4" strokeLinecap="round">
+        <line x1={deadEnd.x - 7} y1={deadEnd.y - 7} x2={deadEnd.x + 7} y2={deadEnd.y + 7} />
+        <line x1={deadEnd.x + 7} y1={deadEnd.y - 7} x2={deadEnd.x - 7} y2={deadEnd.y + 7} />
+      </g>
+    </Box>
+  );
+};
+
+/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。比較のため手法版を表示中。 */
 export const missionThumbnailFor = (courseId: string): React.ReactNode => {
   switch (courseId) {
     case "course-algorithm-breadth-first-search-v1":
-      return <BfsMissionThumbnail />;
+      return <BfsMethodThumbnail />;
     case "course-algorithm-depth-first-search-v1":
-      return <DfsMissionThumbnail />;
+      return <DfsMethodThumbnail />;
     default:
       return null;
   }
