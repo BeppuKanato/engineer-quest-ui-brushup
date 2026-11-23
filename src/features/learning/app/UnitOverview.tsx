@@ -62,10 +62,10 @@ export function UnitOverview({ courseId }: { courseId: string }) {
       <AppBreadcrumbs items={[{ label: "コース", href: "/courses" }, { label: unit?.title ?? "単元" }]} />
     </Container>
     <Container component={motion.main} initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ pt: 1, pb: 5, maxWidth: 1200 }}>
-      <Typography component="h1" variant="h4" sx={{ fontWeight: 700, mt: 2 }}>{unit?.title ?? "単元"}</Typography>
+      <Typography component="h1" sx={{ fontSize: 24, fontWeight: 900, mt: 2 }}>{unit?.title ?? "単元"}</Typography>
       {!unit ? <Box sx={{ py: 6 }}><Typography>この単元は準備中です。</Typography><Typography>公開まで、ほかのコースをご覧ください。</Typography></Box> : !authenticated && !loading ? <Button component={Link} href="/auth/login">ログインして学習する</Button> : loading ? <ProgressLoadingSkeleton variant="overview" /> : error ?
         <Alert severity="error" action={<Button onClick={reload}>再読み込み</Button>}>{error}</Alert> : progress && <>
-          <Typography sx={{ mt: 1.5, color: "text.secondary", lineHeight: 1.8 }}>{unit.intro}</Typography>
+          <Typography sx={{ mt: 1.5, lineHeight: 1.8 }}>{unit.intro}</Typography>
           {mission && (
             <Box component="section" aria-label="目標ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ xs: "stretch", md: "center" }}>
@@ -79,7 +79,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                   </Stack>
                   <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900, mt: 1.5, lineHeight: 1.5 }}>{mission.title}</Typography>
                   <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>{mission.description}</Typography>
-                  <Typography sx={{ mt: 1, fontSize: 14, color: "text.secondary" }}>達成の条件：{mission.successCondition}</Typography>
+                  <Typography sx={{ mt: 1, fontSize: 14 }}>達成の条件：{mission.successCondition}</Typography>
                 </Box>
                 <Stack spacing={1.5} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
                   {missionDone ? (
@@ -91,7 +91,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                       {nextPhase && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>次は『{nextPhase.formalName}』</Typography>}
                       <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>学習を進める</Button>
                       <Button variant="text" disabled sx={{ fontWeight: 700 }}>ミッションに挑戦する</Button>
-                      <Typography sx={{ fontSize: 13, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
+                      <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
                     </>
                   )}
                   {!missionDone && (
@@ -112,7 +112,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
             />
             {progress.unit?.status === "COMPLETED" && <Chip icon={<CheckCircleIcon />} label="単元完了" size="small" sx={{ fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
           </Stack>
-          <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4 }} />
+          <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 4 } }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
           <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
           <ConceptProgressMap courseId={courseId} />
@@ -249,14 +249,14 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
                 style={{ x: "-50%" }}
                 animate={reduced ? undefined : { y: [0, -4, 0] }}
                 transition={reduced ? undefined : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-                sx={{ position: "absolute", bottom: "calc(100% + 12px)", left: "50%", bgcolor: tokens.progress.next, color: "#fff", px: 1.5, py: 0.5, borderRadius: 999, fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", pointerEvents: "none" }}
+                sx={{ position: "absolute", bottom: "calc(100% + 12px)", left: "50%", bgcolor: tokens.progress.next, color: "#fff", px: 1.5, py: 0.5, borderRadius: 999, fontSize: 14, fontWeight: 800, whiteSpace: "nowrap", pointerEvents: "none" }}
               >
                 ここから始める
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. ミッション挑戦" : `${phase.phase}. ${phase.shortName}`}</Typography>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{status}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
           </Box>
@@ -297,7 +297,7 @@ function UnitAchievements({ courseId }: { courseId: string }) {
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{item.title}</Typography>
                   {achieved && <Chip label="達成済み" size="small" sx={{ height: 22, fontSize: 12, fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d" }} />}
                 </Stack>
-                <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>{item.conditionLabel ?? item.description}</Typography>
+                <Typography sx={{ fontSize: 14, color: "text.secondary", mt: 0.5 }}>{item.conditionLabel ?? item.description}</Typography>
               </Box>
             </Box>
           );
