@@ -407,6 +407,11 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
           </Typography>
         )}
         <Box sx={{ mt: "auto", pt: 2 }}>
+          {inProgress && unit.nextPhase && (
+            <Typography fontSize={16} fontWeight={700} color={TEXT} sx={{ mb: 1 }}>
+              次は「{unit.nextPhase}」
+            </Typography>
+          )}
           <StateButton unit={unit} />
         </Box>
       </Box>
