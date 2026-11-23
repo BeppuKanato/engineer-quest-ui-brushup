@@ -28,7 +28,7 @@ html[data-theme="dark"].n.new text.u { fill: #fdba74;}
 <span><i class="sw" style="background:#fff7ed;border:1.8px solid #ea580c"></i>新規ページ</span>
 <span><i class="sw" style="background:#f1f5f9;border:1.2px dashed #94a3b8"></i>URLを持たない画面（親ページ内）</span>
 </div>
-<svg viewBox="0 0 1180 880" role="img" aria-label="画面遷移図">
+<svg viewBox="0 0 1180 900" role="img" aria-label="画面遷移図">
 <defs>
 <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
 <marker id="arwN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
@@ -54,11 +54,9 @@ html[data-theme="dark"].n.new text.u { fill: #fdba74;}
 <!-- コース・単元 -->
 <path class="e" marker-end="url(#arw)" d="M125,272 L125,328"/>
 <path class="e" marker-end="url(#arw)" d="M200,272 L230,272 L230,352 L240,352"/>
-<path class="e new" marker-end="url(#arwN)" d="M125,376 L125,432"/>
 <path class="e" marker-end="url(#arw)" d="M220,352 L335,352 L335,432"/>
 <path class="e" marker-end="url(#arw)" d="M220,456 L240,456"/>
 <path class="e" marker-end="url(#arw)" d="M255,432 L255,404 L228,404 L228,360 L220,360"/>
-<path class="e new" marker-end="url(#arwN)" d="M125,480 L125,536"/>
 <path class="e" marker-end="url(#arw)" d="M335,480 L335,512 L125,512 L125,536"/>
 <path class="e" marker-end="url(#arw)" d="M220,560 L240,560"/>
 <path class="e new" marker-end="url(#arwN)" d="M360,432 L360,404 L360,376"/>
@@ -85,7 +83,6 @@ html[data-theme="dark"].n.new text.u { fill: #fdba74;}
 <text class="el" x="700" y="176">自分の目標の発展ミッション</text>
 <text class="el" x="130" y="322">単元カード</text>
 <text class="el" x="206" y="346">発展ミッション</text>
-<text class="el" x="130" y="426">提示</text>
 <text class="el" x="226" y="448">学ぶ</text>
 <text class="el" x="300" y="398">完了画面から</text>
 <text class="el" x="20" y="330">不足に気づいたら学ぶ</text>
@@ -114,14 +111,13 @@ html[data-theme="dark"].n.new text.u { fill: #fdba74;}
 <g class="n"><rect x="660" y="328" width="190" height="48" rx="9"/><text class="u" x="672" y="349">/knowledge-cards</text><text class="l" x="672" y="366">知識カード詳細</text></g>
 <g class="n"><rect x="870" y="328" width="190" height="48" rx="9"/><text class="u" x="882" y="349">/quest-board/[postId]</text><text class="l" x="882" y="366">掲示板の投稿</text></g>
 <!-- 詳細2 -->
-<g class="n new"><rect x="30" y="432" width="190" height="48" rx="9"/><text class="u" x="42" y="453">.../[courseId]/mission</text><text class="l" x="42" y="470">ミッション提示</text></g>
 <g class="n"><rect x="240" y="432" width="190" height="48" rx="9"/><text class="u" x="252" y="453">.../[courseId]/learn</text><text class="l" x="252" y="470">学習プレイヤー（段階1〜6）</text></g>
 <g class="n new"><rect x="450" y="432" width="190" height="48" rx="9"/><text class="u" x="462" y="453">/missions/[missionId]</text><text class="l" x="462" y="470">発展ミッション挑戦（実装・得点）</text></g>
 <g class="n"><rect x="660" y="432" width="190" height="48" rx="9"/><text class="u" x="672" y="453">/my-works</text><text class="l" x="672" y="470">自分の作品（ミッションの成果物）</text></g>
 <g class="n"><rect x="870" y="432" width="190" height="48" rx="9"/><text class="u" x="882" y="453">/quest-board/new</text><text class="l" x="882" y="470">掲示板に投稿する</text></g>
 <!-- 詳細3 -->
 <g class="n new"><rect x="30" y="536" width="190" height="48" rx="9"/><text class="u" x="42" y="557">.../[courseId]/mission/play</text><text class="l" x="42" y="574">ミッション挑戦（自由実装）</text></g>
-<g class="n nourl"><rect x="240" y="536" width="190" height="48" rx="9"/><text class="u" x="252" y="557">learn内の画面</text><text class="l" x="252" y="574">結果・フィードバック（URLなし）</text></g>
+<g class="n nourl"><rect x="240" y="536" width="190" height="48" rx="9"/><text class="u" x="252" y="557">learn内の状態</text><text class="l" x="252" y="574">ミッション提示・結果・フィードバック</text></g>
 <g class="n nourl"><rect x="450" y="536" width="190" height="48" rx="9"/><text class="u" x="462" y="557">mission/play内の支援</text><text class="l" x="462" y="574">橋渡し支援（URLなし）</text></g>
 <g class="n"><rect x="660" y="536" width="190" height="48" rx="9"/><text class="u" x="672" y="557">/share/select</text><text class="l" x="672" y="574">共有する作品を選ぶ</text></g>
 <!-- 詳細4 -->
@@ -132,5 +128,6 @@ html[data-theme="dark"].n.new text.u { fill: #fdba74;}
 <text class="el" x="30" y="820">※ learn は段階7（従来の実装）を廃し、ミッション挑戦へ分離。ミッション結果は単元完了の結果画面（learn内）が吸収する。</text>
     <text class="el" x="30" y="840">※ 発展ミッションの結果は /missions/[missionId] 内で表示。ボスは /missions 一覧内の配置で差をつけ、専用URLは作らない。</text>
     <text class="el" x="30" y="858">※ 作るは独立セクションを廃し発展ミッションに統合（旧作るクエスト＝発展ミッション、作業画面＝挑戦画面）。作品は /my-works に残り、共有・掲示板への投稿もできる。</text>
+    <text class="el" x="30" y="878">※ 単元ミッションの提示は、段階1の初回開始時に learn 内の状態として開く（専用URLなし）。提示済みはその単元では再表示しない。</text>
 </svg>
 </div>
