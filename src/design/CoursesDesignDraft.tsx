@@ -5,8 +5,10 @@
 // - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
 // - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
 // - 状態は、ボタンの色分けではなく「印と進捗の形」で表す（一般的な学習アプリの慣例、
-//   2026-11-23 Kanato と確認）：未着手＝印なし、学習中＝サムネ下端の進捗バー＋現在地の
-//   強調（青枠と学習中チップ）、完了＝緑のメダルバッジ。ボタンは主色にそろえ、
+//   2026-11-23 Kanato と確認）：未着手＝印なし、学習中＝青い塗りのバッジ＋枠＋
+//   サムネ下端の進捗バー（「段階 n/7」のラベル付き）、完了＝印なし（緑の復習ボタンが
+//   担う。メダルバッジは、完了が学習中より目立つ逆転とボタンとの二重表現のため外した）。
+//   ボタンは主色にそろえ、
 //   文言だけが変わる（始める／続きから／復習する）。ただし完了の復習ボタンだけは
 //   バッジと同じ緑にする（色は意味で統一）。グレーは操作できない状態だけに使う。
 //   ボタンはカード全体リンクの中の見た目上のボタン（遷移はカード全体が担う）。
@@ -37,7 +39,6 @@ const PRIMARY = "#2563eb";
 const BORDER = "#dbe3ef";
 // 完了・復習の意味の色。ボタンとバッジで同じ緑を使う（色は意味で統一する）。
 const GREEN = "#16a34a";
-const GREEN_DARK = "#15803d";
 
 type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
@@ -176,6 +177,47 @@ const AxisFilter: React.FC<{ value: string; onChange: (axis: string) => void }> 
   </Stack>
 );
 
+/** 状態の検索欄：学習状態で絞り込む。件数つき。軸の検索欄とは分ける（GPT指摘）。 */
+const STATE_OPTIONS: { key: string; label: string }[] = [
+  { key: "ALL", label: "すべて" },
+  { key: "IN_PROGRESS", label: "学習中" },
+  { key: "NOT_STARTED", label: "未着手" },
+  { key: "COMPLETED", label: "完了" },
+];
+
+const StateFilter: React.FC<{
+  value: string;
+  onChange: (key: string) => void;
+  counts: Record<string, number>;
+}> = ({ value, onChange, counts }) => (
+  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap aria-label="学習状態で絞り込む">
+    {STATE_OPTIONS.map((opt) => {
+      const selected = opt.key === value;
+      const count = opt.key === "ALL" ? Object.values(counts).reduce((a, b) => a + b, 0) : (counts[opt.key] ?? 0);
+      return (
+        <ButtonBase
+          key={opt.key}
+          onClick={() => onChange(opt.key)}
+          aria-pressed={selected}
+          sx={{
+            px: 1.75,
+            py: 1,
+            borderRadius: 999,
+            border: `1px solid ${selected ? PRIMARY : BORDER}`,
+            bgcolor: selected ? PRIMARY : "#fff",
+            color: selected ? "#fff" : TEXT,
+            fontSize: 16,
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          {opt.label}（{count}）
+        </ButtonBase>
+      );
+    })}
+  </Stack>
+);
+
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
 const FLOW_ORDER = [
   "course-algorithm-breadth-first-search-v1",
@@ -193,53 +235,38 @@ const OTHER_IDS = [
   "course-algorithm-merge-sort-v1",
 ];
 
-/** 完了バッジ：メダル（円＋リボン＋✓）。達成したことを称える印。文字に頼らない。色は復習ボタンと同じ緑。 */
-const CompletionBadge: React.FC = () => (
-  <Box
-    component="svg"
-    viewBox="0 0 52 60"
-    aria-label="ミッション達成"
-    sx={{
-      position: "absolute",
-      top: 6,
-      right: 8,
-      zIndex: 1,
-      width: 64,
-      height: 74,
-      transform: "rotate(-8deg)",
-      filter: "drop-shadow(0 2px 5px rgba(15, 40, 90, 0.35))",
-    }}
-  >
-    <polygon points="15,32 9,56 21,49 25,38" fill={GREEN_DARK} />
-    <polygon points="37,32 43,56 31,49 27,38" fill={GREEN_DARK} />
-    <circle cx="26" cy="24" r="19" fill={GREEN} stroke="#ffffff" strokeWidth="3" />
-    <path d="M17 24 l6.5 6.5 L35 18" fill="none" stroke="#ffffff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Box>
-);
-
+/**
+ * 状態の印：バッジは学習中だけに付ける（2026-11-23、GPT指摘を受けた Kanato の判断）。
+ * 完了のメダルバッジは外した。完了が学習中より目立ってしまう逆転が起きるのと、
+ * 完了は緑の復習ボタンがすでに担っていて二重表現になるため。完了＝印なし。
+ */
 const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
-  if (unit.status === "COMPLETED") {
-    return <CompletionBadge />;
-  }
   if (unit.status === "IN_PROGRESS") {
     return (
-      <Chip
-        label="学習中"
-        size="small"
+      <Box
+        component="span"
         sx={{
           position: "absolute",
           top: 12,
           left: 12,
           zIndex: 1,
-          bgcolor: "#fff",
-          color: PRIMARY,
-          border: `1.5px solid ${PRIMARY}`,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.5,
+          px: 1.25,
+          py: 0.75,
+          borderRadius: 999,
+          bgcolor: PRIMARY,
+          color: "#fff",
           fontWeight: 800,
           fontSize: 14,
-          height: 28,
-          boxShadow: "0 1px 4px rgba(15, 40, 90, 0.25)",
+          lineHeight: 1,
+          boxShadow: "0 2px 6px rgba(15, 40, 90, 0.35)",
         }}
-      />
+      >
+        <PlayArrowIcon sx={{ fontSize: 15 }} />
+        学習中
+      </Box>
     );
   }
   return null;
@@ -248,7 +275,7 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
 /**
  * 状態ボタン：カード下部に置く見た目上のボタン（遷移はカード全体のリンクが担う）。
  * 色は主色にそろえ、文言だけが変わる。状態の違いは印と進捗の形が担う。
- * 例外は完了だけ：復習ボタンはバッジと同じ緑にする（色は意味で統一）。
+ * 例外は完了だけ：復習ボタンは完了の緑にする（色は意味で統一）。
  */
 const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const base = {
@@ -314,12 +341,35 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
           </Box>
         )}
         {inProgress && (
-          <Box
-            aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}
-            sx={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 6, bgcolor: "#dbe3ef", zIndex: 1 }}
-          >
-            <Box sx={{ width: `${(unit.completedPhases / unit.totalPhases) * 100}%`, height: "100%", bgcolor: GREEN }} />
-          </Box>
+          <>
+            {/* 進捗バーのラベル：何の進捗か（段階のどこまでか）を数字で添える */}
+            <Box
+              component="span"
+              sx={{
+                position: "absolute",
+                right: 8,
+                bottom: 12,
+                zIndex: 1,
+                px: 1,
+                py: 0.375,
+                borderRadius: 999,
+                bgcolor: "rgba(255, 255, 255, 0.94)",
+                border: `1px solid ${BORDER}`,
+                color: TEXT,
+                fontSize: 14,
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              段階 {unit.completedPhases}/{unit.totalPhases}
+            </Box>
+            <Box
+              aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}
+              sx={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 6, bgcolor: "#dbe3ef", zIndex: 1 }}
+            >
+              <Box sx={{ width: `${(unit.completedPhases / unit.totalPhases) * 100}%`, height: "100%", bgcolor: GREEN }} />
+            </Box>
+          </>
         )}
       </Box>
       <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", flex: 1 }}>
@@ -402,8 +452,16 @@ export const CoursesDesignDraft: React.FC = () => {
   const unitById = new Map(overview.units.map((u) => [u.id, u]));
   const ratio = overview.totalUnits > 0 ? (overview.completedUnits / overview.totalUnits) * 100 : 0;
   const [axis, setAxis] = useState("すべて");
+  const [stateFilter, setStateFilter] = useState("ALL");
+  const stateCounts: Record<string, number> = {};
+  for (const u of overview.units) {
+    stateCounts[u.status] = (stateCounts[u.status] ?? 0) + 1;
+  }
   const visibleUnits = FLOW_ORDER.map((id) => unitById.get(id)).filter(
-    (u): u is HomeUnit => !!u && (axis === "すべて" || FILTER_GROUP[u.id] === axis),
+    (u): u is HomeUnit =>
+      !!u &&
+      (axis === "すべて" || FILTER_GROUP[u.id] === axis) &&
+      (stateFilter === "ALL" || u.status === stateFilter),
   );
   return (
     <Stack spacing={4}>
@@ -426,7 +484,10 @@ export const CoursesDesignDraft: React.FC = () => {
         </Paper>
       </Box>
 
-      <AxisFilter value={axis} onChange={setAxis} />
+      <Stack spacing={1.25}>
+        <StateFilter value={stateFilter} onChange={setStateFilter} counts={stateCounts} />
+        <AxisFilter value={axis} onChange={setAxis} />
+      </Stack>
 
       <Box component="section" aria-label="単元">
         <CardGrid>
