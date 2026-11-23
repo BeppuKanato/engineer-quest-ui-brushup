@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, type ReactNode } from "react";
 
 import {
@@ -63,27 +64,46 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
   }, [unavailable, onUnavailable]);
   const f = result?.feedback;
   const failed = error || result?.status === "FAILED";
+  const reduce = useReducedMotion();
+  // 称賛（header）がある画面では、フィードバック側を少し遅れて「届く」ように出す。
+  const staged = Boolean(header) && !reduce;
+  const sections: ReadonlyArray<readonly [string, string]> = f ? [
+    ["現在の状態", f.currentState],
+    ...(f.explanation ? [["フィードバック", f.explanation] as const] : []),
+    ["次の目標", f.nextGoal],
+  ] : [];
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
     {header ?? <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{heading}</Typography>}
     <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, pb: 2 }}>
+    <motion.div initial={staged ? { opacity: 0, y: 24 } : false} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: staged ? 0.6 : 0 }}
+      style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+    {header && !unavailable && <Box sx={{ textAlign: "center" }}>
+      <Typography sx={{ fontSize: 18, fontWeight: 900 }}>あなたへの学習フィードバック</Typography>
+      <Typography sx={{ fontSize: 14, mt: 0.5 }}>今回の取り組みをもとに作成されました。</Typography>
+    </Box>}
     {unavailable ? <Typography role="status" color="text.secondary">フィードバックはありません。次へ進みます。</Typography>
       : failed && !retrying ? <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 640 }}>
           <Alert severity="warning">フィードバックを生成できませんでした。学習は続けられます。</Alert>
           <Button variant="outlined" onClick={retry} disabled={retrying} sx={{ alignSelf: "center", minHeight: 44 }}>再生成</Button>
         </Stack>
       : !f ? <Alert severity="info" sx={{ width: "100%", maxWidth: 640 }}>フィードバックを準備しています。</Alert>
-      : <Stack spacing={2} sx={{ width: "100%", maxWidth: 640 }}>
+      : <Box sx={{ width: "100%", maxWidth: 760 }}>
           <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
-          {([["現在の状態", f.currentState], ...(f.explanation ? [["フィードバック", f.explanation] as const] : []), ["次の目標", f.nextGoal]] as const).map(([label, body]) => (
-            <div key={label}>
-              <Typography fontWeight={900}>{label}</Typography>
-              <Typography sx={{ fontSize: 16, overflowWrap: "anywhere" }}>{body}</Typography>
-            </div>
-          ))}
-          <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
-        </Stack>}
+          <Box sx={{ mt: 1.5 }}>
+            {sections.map(([label, body], i) => (
+              <RevealRow key={label} index={i}>
+                <FeedbackCard label={label} body={body} />
+              </RevealRow>
+            ))}
+            <RevealRow index={sections.length} last>
+              <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
+            </RevealRow>
+          </Box>
+        </Box>}
     {children}
+    </motion.div>
     </Box>
     <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ justifyContent: "center", mt: 1, flexShrink: 0 }}>
       <Button data-feedback-skip variant={f?.actionHref ? "text" : "contained"} onClick={onProceed}
@@ -91,5 +111,44 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
         {proceedLabel}
       </Button>
     </Stack>
+  </Box>;
+}
+
+/** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。 */
+function FeedbackCard({ label, body }: { label: string; body: string }) {
+  return <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "16px", px: 2.75, py: 2.25 }}>
+    <Typography sx={{ fontSize: 15, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>{label}</Typography>
+    <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>
+  </Box>;
+}
+
+/**
+ * 読み進める演出の1行（2026-11-23、GPT案1+案3の採用形）。
+ * 左の点と縦線が、行が視界に入るたびに上から順に満ちていく。
+ * 本文は常時DOMにあり、演出は出現の動きだけ（読めない状態は作らない）。
+ * OSの「動きを減らす」設定では全て即時表示にする。
+ */
+function RevealRow({ children, index = 0, last = false }: { children: ReactNode; index?: number; last?: boolean }) {
+  const reduce = useReducedMotion();
+  const delay = Math.min(index * 0.12, 0.36);
+  return <Box sx={{ display: "flex", gap: 2 }}>
+    <Box sx={{ width: 20, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <motion.div initial={{ scale: reduce ? 1 : 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, margin: "-30px" }}
+        transition={{ duration: 0.25, delay }} style={{ marginTop: 24, display: "flex" }}>
+        <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${playerTokens.focus}` }} />
+      </motion.div>
+      {!last && <Box sx={{ position: "relative", width: 2, flex: 1, minHeight: 12, mt: 0.75 }}>
+        <Box sx={{ position: "absolute", left: 0, top: 0, bottom: -32, width: 2, bgcolor: "#dbe3ef" }}>
+          <motion.div initial={{ scaleY: reduce ? 1 : 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true, margin: "-30px" }}
+            transition={{ duration: 0.45, delay: delay + 0.1 }}
+            style={{ position: "absolute", inset: 0, backgroundColor: playerTokens.focus, transformOrigin: "top" }} />
+        </Box>
+      </Box>}
+    </Box>
+    <motion.div initial={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-30px" }} transition={{ duration: 0.35, delay }}
+      style={{ flex: 1, minWidth: 0, paddingBottom: last ? 4 : 18 }}>
+      {children}
+    </motion.div>
   </Box>;
 }

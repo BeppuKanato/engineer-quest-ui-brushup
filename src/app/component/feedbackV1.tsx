@@ -109,7 +109,7 @@ export function FeedbackV1({ kind, eventId, onAction }: {
 
 export function FeedbackCandidates({ candidates, onAction }: { candidates: FeedbackCandidate[]; onAction?: (href: string | null) => boolean }) {
   return <Stack spacing={1.5} aria-label="次の学習候補（実行は任意）">
-    <Typography variant="body2" color="text.secondary">取り組むかどうかは自分で選べます。そのまま次へ進むこともできます。</Typography>
+    <Typography sx={{ fontSize: 14 }}>取り組むかどうかは自分で選べます。そのまま次へ進むこともできます。</Typography>
     {candidates.map((candidate,index)=><Paper component="article" variant="outlined" key={candidate.candidateId} data-feedback-candidate-id={candidate.candidateId} sx={{ p: 1.5, borderRadius: 2 }}>
       <Typography fontWeight={700} sx={{ overflowWrap: "anywhere" }}>{index+1}. {candidate.nextStep}</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, overflowWrap: "anywhere" }}>{candidate.reason}</Typography>
