@@ -80,7 +80,7 @@ export function BubbleSortConsolidationPreview({ embedded = false, onLearningEve
   useEffect(() => {
     if (diagnosis && !completedRef.current) {
       completedRef.current = true;
-      onComplete?.({ assessmentEvidence: assessmentEvidence(content, session), firstAttemptCorrect: diagnosis.correct, totalQuestions: diagnosis.total });
+      onComplete?.({ assessmentEvidence: assessmentEvidence(content, session), firstAttemptCorrect: diagnosis.correct, eventuallyCorrect: session.records.filter(entry => entry.solved).length, totalQuestions: diagnosis.total });
     }
     if (!diagnosis) completedRef.current = false;
   }, [diagnosis, onComplete, session]);

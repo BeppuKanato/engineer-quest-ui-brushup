@@ -9,6 +9,8 @@ import type { ImplementationInputLevel } from "../../implementation/inputLevel";
 export type BubbleSortUnitPhaseSummary = {
   /** 初回解答で正解した問題数（フェーズ3・5・6） */
   firstAttemptCorrect?: number;
+  /** 最終的に正解へ到達した問題数（解き直しを含む。フェーズ3・5・6） */
+  eventuallyCorrect?: number;
   /** 問題の総数（フェーズ3・5・6） */
   totalQuestions?: number;
   /** テスト実行の回数（フェーズ7） */

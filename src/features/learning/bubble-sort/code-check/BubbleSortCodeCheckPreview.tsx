@@ -39,6 +39,7 @@ export function BubbleSortCodeCheckPreview({ embedded = false, onLearningEvent, 
       completedRef.current = true;
       onComplete?.({ assessmentEvidence: assessmentEvidence(bubbleSortCodeCheckContent, session),
         firstAttemptCorrect: session.records.filter(entry => entry.attempts[0]?.correct).length,
+        eventuallyCorrect: session.records.filter(entry => entry.solved).length,
         totalQuestions: bubbleSortCodeCheckContent.questions.length,
       });
     }

@@ -68,19 +68,25 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
     return () => { window.clearTimeout(start); if (interval !== undefined) window.clearInterval(interval); };
   }, [reduce, total]);
   const reacted = total !== undefined && tally >= total;
+  const eventual = summary?.eventuallyCorrect;
+  // 称賛の熱量は出来事の大きさで変える（場面表）：全問初回正解／全部直し切った／残った問題がある。
+  const tier: ResultTier = total !== undefined && first === total ? "perfect"
+    : eventual !== undefined && total !== undefined && eventual < total ? "remaining" : "corrected";
   if (!phase.result) return null;
   return <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: "100%" }}>
     <UnitResultCelebration heading={phase.result.heading} headingRef={headingRef} preset={goalAchievement ? "final" : "phase"} />
     {total !== undefined && first !== undefined && (
       <>
-        <ResultScoreDots total={total} firstAttemptCorrect={first} revealed={tally} />
+        <ResultScoreDots total={total} firstAttemptCorrect={first} eventuallyCorrect={eventual} revealed={tally} />
         {reacted && <motion.p initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }} style={{ margin: 0 }}>
           <Typography component="span" sx={{ display: "block", textAlign: "center", fontSize: 22, fontWeight: 900 }}>
-            全{total}問に正解しました（初回で{first}問正解）。
+            {tier === "remaining"
+              ? `${total}問中、${eventual}問を正解にしました（初回で${first}問正解）。`
+              : `全${total}問に正解しました（初回で${first}問正解）。`}
           </Typography>
         </motion.p>}
-        <ResultMascotReaction perfect={first === total} reacted={reacted} />
+        <ResultMascotReaction tier={tier} reacted={reacted} remainingCount={total - (eventual ?? total)} />
       </>
     )}
     {achievements}
@@ -88,24 +94,34 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
   </Box>;
 }
 
+type ResultTier = "perfect" | "corrected" | "remaining";
+
 /**
  * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
  * 数字と事実はシステム文（ドット＋事実文）が担うので、台詞は共感だけにする
  * （同じ内容を2回言わない）。動きも担う：成績の点灯中は小さく揺れて待ち、
- * 点き終わった瞬間に表情遷移（全問初回正解のときだけ驚き→お祝い）と
- * 跳躍で反応する。台詞は反応と同時に出す。
+ * 点き終わった瞬間に反応する。熱量は出来事の大きさで変える：
+ * 全問初回正解＝驚き→お祝い＋大きな跳躍、全部直し切った＝応援＋小さい跳び、
+ * 残った問題がある＝応援のみ（跳ばない）。責めない。
  */
-function ResultMascotReaction({ perfect, reacted }: { perfect: boolean; reacted: boolean }) {
+function ResultMascotReaction({ tier, reacted, remainingCount }: {
+  tier: ResultTier;
+  reacted: boolean;
+  remainingCount: number;
+}) {
   const reduce = useReducedMotion();
   const [jumped, setJumped] = useState(false);
-  const state = perfect ? (reacted ? "celebrate" : "surprise") : "cheer";
-  const jumping = reacted && !jumped && !reduce;
+  const state = tier === "perfect" ? (reacted ? "celebrate" : "surprise") : "cheer";
+  const jumping = reacted && !jumped && !reduce && tier !== "remaining";
+  const jumpKeyframes = tier === "perfect"
+    ? { y: [0, -38, 0, -14, 0], rotate: [0, -3, 3, 0, 0] }
+    : { y: [0, -16, 0, -6, 0], rotate: [0, 0, 0, 0, 0] };
   return <Box sx={{ display: "flex", alignItems: "center", gap: 2, maxWidth: 640 }}>
     <motion.div
       animate={reduce ? { y: 0, rotate: 0 }
-        : jumping ? { y: [0, -38, 0, -14, 0], rotate: [0, -3, 3, 0, 0] }
+        : jumping ? jumpKeyframes
         : { y: [0, -5, 0], rotate: 0 }}
-      transition={jumping ? { duration: 0.85, ease: "easeOut" }
+      transition={jumping ? { duration: tier === "perfect" ? 0.85 : 0.6, ease: "easeOut" }
         : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
       onAnimationComplete={() => { if (reacted && !jumped) setJumped(true); }}>
       <motion.div key={state} initial={reduce ? false : { opacity: 0, scale: 0.85 }}
@@ -116,9 +132,11 @@ function ResultMascotReaction({ perfect, reacted }: { perfect: boolean; reacted:
     {reacted && <motion.p initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.15 }} style={{ margin: 0 }}>
       <Typography component="span" sx={{ display: "block", fontSize: 18, fontWeight: 700 }}>
-        {perfect
+        {tier === "perfect"
           ? "すごい…！一問も止まらずに解き切ったね！"
-          : "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"}
+          : tier === "corrected"
+            ? "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"
+            : `残った${remainingCount}問は、あとで見直せるよ。ここまでよく進めたね。`}
       </Typography>
     </motion.p>}
   </Box>;
