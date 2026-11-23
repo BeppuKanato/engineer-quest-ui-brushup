@@ -34,7 +34,7 @@ const unit = (
 ): HomeUnit => ({
   status: "NOT_STARTED",
   completedPhases: 0,
-  totalPhases: 7,
+  totalPhases: 6,
   collectedCards: 0,
   totalCards: 3,
   href: `/courses/roadmap/${partial.id}`,

@@ -169,8 +169,8 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   const optionals =
     count >= 7
       ? [
-          { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const },
-          { t: 5.5 / (count - 1), dx: -20, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const },
+          { t: 0.5 / (count - 1), dx: -14, dy: -60, label: "予測・実験", Icon: ScienceIcon, labelSide: "above" as const, timing: "任意・いつでも", needsGoal: false },
+          { t: 5.5 / (count - 1), dx: -20, dy: 126, label: "実装の橋渡し", Icon: BuildIcon, labelSide: "below" as const, timing: "任意・段階6のあと", needsGoal: true },
         ]
       : [];
   const optionalPos = (o: (typeof optionals)[number]) => {
@@ -233,7 +233,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           const wave = wavePoint(o.t);
           const from = vertical ? { x: wave.y, y: wave.x } : { x: wave.x, y: wave.y };
           const to = optionalPos(o);
-          return <line key={o.label} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={tokens.progress.next} strokeWidth={2.5} strokeDasharray="5 6" />;
+          return <line key={o.label} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={o.needsGoal && !missionReady && !missionDone ? "#cbd5e1" : tokens.progress.next} strokeWidth={2.5} strokeDasharray="5 6" />;
         })}
       </svg>
       {unit.phases.map((phase, index) => {
@@ -243,7 +243,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
         const reachable = index <= (next ?? count - 1);
         const Icon = isMission ? FlagIcon : learningPhaseIcons[index];
         const status = done ? "達成済み" : isMission ? (missionReady ? "挑戦できる" : "未着手") : current && hasProgress ? "進行中" : "未着手";
-        const label = isMission ? "ミッション挑戦" : `${phase.phase}. ${phase.shortName}`;
+        const label = isMission ? "目標ミッション" : `${phase.phase}. ${phase.shortName}`;
         const position = point(index);
         const size = current ? 118 : 102;
         return (
@@ -287,11 +287,11 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
                 transition={reduced ? undefined : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
                 sx={{ position: "absolute", bottom: "calc(100% + 12px)", left: "50%", bgcolor: tokens.progress.next, color: "#fff", px: 1.5, py: 0.5, borderRadius: 999, fontSize: 14, fontWeight: 800, whiteSpace: "nowrap", pointerEvents: "none" }}
               >
-                ここから始める
+                {hasProgress ? "現在地" : "ここから始める"}
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. ミッション挑戦" : `${phase.phase}. ${phase.shortName}`}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. 目標ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
@@ -305,13 +305,16 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
         const pos = optionalPos(o);
         const size = 80;
         const Icon = o.Icon;
+        // 取り組めるタイミングを形と文で出す（2026-11-23、GPT指摘）：橋渡しは段階6を
+        // 終えるまで対象外なので、色を落として「まだ」を表す。
+        const locked = o.needsGoal && !missionReady && !missionDone;
         return (
           <Box
             key={o.label}
-            aria-label={`任意フェーズ：${o.label}`}
+            aria-label={`任意フェーズ：${o.label}（${o.timing}）`}
             sx={{ position: "absolute", left: `${(pos.x / xDen) * 100}%`, top: `${(pos.y / yDen) * 100}%`, transform: "translate(-50%, -50%)", width: size, height: size }}
           >
-            <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${tokens.progress.next}`, bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: tokens.progress.next }}>
+            <Box sx={{ width: size, height: size, borderRadius: "50%", border: `2.5px dashed ${locked ? "#cbd5e1" : tokens.progress.next}`, bgcolor: locked ? "#f8fafc" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: locked ? "#94a3b8" : tokens.progress.next }}>
               <Icon sx={{ fontSize: 30 }} />
             </Box>
             <Box
@@ -326,7 +329,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               }}
             >
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{o.label}</Typography>
-              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>任意</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{o.timing}</Typography>
             </Box>
           </Box>
         );
