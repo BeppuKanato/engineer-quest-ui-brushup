@@ -417,5 +417,60 @@ export const resolveFixture = (path: string): unknown => {
       achievedBigGoals: [],
     };
   }
+  // フィードバック画面の仮データ（2026-11-23）: 文面ありの状態をデザイン確認できるようにする。
+  if (key.startsWith("/feedback-v1/phase/") || key.startsWith("/feedback-v1/unit/")) return designFeedbackResult();
   return fixtures[key];
 };
+
+/**
+ * フィードバックの仮データ。内容はバブルソート フェーズ3（動きの確認）直後の想定で、
+ * 概念スナップショットの根拠は実際に歩いた記録（1問目だけ初回誤答→見直して正解、
+ * 他は初回正解）に合わせている。大目標は再設計で廃止済みのため goalSnapshot は null。
+ */
+function designFeedbackResult() {
+  const ev = (questionId: string, questionLabel: string, firstCorrect: boolean, retried: boolean) => ({
+    phaseKey: "bubble-sort-check", assessmentId: "bubble-sort-check", questionId,
+    tags: [] as string[], stageLabel: "動きの確認問題", questionLabel,
+    first: { sourceId: "design", sessionId: "design-session", number: 1, correct: firstCorrect },
+    latest: { sourceId: "design", sessionId: "design-session", number: retried ? 2 : 1, correct: true },
+    retried, sessions: 1,
+  });
+  const concept = (conceptId: string, label: string, evidence: ReturnType<typeof ev>[]) => ({
+    conceptId, label, kind: "assessment", state: "confirmed" as const,
+    attemptedQuestions: evidence.length, totalQuestions: evidence.length, implementation: null, evidence,
+  });
+  const actionHref = "/courses/roadmap/course-algorithm-bubble-sort-v2/learn?phase=bubble-sort-code-mapping";
+  const nextStep = "動きとコードの対応を見て、比較と交換がコードのどの行で書かれているか確かめる";
+  const reason = "動きの理解は確認できたので、次はその動きがコードでどう表されるかをつなげると、コードを読む土台になります。";
+  return {
+    id: "design-feedback-1", status: "COMPLETED", goalSnapshot: null,
+    conceptSnapshot: {
+      id: "design-concept-snapshot", version: 1, courseId: "course-algorithm-bubble-sort-v2",
+      title: "バブルソート", relation: "unit-components",
+      concepts: [
+        concept("design-c1", "ペアの比較と交換", [
+          ev("bubble-sort-check-q-next-pair", "次に比べるペア", false, true),
+          ev("bubble-sort-check-q-larger-destination", "大きい値の行き先", true, false),
+          ev("bubble-sort-check-q-larger-stays", "交換しない場合", true, false),
+        ]),
+        concept("design-c2", "周の終わりと次の周", [
+          ev("bubble-sort-check-q-fixed-at-pass-end", "右端の確定", true, false),
+          ev("bubble-sort-check-q-pass-two-first-pair", "2周目の最初のペア", true, false),
+        ]),
+        concept("design-c3", "比べる範囲の縮小", [
+          ev("bubble-sort-check-q-pass-two-pair-count", "2周目のペアの数", true, false),
+        ]),
+        concept("design-c4", "並び替えの終了", [
+          ev("bubble-sort-check-q-why-finished", "終わる理由", true, false),
+        ]),
+      ],
+    },
+    feedback: {
+      currentState: "比べるペアの進み方と、大きい値の行き先は追えています。最初の問題では次のペアの位置を一度取り違えましたが、動きを見直して自分で直せました。",
+      explanation: "周の終わりに右端のマスが確定することと、比べる範囲が狭くなって並び替えが終わることも、初回で正しく判断できています。",
+      nextGoal: "図で見た動きを、コードの行に対応づける",
+      nextStep, reason, actionLabel: "動きとコードの対応へ進む", actionHref,
+      recommendations: [{ candidateId: "candidate-1", nextStep, reason, actionLabel: "動きとコードの対応へ進む", actionHref }],
+    },
+  };
+}

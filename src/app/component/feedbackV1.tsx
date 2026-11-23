@@ -7,6 +7,7 @@ import { auth } from "@/lib/firebase";
 import { getFeedbackV1, retryFeedbackV1, feedbackCandidates, type FeedbackCandidate, type FeedbackV1Result } from "@/api/feedbackV1.api";
 export type { FeedbackV1Result } from "@/api/feedbackV1.api";
 import { ApiError, fetcher } from "@/lib/fetcher";
+import { isDesignMode } from "@/design/fixtures";
 
 // Keep target/state identifiers, never copy shared code/body or arbitrary query text into telemetry.
 function canonicalRoute(route: string) {
@@ -52,8 +53,9 @@ export function useFeedbackV1(kind: FeedbackV1Kind, eventId: string) {
     let notFoundRetries = 0;
     const initialMethod = retryRequest?.target === `${kind}:${eventId}` ? retryRequest.mode : "POST";
     const unsubscribe = onAuthStateChanged(auth, async user => {
-      if (!user) return;
-      const token = await user.getIdToken();
+      // デザインモードでは認証ユーザーがいないため、仮トークンで fixture を読む
+      if (!user && !isDesignMode()) return;
+      const token = user ? await user.getIdToken() : "design-token";
       const load = async (method: string) => {
         try {
           const data = method === "RETRY"
