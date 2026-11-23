@@ -13,8 +13,9 @@
 // - カード全体が単元画面へのリンク
 // 並び（2026-11-23 Kanato の案を採用）：グループごとに行を変えるのはやめ、全単元を
 // 3列で流す。行分けだと単元数によって空きマスだらけになり、増えた時にも直らないため。
-// 課題軸の区別は、カードに付けたグループ名のラベルで付ける。同じ軸の単元は隣り合う
-// 順序に並べ、組が行の途中で割れないようにする。
+// 課題軸の区別は、カードに付けた「アイコン＋グループ名」のチップで付ける（色は
+// 状態の意味で予約済みのため使わない）。同じ軸の単元は隣り合う順序に並べ、
+// 組が行の途中で割れないようにする。
 // BFS と DFS のサムネは、目標ミッションの場面を描いた試作（MissionThumbnail）。
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
@@ -49,6 +50,78 @@ const GROUP_LABEL: Record<string, string> = {
   "course-algorithm-bubble-sort-v2": "並び替え",
   "course-algorithm-binary-search-v1": "配列の検索",
 };
+
+/** 軸のアイコン（24×24、線と点の最小限の絵）。色は使わず、形で軸を区別する。 */
+const GroupGlyph: React.FC<{ label: string }> = ({ label }) => {
+  const common = { width: 16, height: 16, viewBox: "0 0 24 24", "aria-hidden": true } as const;
+  switch (label) {
+    case "グラフ探索":
+      return (
+        <svg {...common}>
+          <path d="M7 17 L12 6 M12 6 L18 14 M7 17 L18 14" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="7" cy="17" r="2.6" fill="currentColor" />
+          <circle cx="12" cy="6" r="2.6" fill="currentColor" />
+          <circle cx="18" cy="14" r="2.6" fill="currentColor" />
+        </svg>
+      );
+    case "迷路生成":
+      return (
+        <svg {...common}>
+          <path
+            d="M4 20 V4 H20 V20 H10 V11 H16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case "並び替え":
+      return (
+        <svg {...common}>
+          <rect x="5.2" y="13" width="3.6" height="7" fill="currentColor" />
+          <rect x="10.6" y="9" width="3.6" height="11" fill="currentColor" />
+          <rect x="16" y="5" width="3.6" height="15" fill="currentColor" />
+        </svg>
+      );
+    case "配列の検索":
+      return (
+        <svg {...common}>
+          <circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M14.8 14.8 L20 20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
+/** グループチップ：アイコン＋グループ名。同じチップの並びで「同じ軸」が一目で分かる。 */
+const GroupChip: React.FC<{ label: string }> = ({ label }) => (
+  <Box
+    component="span"
+    sx={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 0.75,
+      alignSelf: "flex-start",
+      px: 1.25,
+      py: 0.625,
+      mb: 1,
+      border: `1px solid ${BORDER}`,
+      borderRadius: 999,
+      bgcolor: "#fff",
+      color: TEXT,
+      fontSize: 14,
+      fontWeight: 700,
+      lineHeight: 1,
+    }}
+  >
+    <GroupGlyph label={label} />
+    {label}
+  </Box>
+);
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
 const FLOW_ORDER = [
@@ -197,11 +270,7 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
         )}
       </Box>
       <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", flex: 1 }}>
-        {GROUP_LABEL[unit.id] && (
-          <Typography fontSize={14} fontWeight={700} color="#6b7280">
-            {GROUP_LABEL[unit.id]}
-          </Typography>
-        )}
+        {GROUP_LABEL[unit.id] && <GroupChip label={GROUP_LABEL[unit.id]} />}
         <Typography fontSize={18} fontWeight={900} color={TEXT}>
           {unit.title}
         </Typography>
