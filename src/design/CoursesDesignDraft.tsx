@@ -11,8 +11,11 @@
 //   バッジと同じ緑にする（色は意味で統一）。グレーは操作できない状態だけに使う。
 //   ボタンはカード全体リンクの中の見た目上のボタン（遷移はカード全体が担う）。
 // - カード全体が単元画面へのリンク
-// グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
-// BFS のサムネだけ、目標ミッションの場面を描いた試作（MissionThumbnail）に差し替えてある。
+// 並び（2026-11-23 Kanato の案を採用）：グループごとに行を変えるのはやめ、全単元を
+// 3列で流す。行分けだと単元数によって空きマスだらけになり、増えた時にも直らないため。
+// 課題軸の区別は、カードに付けたグループ名のラベルで付ける。同じ軸の単元は隣り合う
+// 順序に並べ、組が行の途中で割れないようにする。
+// BFS と DFS のサムネは、目標ミッションの場面を描いた試作（MissionThumbnail）。
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -36,13 +39,26 @@ const GREEN_DARK = "#15803d";
 type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
 
-// 課題軸のグループ（2026-11-21 決定）。貪欲法は手法軸のため単独で置く。
-const GROUPS: { label: string; ids: string[] }[] = [
-  { label: "グラフ探索", ids: ["course-algorithm-breadth-first-search-v1", "course-algorithm-depth-first-search-v1"] },
-  { label: "迷路生成", ids: ["course-algorithm-maze-digging-v1", "course-algorithm-wall-extension-v1"] },
-  { label: "並び替え", ids: ["course-algorithm-bubble-sort-v2"] },
-  { label: "配列の検索", ids: ["course-algorithm-binary-search-v1"] },
-  { label: "貪欲法", ids: ["course-algorithm-greedy-coins-v1"] },
+// 課題軸のグループ（2026-11-21 決定）。カードのラベルに使う。
+// 貪欲法は手法軸で単独＝単元名自体がグループ名になるため、ラベルは付けない。
+const GROUP_LABEL: Record<string, string> = {
+  "course-algorithm-breadth-first-search-v1": "グラフ探索",
+  "course-algorithm-depth-first-search-v1": "グラフ探索",
+  "course-algorithm-maze-digging-v1": "迷路生成",
+  "course-algorithm-wall-extension-v1": "迷路生成",
+  "course-algorithm-bubble-sort-v2": "並び替え",
+  "course-algorithm-binary-search-v1": "配列の検索",
+};
+
+// 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
+const FLOW_ORDER = [
+  "course-algorithm-breadth-first-search-v1",
+  "course-algorithm-depth-first-search-v1",
+  "course-algorithm-bubble-sort-v2",
+  "course-algorithm-maze-digging-v1",
+  "course-algorithm-wall-extension-v1",
+  "course-algorithm-binary-search-v1",
+  "course-algorithm-greedy-coins-v1",
 ];
 
 const OTHER_IDS = [
@@ -181,6 +197,11 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
         )}
       </Box>
       <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", flex: 1 }}>
+        {GROUP_LABEL[unit.id] && (
+          <Typography fontSize={14} fontWeight={700} color="#6b7280">
+            {GROUP_LABEL[unit.id]}
+          </Typography>
+        )}
         <Typography fontSize={18} fontWeight={900} color={TEXT}>
           {unit.title}
         </Typography>
@@ -279,24 +300,15 @@ export const CoursesDesignDraft: React.FC = () => {
         </Paper>
       </Box>
 
-      {GROUPS.map((group) => {
-        const groupUnits = group.ids
-          .map((id) => unitById.get(id))
-          .filter((u): u is HomeUnit => !!u);
-        if (groupUnits.length === 0) return null;
-        return (
-          <Box key={group.label} component="section" aria-label={group.label}>
-            <Typography component="h2" fontSize={18} fontWeight={900} color={TEXT} sx={{ mb: 2 }}>
-              {group.label}
-            </Typography>
-            <CardGrid>
-              {groupUnits.map((unit) => (
-                <UnitCard key={unit.id} unit={unit} />
-              ))}
-            </CardGrid>
-          </Box>
-        );
-      })}
+      <Box component="section" aria-label="単元">
+        <CardGrid>
+          {FLOW_ORDER.map((id) => unitById.get(id))
+            .filter((u): u is HomeUnit => !!u)
+            .map((unit) => (
+              <UnitCard key={unit.id} unit={unit} />
+            ))}
+        </CardGrid>
+      </Box>
 
       <Box component="section" aria-label="その他のコース">
         <Typography component="h2" fontSize={18} fontWeight={900} color={TEXT} sx={{ mb: 2 }}>
