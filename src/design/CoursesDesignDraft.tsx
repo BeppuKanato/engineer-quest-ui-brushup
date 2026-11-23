@@ -223,17 +223,16 @@ const STATE_ORDER: Record<string, number> = { IN_PROGRESS: 0, NOT_STARTED: 1, CO
 
 /**
  * 学習内容の説明（2026-11-23 追加）：役割分担は、ミッションの題＝この単元で挑む課題（場面）、
- * この1行＝そのアルゴリズムで何ができるか（Kanato の指定）。仕組みの説明にすると
- * 題と役割が重なるため、「〜できる」の形で書く。
+ * この説明＝アルゴリズムの目的と特徴（Kanato の指定：「何をするのが目的か＋特徴」の作りの文）。
  */
 const FEATURE_TEXT: Record<string, string> = {
-  "course-algorithm-breadth-first-search-v1": "道のつながりの中から、いちばん短い行き方が見つけられる",
-  "course-algorithm-depth-first-search-v1": "道を深くたどって、出口までの通り道が見つけられる",
-  "course-algorithm-maze-digging-v1": "全体がつながった、曲がりくねった迷路が作れる",
-  "course-algorithm-wall-extension-v1": "まっすぐな壁で仕切られた迷路が作れる",
-  "course-algorithm-bubble-sort-v2": "バラバラな並びを、順番どおりに並べ替えられる",
-  "course-algorithm-binary-search-v1": "順番に並んだものから、探しものを少ない回数で見つけられる",
-  "course-algorithm-greedy-coins-v1": "その場でいちばんいい選択を続けて、答えが出せる",
+  "course-algorithm-breadth-first-search-v1": "最短ルートを見つけるのが目的。近い場所から順に調べていくのが特徴",
+  "course-algorithm-depth-first-search-v1": "出口までの道を見つけるのが目的。一本道を深く進み、行き止まりで戻るのが特徴",
+  "course-algorithm-maze-digging-v1": "全体がつながる迷路を作るのが目的。壁を掘って通路を伸ばしていくのが特徴",
+  "course-algorithm-wall-extension-v1": "全体がつながる迷路を作るのが目的。柱から壁を倒して伸ばしていくのが特徴",
+  "course-algorithm-bubble-sort-v2": "並びを順番どおりに整えるのが目的。隣同士を比べて交換していくのが特徴",
+  "course-algorithm-binary-search-v1": "探しものを速く見つけるのが目的。調べる範囲を半分ずつに絞るのが特徴",
+  "course-algorithm-greedy-coins-v1": "いちばんよい答えを見つけるのが目的。その場で最良の選択を繰り返すのが特徴",
 };
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
