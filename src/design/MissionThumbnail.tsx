@@ -161,8 +161,8 @@ export const DfsMissionThumbnail: React.FC = () => (
   </Box>
 );
 
-/** 困っているロボット（頭の左上基準）。場面サムネ共通の主人公。 */
-const TroubledRobot: React.FC<{ x: number; y: number }> = ({ x, y }) => (
+/** ロボット（頭の左上基準）。場面サムネ共通の主人公。dream は「作りたいものを思い浮かべている」顔。 */
+const TroubledRobot: React.FC<{ x: number; y: number; dream?: boolean }> = ({ x, y, dream }) => (
   <g transform={`translate(${x} ${y})`}>
     <line x1="22" y1="-14" x2="22" y2="-28" stroke="#1e40af" strokeWidth="3.5" strokeLinecap="round" />
     <circle cx="22" cy="-32" r="5" fill="#2563eb" />
@@ -170,8 +170,31 @@ const TroubledRobot: React.FC<{ x: number; y: number }> = ({ x, y }) => (
     <rect x="7" y="8" width="30" height="19" rx="5" fill="#dbeafe" />
     <circle cx="17" cy="16" r="3" fill="#1e3a8a" />
     <circle cx="27" cy="16" r="3" fill="#1e3a8a" />
-    <path d="M17 24 Q22 21 27 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
-    <path d="M52 6 C52 6 46 16 46 20.5 A6 6 0 0 0 58 20.5 C58 16 52 6 52 6 Z" fill="#7dd3fc" />
+    {dream ? (
+      <path d="M17 21 Q22 26 27 21" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
+    ) : (
+      <path d="M17 24 Q22 21 27 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
+    )}
+    {dream ? (
+      <path d="M54 -8 L56.5 -1 L63 1.5 L56.5 4 L54 11 L51.5 4 L45 1.5 L51.5 -1 Z" fill="#f59e0b" />
+    ) : (
+      <path d="M52 6 C52 6 46 16 46 20.5 A6 6 0 0 0 58 20.5 C58 16 52 6 52 6 Z" fill="#7dd3fc" />
+    )}
+  </g>
+);
+
+/** 思い浮かべている完成した迷路（点線枠の設計図パネル）。作る側の単元で使う。 */
+const ThoughtMaze: React.FC<{ x: number; y: number }> = ({ x, y }) => (
+  <g transform={`translate(${x} ${y})`}>
+    <rect x="0" y="0" width="106" height="66" rx="10" fill="#ffffff" stroke="#2563eb" strokeWidth="2" strokeDasharray="6 5" />
+    <rect x="10" y="10" width="86" height="46" fill="#f4f8fd" stroke="#5b7186" strokeWidth="3" />
+    <g stroke="#5b7186" strokeWidth="3">
+      <line x1="34" y1="10" x2="34" y2="36" />
+      <line x1="34" y1="36" x2="62" y2="36" />
+      <line x1="62" y1="24" x2="62" y2="56" />
+      <line x1="78" y1="10" x2="78" y2="32" />
+      <line x1="10" y1="46" x2="44" y2="46" />
+    </g>
   </g>
 );
 
@@ -194,19 +217,17 @@ export const DiggingMissionThumbnail: React.FC = () => (
     preserveAspectRatio="xMidYMid slice"
     sx={{ width: "100%", height: "100%", display: "block" }}
     role="img"
-    aria-label="岩盤を掘って迷路を作ろうとして、固い岩の前で困っているロボット"
+    aria-label="完成した迷路を思い浮かべながら、岩盤を掘るロボット"
   >
     <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
     {/* 岩盤の塊 */}
     <rect x="10" y="6" width="440" height="198" rx="10" fill="#8d6e63" />
     <g fill="#6d4c41" opacity="0.55">
-      <rect x="252" y="52" width="13" height="13" rx="2" />
-      <rect x="336" y="52" width="13" height="13" rx="2" />
       <rect x="252" y="140" width="13" height="13" rx="2" />
       <rect x="336" y="140" width="13" height="13" rx="2" />
       <rect x="392" y="96" width="13" height="13" rx="2" />
     </g>
-    <path d="M282 66 l10 8 l-6 8 M356 158 l10 8 l-6 8" stroke="#5d4037" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M356 158 l10 8 l-6 8 M404 168 l10 8 l-6 8" stroke="#5d4037" strokeWidth="2.5" fill="none" strokeLinecap="round" />
     {/* 掘った通路：入口から入って、途中で岩にぶつかっている */}
     <path
       d="M4 160 L96 160 L96 88 L172 88"
@@ -219,13 +240,16 @@ export const DiggingMissionThumbnail: React.FC = () => (
     {/* 掘り出した土の山 */}
     <ellipse cx="34" cy="198" rx="28" ry="9" fill="#6d4c41" />
     <ellipse cx="66" cy="202" rx="18" ry="6" fill="#795548" />
-    <TroubledRobot x={140} y={70} />
+    <TroubledRobot x={140} y={70} dream />
     {/* シャベル：岩の面に向けている */}
     <g>
       <line x1="190" y1="98" x2="216" y2="78" stroke="#6d4c41" strokeWidth="4.5" strokeLinecap="round" />
       <path d="M216 78 L234 70 L237 82 L222 88 Z" fill="#b0bec5" />
     </g>
-    <QuestionBubble x={104} y={44} tail="M94 56 L82 70 L100 60 Z" />
+    {/* 思い浮かべている完成した迷路 */}
+    <circle cx="216" cy="30" r="4" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+    <circle cx="250" cy="30" r="5.5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+    <ThoughtMaze x={284} y={14} />
   </Box>
 );
 
@@ -237,17 +261,24 @@ export const WallExtensionMissionThumbnail: React.FC = () => (
     preserveAspectRatio="xMidYMid slice"
     sx={{ width: "100%", height: "100%", display: "block" }}
     role="img"
-    aria-label="柱の並ぶ広場で、壁の伸ばし方に困っているロボット"
+    aria-label="完成した迷路を思い浮かべながら、柱から壁を伸ばすロボット"
   >
     <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
     <rect x="0" y="172" width="460" height="38" fill="#e2eedd" />
-    {/* 伸ばし済みの壁 */}
+    {/* 伸ばし済みの壁と、伸ばし途中の壁 */}
     <g stroke="#5b7186" strokeWidth="13">
-      <line x1="108" y1="44" x2="188" y2="44" />
       <line x1="188" y1="44" x2="188" y2="104" />
+      <line x1="268" y1="44" x2="348" y2="44" />
       <line x1="268" y1="104" x2="348" y2="104" />
       <line x1="348" y1="104" x2="348" y2="164" />
       <line x1="108" y1="164" x2="188" y2="164" />
+      <line x1="196" y1="164" x2="238" y2="164" />
+    </g>
+    {/* 伸ばし途中の先端のきらめき */}
+    <g stroke="#f59e0b" strokeWidth="3" strokeLinecap="round">
+      <line x1="248" y1="156" x2="254" y2="150" />
+      <line x1="250" y1="164" x2="258" y2="164" />
+      <line x1="248" y1="172" x2="254" y2="178" />
     </g>
     {/* 柱 */}
     <g fill="#5b7186">
@@ -255,10 +286,13 @@ export const WallExtensionMissionThumbnail: React.FC = () => (
         [36, 96, 156].map((y) => <rect key={`${x}-${y}`} x={x} y={y} width="16" height="16" rx="3" />),
       )}
     </g>
-    <TroubledRobot x={22} y={126} />
+    <TroubledRobot x={22} y={126} dream />
     {/* 手に持った壁のパネル */}
     <rect x="70" y="136" width="46" height="13" rx="3" fill="#5b7186" />
-    <QuestionBubble x={98} y={100} tail="M88 112 L74 124 L94 116 Z" />
+    {/* 思い浮かべている完成した迷路 */}
+    <circle cx="54" cy="80" r="3.5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+    <circle cx="66" cy="66" r="5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+    <ThoughtMaze x={92} y={4} />
   </Box>
 );
 
