@@ -27,7 +27,7 @@ export const unitMissions: Record<string, UnitMission> = {
   "course-algorithm-binary-search-v1": {
     courseId: "course-algorithm-binary-search-v1",
     title: "ほしい商品を少ない回数で見つける",
-    description: "小さい順に並んだ商品の中から、ほしいものを探す。比べる回数をできるだけ少なく見つけよう。",
+    description: "商品が何十個も並んでいる。1つずつ確認していたら、目当ての商品にたどり着くまで時間がかかりすぎる。範囲を半分ずつ絞って、少ない回数で見つけよう。",
     successCondition: "範囲を正しく狭めて、目的の商品を見つけたとき達成",
   },
   "course-algorithm-maze-digging-v1": {

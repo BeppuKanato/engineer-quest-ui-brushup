@@ -43,7 +43,10 @@ export function ConceptProgressMap({ courseId }: { courseId: string }) {
   return <Box component="section" aria-labelledby="concept-progress-heading" sx={{ mt: 4 }}>
     <Typography id="concept-progress-heading" component="h2" variant="h6" fontWeight={950}>概念の確認状況</Typography>
     <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>学習中に一度でも正解した問題を「確認済み」として数えています。初回正解率は判定には使いません。</Typography>
-    {current?.data ? <ConceptProgressList data={current.data} /> : current?.failed
+    {current?.data ? <>
+      <ConceptProgressList data={current.data} />
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>正解できていない概念は、上のマップで段階を選ぶと解き直せます。</Typography>
+    </> : current?.failed
       ? <Alert severity="warning" action={<Button onClick={() => setRevision(value => value + 1)}>再読み込み</Button>}>概念の確認状況を取得できませんでした。学習はそのまま続けられます。</Alert>
       : <Skeleton variant="rounded" height={140} aria-label="概念の確認状況を読み込み中" />}
   </Box>;

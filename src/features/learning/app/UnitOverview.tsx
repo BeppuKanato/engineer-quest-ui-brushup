@@ -4,6 +4,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ScienceIcon from "@mui/icons-material/Science";
 import BuildIcon from "@mui/icons-material/Build";
 import { motion, useReducedMotion } from "framer-motion";
@@ -98,8 +99,6 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                     <>
                       {nextPhase && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>次は『{nextPhase.formalName}』</Typography>}
                       <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>{progress.unit ? "学習を進める" : "学習を始める"}</Button>
-                      <Button variant="text" disabled sx={{ fontWeight: 700 }}>ミッションに挑戦する</Button>
-                      <Typography sx={{ fontSize: 14, color: "text.secondary", textAlign: "center" }}>段階1〜6を終えたら挑戦できる</Typography>
                     </>
                   )}
 
@@ -108,7 +107,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
             </Box>
           )}
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
-            <Typography sx={{ fontWeight: 700 }}>段階 {completed} / 6 完了</Typography>
+            <Typography sx={{ fontWeight: 700 }}>学習段階 {completed} / 6 完了</Typography>
             <Chip
               label={missionDone ? "ミッション達成済み" : missionReady ? "ミッションに挑戦できる" : "ミッション未挑戦"}
               size="small"
@@ -275,6 +274,13 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
             >
               <Icon sx={{ fontSize: 44 }} />
               {done && <CheckCircleIcon aria-hidden sx={{ position: "absolute", right: 0, bottom: 0, fontSize: 28 }} />}
+              {/* 現在地ノードは「押せる」ことが見た目で分かるように、再生バッジを常時出す
+                  （2026-11-23、Kanato：ホバーで出るだけでは足りない）。完了のチェックと対の位置。 */}
+              {current && (
+                <Box component="span" aria-hidden sx={{ position: "absolute", right: -2, bottom: -2, width: 30, height: 30, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${tokens.progress.next}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <PlayArrowIcon sx={{ fontSize: 18, color: tokens.progress.next }} />
+                </Box>
+              )}
             </Button>
             {current && (
               <Box
@@ -288,7 +294,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               </Box>
             )}
             <Box sx={{ position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", width: vertical ? 150 : 190, maxWidth: "38vw", textAlign: "center", pointerEvents: "none" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "7. 目標ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isMission ? "目標ミッション" : `${phase.phase}. ${phase.shortName}`}</Typography>
               <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
             </Box>
             </Box>
