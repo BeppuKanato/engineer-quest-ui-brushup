@@ -22,9 +22,11 @@
 
 import { useState } from "react";
 
-import { Box, Button, ButtonBase, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, ButtonBase, Chip, Paper, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
+import FlagIcon from "@mui/icons-material/Flag";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import Link from "next/link";
 
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
@@ -33,6 +35,7 @@ import coursesData from "@/design/data/courses.json";
 import { homeFixture } from "@/design/fixtures";
 import { findUnitMission } from "@/features/learning/app/missionRegistry";
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
+import { goalStore, useGoalCourseId } from "@/design/goalStore";
 
 const TEXT = "#111827";
 const PRIMARY = "#2563eb";
@@ -333,7 +336,66 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   );
 };
 
-const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
+/**
+ * 目標の旗トグル（2026-11-23、Kanato の案）：文字ボタンではなく旗アイコンでオンオフする。
+ * 伝わり方の担保は2つ：ホバーで「目標にする／目標を外す」のツールチップ（補助）と、
+ * 設定済みのとき旗の横に「目標」の文字が残ること（状態はアイコンだけにしない）。
+ * 押した瞬間の通知はページ側の Snackbar が担う。目標は1つだけ（goalStore）。
+ */
+const GoalFlag: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit) => void }> = ({ unit, onToggleGoal }) => {
+  const goalCourseId = useGoalCourseId();
+  const isGoal = goalCourseId === unit.id;
+  return (
+    <Tooltip title={isGoal ? "目標を外す" : "目標にする"}>
+      <Box
+        component="span"
+        role="button"
+        aria-label={isGoal ? `${unit.title}の目標を外す` : `${unit.title}を目標にする`}
+        aria-pressed={isGoal}
+        tabIndex={0}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onToggleGoal(unit);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            onToggleGoal(unit);
+          }
+        }}
+        sx={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          zIndex: 2,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.5,
+          height: 40,
+          px: isGoal ? 1.5 : 0,
+          width: isGoal ? "auto" : 40,
+          justifyContent: "center",
+          borderRadius: 999,
+          bgcolor: isGoal ? PRIMARY : "#fff",
+          color: isGoal ? "#fff" : TEXT,
+          border: isGoal ? `1px solid ${PRIMARY}` : `1px solid ${BORDER}`,
+          boxShadow: "0 2px 6px rgba(15, 40, 90, 0.25)",
+          cursor: "pointer",
+          fontSize: 14,
+          fontWeight: 800,
+          lineHeight: 1,
+        }}
+      >
+        {isGoal ? <FlagIcon sx={{ fontSize: 18 }} /> : <FlagOutlinedIcon sx={{ fontSize: 20 }} />}
+        {isGoal && "目標"}
+      </Box>
+    </Tooltip>
+  );
+};
+
+const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit) => void }> = ({ unit, onToggleGoal }) => {
   const mission = findUnitMission(unit.id);
   const scene = missionThumbnailFor(unit.id);
   const inProgress = unit.status === "IN_PROGRESS";
@@ -356,6 +418,7 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
     >
       <Box sx={{ position: "relative", height: 196, bgcolor: "#f6f9ff", flexShrink: 0 }}>
         <StateMark unit={unit} />
+        <GoalFlag unit={unit} onToggleGoal={onToggleGoal} />
         {scene ?? (
           <Box sx={{ position: "absolute", inset: 0, p: 1.5 }}>
             <CourseThumbnail courseId={unit.id} />
@@ -484,6 +547,13 @@ export const CoursesDesignDraft: React.FC = () => {
   const ratio = overview.totalUnits > 0 ? (overview.completedUnits / overview.totalUnits) * 100 : 0;
   const [axis, setAxis] = useState("すべて");
   const [stateFilter, setStateFilter] = useState("ALL");
+  const [notice, setNotice] = useState<string | null>(null);
+  // 目標トグルの通知：効果（ホームに表示される）を結果で伝える。
+  const handleToggleGoal = (unit: HomeUnit) => {
+    const wasGoal = goalStore.get() === unit.id;
+    goalStore.toggle(unit.id);
+    setNotice(wasGoal ? "目標を外しました" : "目標に設定しました。ホームの目標に表示されます");
+  };
   const stateCounts: Record<string, number> = {};
   for (const u of overview.units) {
     stateCounts[u.status] = (stateCounts[u.status] ?? 0) + 1;
@@ -534,7 +604,7 @@ export const CoursesDesignDraft: React.FC = () => {
       <Box component="section" aria-label="単元">
         <CardGrid>
           {visibleUnits.map((unit) => (
-            <UnitCard key={unit.id} unit={unit} />
+            <UnitCard key={unit.id} unit={unit} onToggleGoal={handleToggleGoal} />
           ))}
         </CardGrid>
       </Box>
@@ -572,6 +642,13 @@ export const CoursesDesignDraft: React.FC = () => {
           </Button>
         </Stack>
       </Paper>
+      <Snackbar
+        open={notice !== null}
+        autoHideDuration={3000}
+        onClose={() => setNotice(null)}
+        message={notice ?? ""}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Stack>
   );
 };

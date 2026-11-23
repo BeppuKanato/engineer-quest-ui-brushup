@@ -4,6 +4,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckIcon from "@mui/icons-material/Check";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ScienceIcon from "@mui/icons-material/Science";
 import BuildIcon from "@mui/icons-material/Build";
 import { motion, useReducedMotion } from "framer-motion";
@@ -15,6 +16,7 @@ import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { AppHeader } from "@/app/component/appHeader";
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
+import { goalStore, useGoalCourseId } from "@/design/goalStore";
 import { useUserSession } from "@/app/component/userSession";
 import { startLearningUnit } from "@/api/learning.api";
 import { appLearningTokens as tokens } from "./appLearning.tokens";
@@ -37,7 +39,9 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   const { firebaseUser } = useUserSession();
   const { progress, loading, error, reload, authenticated } = useLearningProgress(unit?.courseId);
   const [starting, setStarting] = useState(false), [startError, setStartError] = useState<string | null>(null);
-  const [goalSet, setGoalSet] = useState(false);
+  // 目標は共有状態（コース一覧の旗トグルと同じものを見る）。目標は1つだけ。
+  const goalCourseId = useGoalCourseId();
+  const goalSet = goalCourseId === courseId;
   const log = useLearningLog(courseId);
   const mission = unit ? findUnitMission(unit.courseId) : undefined;
   const next = unit && progress ? resumePhaseIndex(unit, progress) : null;
@@ -98,7 +102,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                     </>
                   )}
                   {!missionDone && (
-                    <Button variant="outlined" startIcon={goalSet ? <CheckIcon /> : undefined} onClick={() => setGoalSet(value => !value)} sx={{ fontWeight: 700 }}>
+                    <Button variant="outlined" startIcon={goalSet ? <FlagIcon /> : <FlagOutlinedIcon />} onClick={() => goalStore.toggle(courseId)} sx={{ fontWeight: 700 }}>
                       {goalSet ? "目標に設定済み" : "目標に設定する"}
                     </Button>
                   )}
