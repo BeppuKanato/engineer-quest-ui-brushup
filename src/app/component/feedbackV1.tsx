@@ -116,7 +116,7 @@ export function FeedbackCandidates({ candidates, onAction, framing = "choice" }:
       <Typography fontWeight={700} sx={{ overflowWrap: "anywhere" }}>{index+1}. {candidate.nextStep}</Typography>
       <Typography variant="body2" sx={{ mt: 0.5, overflowWrap: "anywhere" }}>{candidate.reason}</Typography>
       {candidate.actionHref && <Button component={Link} href={candidate.actionHref} variant={index === 0 ? "contained" : "outlined"}
-        sx={{ mt: 1, minHeight: 44, maxWidth: "100%", overflowWrap: "anywhere" }} onClick={event=>{if(onAction?.(candidate.actionHref)) event.preventDefault();}}>{candidate.actionLabel}</Button>}
+        sx={{ mt: 1, minHeight: framing === "next" && index === 0 ? 52 : 44, width: framing === "next" && index === 0 ? "100%" : undefined, maxWidth: "100%", overflowWrap: "anywhere" }} onClick={event=>{if(onAction?.(candidate.actionHref)) event.preventDefault();}}>{candidate.actionLabel}</Button>}
     </Paper>)}
   </Stack>;
 }

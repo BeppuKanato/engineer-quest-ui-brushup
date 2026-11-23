@@ -12,13 +12,15 @@ import { playerTokens } from "../player/player.tokens";
  * revealed が渡された場合は、その数までを1つずつ点灯させる（称賛の順序演出用）。
  * 渡されなければ全点灯の静止表示。
  */
-export function ResultScoreDots({ total, firstAttemptCorrect, eventuallyCorrect, revealed }: {
+export function ResultScoreDots({ total, firstAttemptCorrect, eventuallyCorrect, revealed, dotSize = 18 }: {
   total: number;
   firstAttemptCorrect: number;
   /** 最終的に正解へ到達した数。渡された場合、それを超えるドットは「まだ」を表す灰色の輪郭にする。 */
   eventuallyCorrect?: number;
   /** ここまで点灯済みにする。未指定なら全部出す。 */
   revealed?: number;
+  /** ドットの直径（px）。要約など控えめに出す場所では小さくする。 */
+  dotSize?: number;
 }) {
   const reduce = useReducedMotion();
   if (!Number.isInteger(total) || !Number.isInteger(firstAttemptCorrect)
@@ -39,7 +41,7 @@ export function ResultScoreDots({ total, firstAttemptCorrect, eventuallyCorrect,
           : { scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 500, damping: first ? 17 : 26 }}
         style={{ display: "inline-flex" }}>
-        <Box sx={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+        <Box sx={{ width: dotSize, height: dotSize, borderRadius: "50%", flexShrink: 0,
           bgcolor: first ? playerTokens.focus : "transparent",
           border: `2px solid ${remaining ? "#c3cad4" : playerTokens.focus}` }} />
       </motion.span>;

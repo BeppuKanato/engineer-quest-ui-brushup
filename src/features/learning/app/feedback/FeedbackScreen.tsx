@@ -1,5 +1,9 @@
 "use client";
 
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FlagIcon from "@mui/icons-material/Flag";
+import SearchIcon from "@mui/icons-material/Search";
 import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import confetti from "canvas-confetti";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -126,7 +130,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   const actionIsNext = !!actionPhase && !!nextPhaseKey && actionPhase === nextPhaseKey;
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="popLayout" initial={false}>
     {stage === "celebration" ? (
       <motion.div key="celebration" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }}
         exit={reduce ? { opacity: 0 } : { opacity: 0, y: -24 }} transition={{ duration: 0.4 }}
@@ -162,11 +166,15 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               <Box sx={{ mt: 1.5 }}>
                 {praise && <RevealRow index={0}>
-                  {/* 主役: praise は根拠のある称賛。画面で1つだけの強調面（2px 枠）で出す */}
-                  <Box sx={{ bgcolor: "#fff", border: `2px solid ${playerTokens.focus}`, borderRadius: "16px", px: "22px", py: "20px" }}>
+                  {/* 主役: praise は根拠のある称賛。画面で1つだけの強調面（2px 枠）で出し、
+                      出現時に枠が一度だけ光って気づきへ注意を引く（常時の発光はしない） */}
+                  <motion.div initial={false}
+                    animate={reduce ? undefined : { boxShadow: ["0 0 0 0 rgba(37,99,235,0)", "0 0 0 8px rgba(37,99,235,0.16)", "0 0 0 0 rgba(37,99,235,0)"] }}
+                    transition={{ duration: 1.2, delay: 0.55, times: [0, 0.35, 1] }}
+                    style={{ backgroundColor: "#fff", border: `2px solid ${playerTokens.focus}`, borderRadius: 16, padding: "20px 22px" }}>
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>あなたの学び</Typography>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.8 }}>{praise}</Typography>
-                  </Box>
+                  </motion.div>
                 </RevealRow>}
                 {sections.map(([label, body], i) => (
                   <RevealRow key={label} index={i + rowOffset}>
@@ -174,7 +182,10 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
                   </RevealRow>
                 ))}
                 <RevealRow index={sections.length + rowOffset} last>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>次の一歩</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
+                    <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
+                    <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
+                  </Box>
                   <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} />
                 </RevealRow>
               </Box>
@@ -233,10 +244,21 @@ function FeedbackGenerating() {
   </Box>;
 }
 
+/** 節ごとのアイコン（役割の見分け。色は意味の統一に従う：緑=できている、旗=目標）。 */
+const SECTION_ICONS: Record<string, ReactNode> = {
+  "できていること": <CheckCircleIcon sx={{ fontSize: 20, color: "#16a34a" }} />,
+  "改善点": <SearchIcon sx={{ fontSize: 20, color: "#64748b" }} />,
+  "次の目標": <FlagIcon sx={{ fontSize: 20, color: playerTokens.focus }} />,
+};
+
 /** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。 */
 function FeedbackCard({ label, body }: { label: string; body: string }) {
+  const icon = SECTION_ICONS[label];
   return <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "16px", px: 2.75, py: 2.25 }}>
-    <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>{label}</Typography>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
+      {icon}
+      <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>{label}</Typography>
+    </Box>
     <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>
   </Box>;
 }
@@ -251,9 +273,10 @@ function RevealRow({ children, index = 0, last = false }: { children: ReactNode;
   const reduce = useReducedMotion();
   // 読み進める順に1つずつ出す（2026-11-23 改訂）。以前は全行がほぼ同時に出て
   // 「いっぺんに出すだけ」だった。タップは不要で、全コンテンツは最初から
-  // DOM にある。受け渡し（0〜0.35s）のあと praise から 0.55s 間隔で続き、
-  // 左の線も同じ歩調で上から満ちていく。全行が出そろうまで約3秒。
-  const delay = reduce ? 0 : 0.3 + index * 0.55;
+  // DOM にある。受け渡し（0〜0.35s）のあと praise から 0.95s 間隔で続く
+  // （0.55s では出現の速さが読む速さを追い越す、という GPT レビューの指摘で
+  // 延長）。左の線も同じ歩調で上から満ちていく。全行が出そろうまで約5秒。
+  const delay = reduce ? 0 : 0.3 + index * 0.95;
   return <Box sx={{ display: "flex", gap: 2 }}>
     <Box sx={{ width: 20, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
       <motion.div initial={{ scale: reduce ? 1 : 0 }} animate={{ scale: 1 }}

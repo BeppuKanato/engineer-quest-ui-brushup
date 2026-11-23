@@ -158,7 +158,7 @@ export function PhaseResultSummaryLine({ summary }: { summary?: BubbleSortUnitPh
     ? `全${total}問に正解（初回で${first}問正解）`
     : `${total}問中${eventual}問正解（初回で${first}問正解）`;
   return <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-    <ResultScoreDots total={total} firstAttemptCorrect={first} eventuallyCorrect={summary?.eventuallyCorrect} />
+    <ResultScoreDots total={total} firstAttemptCorrect={first} eventuallyCorrect={summary?.eventuallyCorrect} dotSize={13} />
     <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{text}</Typography>
   </Box>;
 }
