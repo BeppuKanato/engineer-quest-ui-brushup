@@ -414,7 +414,7 @@ function UnitAchievements({ courseId }: { courseId: string }) {
         {items.map(item => {
           const achieved = item.status === "achieved";
           return (
-            <Box key={item.id} sx={{ display: "flex", gap: 1.5, p: 2, border: `1px solid ${tokens.border}`, borderRadius: 2, bgcolor: tokens.surface, opacity: achieved ? 1 : 0.75 }}>
+            <Box key={item.id} sx={{ display: "flex", gap: 1.5, p: 2, border: `1px solid ${tokens.border}`, borderRadius: 2, bgcolor: tokens.surface }}>
               <EmojiEventsIcon aria-hidden sx={{ color: achieved ? "#b45309" : "#94a3b8", fontSize: 32, flexShrink: 0 }} />
               <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
