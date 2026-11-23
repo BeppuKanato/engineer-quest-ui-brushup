@@ -12,7 +12,8 @@ import { GreedyCoinsMotivationCanvas } from "./GreedyCoinsMotivationCanvas";
 export function GreedyCoinsMotivationPreview({ embedded = false, onLearningEvent, active = true, onComplete }: LearningInstrumentation & { embedded?: boolean; onComplete?: () => void }) {
   const player = (
     <LearningPlayer onLearningEvent={onLearningEvent} active={active} content={greedyCoinsMotivationContent}
-      renderCanvas={(canvas) => <GreedyCoinsMotivationCanvas canvas={canvas} onExit={onComplete ? () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } : undefined} />} />
+      endAction={onComplete ? { label: greedyCoinsMotivationContent.steps[greedyCoinsMotivationContent.steps.length - 1].canvas.state.exit?.label ?? "次へ進む", onClick: () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } } : undefined}
+      renderCanvas={(canvas) => <GreedyCoinsMotivationCanvas canvas={canvas} />} />
   );
   if (embedded) {
     return (

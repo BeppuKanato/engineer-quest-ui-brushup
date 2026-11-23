@@ -13,7 +13,8 @@ import { bfsMotivationContent } from "./motivation.content";
 export function BfsMotivationPreview({ embedded = false, onLearningEvent, active = true, onComplete }: LearningInstrumentation & { embedded?: boolean; onComplete?: () => void }) {
   return (
     <Box component={embedded ? "div" : "main"} sx={{ height: embedded ? "100%" : "100dvh", minHeight: embedded ? 0 : 440, bgcolor: playerTokens.background, display: "flex" }}>
-      <LearningPlayer onLearningEvent={onLearningEvent} active={active} content={bfsMotivationContent} renderCanvas={(canvas) => <BfsMotivationCanvas canvas={canvas} onExit={onComplete ? () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } : undefined} />} />
+      <LearningPlayer onLearningEvent={onLearningEvent} active={active} content={bfsMotivationContent} endAction={onComplete ? { label: bfsMotivationContent.steps[bfsMotivationContent.steps.length - 1].canvas.state.exit?.label ?? "次へ進む", onClick: () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } } : undefined}
+      renderCanvas={(canvas) => <BfsMotivationCanvas canvas={canvas} />} />
     </Box>
   );
 }

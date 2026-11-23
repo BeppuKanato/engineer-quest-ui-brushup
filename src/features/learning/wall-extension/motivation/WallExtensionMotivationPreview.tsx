@@ -12,7 +12,8 @@ import { WallExtensionMotivationCanvas } from "./WallExtensionMotivationCanvas";
 export function WallExtensionMotivationPreview({ embedded = false, onLearningEvent, active = true, onComplete }: LearningInstrumentation & { embedded?: boolean; onComplete?: () => void }) {
   const player = (
     <LearningPlayer onLearningEvent={onLearningEvent} active={active} content={wallExtensionMotivationContent}
-      renderCanvas={(canvas) => <WallExtensionMotivationCanvas canvas={canvas} onExit={onComplete ? () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } : undefined} />} />
+      endAction={onComplete ? { label: wallExtensionMotivationContent.steps[wallExtensionMotivationContent.steps.length - 1].canvas.state.exit?.label ?? "次へ進む", onClick: () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } } : undefined}
+      renderCanvas={(canvas) => <WallExtensionMotivationCanvas canvas={canvas} />} />
   );
   if (embedded) {
     return (

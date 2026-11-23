@@ -6,7 +6,6 @@ import { Box, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import { useId } from "react";
 
-import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { GraphEdges, GraphNodes, GraphViewport } from "../../player/GraphDrawing";
 import { motivationMazeGeometry, MotivationMazeTiles, MotivationTrail, MotivationCurrentPlace } from "../../player/MotivationDrawing";
 import { playerTokens, type PlayerStatus } from "../../player/player.tokens";
@@ -35,7 +34,7 @@ function FolderExample() {
 }
 
 /** 図の差分だけを描画する。格子・現在地・軌跡はBFSと共用、グラフはGraphDrawingに委譲。 */
-export function DfsMotivationCanvas({ canvas, onExit }: { canvas: DfsMotivationCanvasState; onExit?: () => void }) {
+export function DfsMotivationCanvas({ canvas }: { canvas: DfsMotivationCanvasState }) {
   const { data, state, highlights } = canvas;
   const reduced = useReducedMotion(), returnArrow = useId();
   const transition = { duration: reduced ? 0 : playerTokens.transitionMs / 1000, ease: "easeInOut" } as const;
@@ -83,9 +82,5 @@ export function DfsMotivationCanvas({ canvas, onExit }: { canvas: DfsMotivationC
         <text x={(point("A").x + point("B").x) / 2} y={point("A").y - 62} textAnchor="middle" fill={playerTokens.text} fontSize={18}>つながり（辺）</text>
       </>}
     </GraphViewport>
-    {state.exit && <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={transition}
-      sx={{ position: "absolute", left: "50%", bottom: 12, transform: "translateX(-50%)" }}>
-      <PhaseNextButton label="動きの説明へ進む" disabled={!onExit} onClick={onExit ?? (() => {})} />
-    </Box>}
   </Box>;
 }

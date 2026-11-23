@@ -6,7 +6,6 @@ import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-
 import { GraphEdges, GraphNodes, GraphViewport } from "../../player/GraphDrawing";
 import { graphGeometry } from "../../player/graphGeometry";
 import { motivationMazeGeometry, MotivationMazeTiles, MotivationTrail, MotivationCurrentPlace } from "../../player/MotivationDrawing";
-import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { playerTokens } from "../../player/player.tokens";
 import type { MotivationCanvasState } from "./motivation.types";
 
@@ -31,7 +30,7 @@ function CandidateRoute({ route, view, point, focused, transition }: {
 
 /** 教材固有の図のみを描画する。再生、キャプション、操作バーは共通プレイヤーへ委譲。
  * onExit が渡された場合だけ、最終場面の終了ボタンを実際に押せるようにする（単元フローでの意思確認の区切り）。 */
-export function BfsMotivationCanvas({ canvas, onExit }: { canvas: MotivationCanvasState; onExit?: () => void }) {
+export function BfsMotivationCanvas({ canvas }: { canvas: MotivationCanvasState }) {
   const { data, state, highlights } = canvas;
   const isMaze = data.view === "maze";
   const reducedMotion = useReducedMotion();
@@ -116,14 +115,6 @@ export function BfsMotivationCanvas({ canvas, onExit }: { canvas: MotivationCanv
           {state.trail.length - 1}{data.labels.moveUnit}
         </text>}
       </GraphViewport>
-      {/* 出口ボタンは SVG の外に置く。foreignObject 内では SVG の拡大率に引きずられ、指定した大きさで表示されない（#157）。 */}
-      {state.exit && <Box component={motion.div}
-        initial={reducedMotion ? false : { opacity: 0, y: 8, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }}
-        transition={{ duration: reducedMotion ? 0 : 0.35, ease: "easeOut" }}
-        sx={{ position: "absolute", left: "50%", bottom: 12 }}>
-        <PhaseNextButton label={state.exit.label} disabled={!onExit} onClick={() => onExit?.()}
-          ariaLabel={onExit ? state.exit.label : `${state.exit.label}（接続は後続Issueで実装）`} />
-      </Box>}
     </Box>
   );
 }

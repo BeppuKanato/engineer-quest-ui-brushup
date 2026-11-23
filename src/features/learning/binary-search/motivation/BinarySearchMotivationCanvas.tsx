@@ -3,7 +3,6 @@
 import Box from "@mui/material/Box";
 import { motion, useReducedMotion } from "framer-motion";
 
-import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { ArrayDrawing } from "../../player/ArrayDrawing";
 import type { ArrayBarsCanvasState } from "../../player/arrayBars.types";
 import { GraphViewport } from "../../player/GraphDrawing";
@@ -107,24 +106,15 @@ function toArrayBars(canvas: BinarySearchMotivationCanvasState): ArrayBarsCanvas
   };
 }
 
-export function BinarySearchMotivationCanvas({ canvas, onExit }: {
-  canvas: BinarySearchMotivationCanvasState;
-  onExit?: () => void;
-}) {
+export function BinarySearchMotivationCanvas({ canvas }: { canvas: BinarySearchMotivationCanvasState }) {
   const reduced = useReducedMotion();
   const transition = { duration: reduced ? 0 : playerTokens.transitionMs / 1000, ease: "easeInOut" } as const;
-  const { visual, exit } = canvas.state;
+  const { visual } = canvas.state;
   return (
     <Box sx={{ height: "100%", minHeight: 220, position: "relative" }}>
       {visual.kind === "array" && <ArrayDrawing canvas={toArrayBars(canvas)} label={`${visual.values.length}つの並んだ数字`} />}
       {visual.kind === "guess" && <GuessStrip visual={visual} />}
       {visual.kind === "halving" && <HalvingRows visual={visual} />}
-      {exit && (
-        <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={transition}
-          sx={{ position: "absolute", left: "50%", bottom: 12, transform: "translateX(-50%)" }}>
-          <PhaseNextButton label={exit.label} disabled={!onExit} onClick={onExit ?? (() => {})} />
-        </Box>
-      )}
     </Box>
   );
 }

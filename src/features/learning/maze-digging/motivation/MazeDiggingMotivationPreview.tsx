@@ -12,7 +12,8 @@ import { MazeDiggingMotivationCanvas } from "./MazeDiggingMotivationCanvas";
 export function MazeDiggingMotivationPreview({ embedded = false, onLearningEvent, active = true, onComplete }: LearningInstrumentation & { embedded?: boolean; onComplete?: () => void }) {
   const player = (
     <LearningPlayer onLearningEvent={onLearningEvent} active={active} content={mazeDiggingMotivationContent}
-      renderCanvas={(canvas) => <MazeDiggingMotivationCanvas canvas={canvas} onExit={onComplete ? () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } : undefined} />} />
+      endAction={onComplete ? { label: mazeDiggingMotivationContent.steps[mazeDiggingMotivationContent.steps.length - 1].canvas.state.exit?.label ?? "次へ進む", onClick: () => { onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } }); onComplete(); } } : undefined}
+      renderCanvas={(canvas) => <MazeDiggingMotivationCanvas canvas={canvas} />} />
   );
   if (embedded) {
     return (

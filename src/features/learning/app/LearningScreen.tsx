@@ -6,8 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AppHeader } from "@/app/component/appHeader";
 import { useUserSession } from "@/app/component/userSession";
 import { ApiError, fetcher } from "@/lib/fetcher";
-import { completeLearningPhase, completeLearningUnit, startLearningUnit, type AchievedBigGoal, type LearningProgress, type UnlockedAchievement } from "@/api/learning.api";
-import { getCurrentBigGoal, type BigGoal } from "@/api/bigGoal.api";
+import { completeLearningPhase, completeLearningUnit, startLearningUnit, type LearningProgress, type UnlockedAchievement } from "@/api/learning.api";
 import { FeedbackDestination } from "@/app/component/feedbackV1";
 import { auth } from "@/lib/firebase";
 import { BfsUnitPreview } from "../bfs/unit/BfsUnitPreview";
@@ -31,11 +30,7 @@ import { emptyLearningRewards, mergeLearningRewards, type LearningRewards } from
 import { findLearningUnit, resumePhaseIndex, savedPhaseSummaries, type LearningUnit } from "./unitRegistry";
 import { learningErrorMessage, useLearningProgress } from "./useLearningProgress";
 import { useLearningLog } from "./useLearningLog";
-import { BigGoalGate } from "./bigGoal/BigGoalGate";
-import { BigGoalAchievementBand, BigGoalAchievementZone } from "./bigGoal/BigGoalAchievementBand";
-import { BigGoalNextProposal } from "./bigGoal/BigGoalNextProposal";
-import { bigGoalProgressFact } from "./bigGoal/bigGoalPresentation";
-import { FeedbackScreen, type FeedbackGoalSummary } from "./feedback/FeedbackScreen";
+import { FeedbackScreen } from "./feedback/FeedbackScreen";
 import { isDesignMode } from "@/design/fixtures";
 import { MissionPresentation } from "@/design/MissionPresentation";
 import { hasSeenMissionStory } from "@/design/missionStoryStore";
@@ -92,21 +87,6 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   // フィードバックの適用可否（#369）。先行生成の応答で判明するまでは unknown とし、
   // 適用されない学習者では結果画面の前進を従来のブリッジに戻す。
   const [feedbackAvailability, setFeedbackAvailability] = useState<"unknown" | "available" | "unavailable">("unknown");
-  // 保存で達成した大目標（#369／#370）。提示先ごとにフェーズキー別／単元分で持つ。
-  // phaseAchievedGoals は次の目標の提案を出すフィードバック画面のキー、
-  // phaseGoalCelebrations は称賛を出す結果画面のキー、unitAchievedGoals は
-  // 最終リザルトの称賛と単元のフィードバック画面の提案（兼用）。
-  const [phaseAchievedGoals, setPhaseAchievedGoals] = useState<Readonly<Record<string, readonly AchievedBigGoal[]>>>({});
-  const [phaseGoalCelebrations, setPhaseGoalCelebrations] = useState<Readonly<Record<string, readonly AchievedBigGoal[]>>>({});
-  const [unitAchievedGoals, setUnitAchievedGoals] = useState<readonly AchievedBigGoal[]>([]);
-  // 専用画面の大目標サマリ用。進捗の数値は API のコード計算をそのまま使う。
-  const [currentGoal, setCurrentGoal] = useState<BigGoal | null>(null);
-  const refreshCurrentGoal = useCallback(() => {
-    void getToken().then(token => getCurrentBigGoal(token)).then(({ goal }) => {
-      if (auth.currentUser?.uid === uid) setCurrentGoal(goal);
-    }).catch(() => undefined);
-  }, [getToken, uid]);
-  useEffect(() => { refreshCurrentGoal(); }, [refreshCurrentGoal]);
   useEffect(() => { setDraft({ code: readCodeDraft(courseId, uid) }); }, [courseId, uid]);
   useEffect(() => {
     let current = true;
@@ -129,32 +109,9 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     if (forResult.length) setPhaseUnlocks(current => ({ ...current, [phaseKey]: [...(current[phaseKey] ?? []), ...forResult.filter(item => !(current[phaseKey] ?? []).some(x => x.id === item.id))] }));
     const forFinal = result.unlockedAchievements.filter(item => !forResult.some(x => x.id === item.id));
     if (forFinal.length) setFinalUnlocks(current => [...current, ...forFinal.filter(item => !current.some(x => x.id === item.id))]);
-    // この保存で達成した大目標の提示先（#369／#370）。
-    // 称賛は「その保存以降で最初に来る結果画面」へ（結果画面の無いフェーズからは
-    // 次の結果画面へ持ち越し、無ければ最終リザルト）。次の目標の提案は
-    // 「その保存以降で最初に来るフィードバック専用画面」へ（無ければ単元の画面）。
-    // 提示先は目標IDで重複を除いて振り分けるため、同じ達成が二重に祝われたり
-    // 提案が二重に出たりすることはない。
-    const achieved = result.achievedBigGoals ?? [];
-    if (achieved.length) {
-      const phaseIndex = unit.phases.findIndex(p => p.id === phaseKey);
-      const laterPhases = phaseIndex >= 0 ? unit.phases.slice(phaseIndex) : [];
-      const celebrationTarget = laterPhases.find(p => p.transitionOut === "result");
-      const proposalTarget = laterPhases.find(p => p.transitionOut === "result" || p.transitionOut === "result-in-phase");
-      const append = (key: string) => (current: Readonly<Record<string, readonly AchievedBigGoal[]>>) => ({
-        ...current,
-        [key]: [...(current[key] ?? []), ...achieved.filter(goal => !(current[key] ?? []).some(x => x.id === goal.id))],
-      });
-      if (celebrationTarget) setPhaseGoalCelebrations(append(celebrationTarget.id));
-      if (proposalTarget) setPhaseAchievedGoals(append(proposalTarget.id));
-      if (!celebrationTarget || !proposalTarget) {
-        setUnitAchievedGoals(current => [...current, ...achieved.filter(goal => !current.some(x => x.id === goal.id))]);
-      }
-    }
-    refreshCurrentGoal();
     // 切れ目ダイアログは知識カード専用（#333）。提示は遷移を待たせない（#147）。エラー時はここへ到達しない。
     if (result.awardedCard) present({ phaseKey });
-  }, [getToken, courseId, uid, unit, present, refreshCurrentGoal]);
+  }, [getToken, courseId, uid, unit, present]);
   // フィードバックの先行生成（#202）と専用画面（#369）。生成の成否は学習の進行に影響させない。
   // 先行生成の応答で適用可否が判明する：割り当てなし（409）・対象イベントなし（404）は
   // unavailable とし、結果画面の前進を従来のブリッジに戻して学習者を画面に留めない。
@@ -170,20 +127,12 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   const onCheckPhaseCompleted = useCallback((phaseKey: string, nextPhaseKey: string | null) => {
     startFeedback("phase", phaseFeedbackEventId(phaseKey, nextPhaseKey));
   }, [startFeedback, phaseFeedbackEventId]);
-  const goalSummary: FeedbackGoalSummary | null = useMemo(() => currentGoal
-    ? {
-      displayText: currentGoal.displayText,
-      progress: currentGoal.progress,
-      fact: bigGoalProgressFact(currentGoal),
-      requirements: currentGoal.evaluation?.requirements ?? [],
-    }
-    : null, [currentGoal]);
+  // 大目標は再設計で廃止（2026-11-22 決定）。フィードバック画面へ目標サマリは渡さない。
   const renderPhaseFeedbackScreen = useCallback((phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode }) => {
     const phase = unit.phases.find(item => item.id === phaseKey);
-    const achieved = phaseAchievedGoals[phaseKey] ?? [];
     return <FeedbackScreen kind="phase" eventId={phaseFeedbackEventId(phaseKey, nextPhaseKey)}
       heading={phase ? `${phase.formalName}のフィードバック` : "フィードバック"}
-      figure={nav.figure} goalSummary={achieved.length ? null : goalSummary}
+      figure={nav.figure} goalSummary={null}
       onAction={href => {
         if (!href) return false;
         const target = new URL(href, window.location.origin).searchParams.get("phase");
@@ -192,18 +141,14 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
         return true;
       }}
       onProceed={nav.goNext} proceedLabel="そのまま次へ"
-      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goNext(); }}>
-      {achieved.length ? <BigGoalNextProposal achievedGoal={achieved[0]} getToken={getToken} /> : null}
-    </FeedbackScreen>;
-  }, [phaseFeedbackEventId, goalSummary, phaseAchievedGoals, getToken, unit]);
+      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goNext(); }} />;
+  }, [phaseFeedbackEventId, unit]);
   const renderUnitFeedbackScreen = useCallback((nav: { goBack: () => void; figure: ReactNode }) => (
     <FeedbackScreen kind="unit" eventId={courseId} heading="単元のフィードバック"
-      figure={nav.figure} goalSummary={unitAchievedGoals.length ? null : goalSummary}
+      figure={nav.figure} goalSummary={null}
       onProceed={nav.goBack} proceedLabel="結果に戻る"
-      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }}>
-      {unitAchievedGoals.length ? <BigGoalNextProposal achievedGoal={unitAchievedGoals[0]} getToken={getToken} /> : null}
-    </FeedbackScreen>
-  ), [courseId, goalSummary, unitAchievedGoals, getToken]);
+      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }} />
+  ), [courseId]);
   const onFinalResult = useCallback(() => setFinalShown(true), []);
   useEffect(() => {
     if (!finalShown || unitSaved || completedUnitRequest.current) return;
@@ -214,17 +159,11 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
       setUnitSaved(true); setRewards(rewards => mergeLearningRewards(rewards, result));
       // 単元完了で解除された実績は最終リザルトの「新しい実績」に出す（#333）。
       if (result.unlockedAchievements.length) setFinalUnlocks(current => [...current, ...result.unlockedAchievements.filter(item => !current.some(x => x.id === item.id))]);
-      // 単元完了と重なって達成した大目標は、最終リザルトの称賛と単元の
-      // フィードバック画面の提示につなげる（#369／#370）。最終フェーズの保存分と重複しないよう目標IDで除く。
-      if (result.achievedBigGoals?.length) {
-        setUnitAchievedGoals(current => [...current, ...result.achievedBigGoals!.filter(goal => !current.some(x => x.id === goal.id))]);
-      }
-      refreshCurrentGoal();
       log({ eventType: "unit_complete" });
       startFeedback("unit", courseId);
     }, () => { if (current) { completedUnitRequest.current = false; setUnitError(true); } });
     return () => { current = false; };
-  }, [finalShown, unitSaved, courseId, getToken, log, unitRevision, startFeedback, refreshCurrentGoal]);
+  }, [finalShown, unitSaved, courseId, getToken, log, unitRevision, startFeedback]);
   const saveCode = useCallback((code: string) => setDraftError(!writeCodeDraft(courseId, uid, code)), [courseId, uid]);
   const dismissAwardedCard = useCallback((cardId: string) => setRewards(current => ({ ...current, awardedCards: current.awardedCards.filter(item => item.card.id !== cardId) })), []);
   if (!draft) return <Typography role="status">学習を開いています。</Typography>;
@@ -252,11 +191,6 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
       return items?.length ? <AchievementBand items={items} phaseKey={phaseKey} onEvent={log} /> : null;
     },
     renderNewAchievements: () => finalUnlocks.length ? <NewAchievementZone items={finalUnlocks} onEvent={log} /> : null,
-    renderPhaseGoalAchievement: (phaseKey: string) => {
-      const goals = phaseGoalCelebrations[phaseKey];
-      return goals?.length ? <BigGoalAchievementBand goals={goals} phaseKey={phaseKey} onEvent={log} /> : null;
-    },
-    renderFinalGoalAchievement: () => unitAchievedGoals.length ? <BigGoalAchievementZone goals={unitAchievedGoals} onEvent={log} /> : null,
     onCheckPhaseCompleted,
     feedbackEnabled: feedbackAvailability !== "unavailable",
     renderPhaseFeedbackScreen,
@@ -268,9 +202,7 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     {entryError && <Alert severity="warning" action={<Button onClick={() => setEntryRevision(value => value + 1)}>再試行</Button>}>学習の開始を記録できませんでした。学習は続けられます。{entryError}</Alert>}
     {draftError && <Alert severity="warning">このブラウザにコード下書きを保存できませんでした。</Alert>}
     {finalShown && !unitSaved && (unitError ? <Alert severity="error" action={<Button onClick={() => setUnitRevision(value => value + 1)}>再試行</Button>}>単元の完了を保存できませんでした。再試行してください。</Alert> : <Typography role="status">単元の完了を保存しています。</Typography>)}
-    <BigGoalGate courseId={courseId} unitTitle={unit.title} getToken={getToken}>
-      {unit.kind === "dfs" ? <DfsUnitPreview {...unitPreviewProps} /> : unit.kind === "wall-extension" ? <WallExtensionUnitPreview {...unitPreviewProps} /> : unit.kind === "bubble-sort" ? <BubbleSortUnitPreview {...unitPreviewProps} /> : unit.kind === "maze-digging" ? <MazeDiggingUnitPreview {...unitPreviewProps} /> : unit.kind === "binary-search" ? <BinarySearchUnitPreview {...unitPreviewProps} /> : unit.kind === "greedy-coins" ? <GreedyCoinsUnitPreview {...unitPreviewProps} /> : <BfsUnitPreview {...unitPreviewProps} />}
-    </BigGoalGate>
+    {unit.kind === "dfs" ? <DfsUnitPreview {...unitPreviewProps} /> : unit.kind === "wall-extension" ? <WallExtensionUnitPreview {...unitPreviewProps} /> : unit.kind === "bubble-sort" ? <BubbleSortUnitPreview {...unitPreviewProps} /> : unit.kind === "maze-digging" ? <MazeDiggingUnitPreview {...unitPreviewProps} /> : unit.kind === "binary-search" ? <BinarySearchUnitPreview {...unitPreviewProps} /> : unit.kind === "greedy-coins" ? <GreedyCoinsUnitPreview {...unitPreviewProps} /> : <BfsUnitPreview {...unitPreviewProps} />}
     {boundary && <LearningRewardBoundary boundary={boundary} onDone={finish} onEvent={event => log({ ...event, phaseKey: typeof event.payload?.phaseKey === "string" ? event.payload.phaseKey : boundary.phaseKey })} />}
   </LearningRewardsContext.Provider>;
 }

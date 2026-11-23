@@ -13,11 +13,12 @@ export function DfsMotivationPreview({ embedded = false, active = true, onLearni
   return <Box component={embedded ? "div" : "main"} aria-label={dfsMotivationContent.stageName}
     sx={{ height: embedded ? "100%" : "100dvh", minHeight: embedded ? 0 : 440, display: "grid", placeItems: "center", bgcolor: playerTokens.background }}>
     <Box sx={{ width: embedded ? "100%" : "84vw", height: embedded ? "100%" : "84dvh", minHeight: embedded ? 0 : 360, display: "flex" }}>
-      <LearningPlayer content={dfsMotivationContent} active={active} onLearningEvent={onLearningEvent} renderCanvas={canvas =>
-        <DfsMotivationCanvas canvas={canvas} onExit={onComplete ? () => {
+      <LearningPlayer content={dfsMotivationContent} active={active} onLearningEvent={onLearningEvent}
+        endAction={onComplete ? { label: "動きの説明へ進む", onClick: () => {
           onLearningEvent?.({ eventType: "phase_choice", payload: { choice: "continue" } });
           onComplete();
-        } : undefined} />} />
+        } } : undefined} renderCanvas={canvas =>
+        <DfsMotivationCanvas canvas={canvas} />} />
     </Box>
   </Box>;
 }
