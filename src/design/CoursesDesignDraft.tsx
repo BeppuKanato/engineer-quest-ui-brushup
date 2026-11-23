@@ -357,7 +357,6 @@ const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoa
     >
       <Box sx={{ position: "relative", height: 196, bgcolor: "#f6f9ff", flexShrink: 0 }}>
         <StateMark unit={unit} />
-        <GoalFlag courseId={unit.id} title={unit.title} absolute onToggle={(nowGoal) => onToggleGoal(unit, nowGoal)} />
         {scene ?? (
           <Box sx={{ position: "absolute", inset: 0, p: 1.5 }}>
             <CourseThumbnail courseId={unit.id} />
@@ -396,7 +395,11 @@ const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoa
         )}
       </Box>
       <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", flex: 1 }}>
-        {GROUP_LABEL[unit.id] && <GroupChip label={GROUP_LABEL[unit.id]} />}
+        {/* 旗は画像に被せず、テキスト側の見出し行の右端に置く（2026-11-23）。 */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+          {GROUP_LABEL[unit.id] ? <GroupChip label={GROUP_LABEL[unit.id]} /> : <span />}
+          <GoalFlag courseId={unit.id} title={unit.title} onToggle={(nowGoal) => onToggleGoal(unit, nowGoal)} />
+        </Stack>
         <Typography fontSize={18} fontWeight={900} color={TEXT}>
           {unit.title}
         </Typography>
