@@ -28,6 +28,9 @@ import { missionThumbnailFor } from "@/design/MissionThumbnail";
 const TEXT = "#111827";
 const PRIMARY = "#2563eb";
 const BORDER = "#dbe3ef";
+// 完了・復習の意味の色。ボタンとバッジで同じ緑を使う（色は意味で統一する）。
+const GREEN = "#16a34a";
+const GREEN_DARK = "#15803d";
 
 type CourseInfo = { id: string; title: string; description: string };
 const courseById = new Map((coursesData as CourseInfo[]).map((c) => [c.id, c]));
@@ -47,7 +50,7 @@ const OTHER_IDS = [
   "course-algorithm-merge-sort-v1",
 ];
 
-/** 完了バッジ：メダル（円＋リボン＋✓）。達成したことを称える印。文字に頼らない。 */
+/** 完了バッジ：メダル（円＋リボン＋✓）。達成したことを称える印。文字に頼らない。色は復習ボタンと同じ緑。 */
 const CompletionBadge: React.FC = () => (
   <Box
     component="svg"
@@ -55,18 +58,18 @@ const CompletionBadge: React.FC = () => (
     aria-label="ミッション達成"
     sx={{
       position: "absolute",
-      top: 8,
-      right: 10,
+      top: 6,
+      right: 8,
       zIndex: 1,
-      width: 50,
-      height: 58,
+      width: 64,
+      height: 74,
       transform: "rotate(-8deg)",
-      filter: "drop-shadow(0 2px 4px rgba(15, 40, 90, 0.35))",
+      filter: "drop-shadow(0 2px 5px rgba(15, 40, 90, 0.35))",
     }}
   >
-    <polygon points="15,32 9,56 21,49 25,38" fill="#1e40af" />
-    <polygon points="37,32 43,56 31,49 27,38" fill="#1e40af" />
-    <circle cx="26" cy="24" r="19" fill="#2563eb" stroke="#ffffff" strokeWidth="3" />
+    <polygon points="15,32 9,56 21,49 25,38" fill={GREEN_DARK} />
+    <polygon points="37,32 43,56 31,49 27,38" fill={GREEN_DARK} />
+    <circle cx="26" cy="24" r="19" fill={GREEN} stroke="#ffffff" strokeWidth="3" />
     <path d="M17 24 l6.5 6.5 L35 18" fill="none" stroke="#ffffff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
   </Box>
 );
@@ -105,8 +108,6 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
  * 未着手＝青＋▶／学習中＝青＋段階の目盛り（白）／完了＝緑＋円の矢印。
  * グレーは操作できない状態だけに使うので、完了には使わない。
  */
-const REVIEW_GREEN = "#16a34a";
-
 const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const base = {
     display: "flex",
@@ -120,7 +121,7 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   } as const;
   if (unit.status === "COMPLETED") {
     return (
-      <Box component="span" sx={{ ...base, bgcolor: REVIEW_GREEN, color: "#fff" }}>
+      <Box component="span" sx={{ ...base, bgcolor: GREEN, color: "#fff" }}>
         <ReplayIcon sx={{ fontSize: 19 }} />
         復習する
       </Box>
