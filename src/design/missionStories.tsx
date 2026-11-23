@@ -21,38 +21,11 @@ export type MissionStory = { steps: readonly MissionStoryStep[] };
 const BOOK_COLORS = ["#7d8ca3", "#a98a6d", "#82a37d", "#9382a3", "#a37d7d", "#7d8ca3", "#a98a6d", "#82a37d", "#9382a3"];
 const BOOK_HEIGHTS = [64, 92, 52, 80, 60, 96, 68, 88, 56];
 
-/** ステップ3の図：隣同士を見比べて入れ替える（人間のやり方）。 */
-function SwapFigure() {
-  return (
-    <svg viewBox="0 0 460 210" width="100%" height="100%" role="img" aria-label="隣同士の本を見比べて入れ替える図" style={{ display: "block" }}>
-      <rect width="460" height="210" fill="#eef3f9" />
-      {/* 棚 */}
-      <rect x="60" y="150" width="340" height="10" rx="3" fill="#8a6a52" />
-      <rect x="76" y="160" width="10" height="34" fill="#8a6a52" />
-      <rect x="374" y="160" width="10" height="34" fill="#8a6a52" />
-      {/* 対象の2冊（大きく） */}
-      <g>
-        <rect x="150" y="62" width="52" height="88" rx="5" fill="#7d8ca3" />
-        <text x="176" y="118" textAnchor="middle" fontSize="30" fontWeight="800" fill="#fff">7</text>
-        <rect x="258" y="88" width="52" height="62" rx="5" fill="#a98a6d" />
-        <text x="284" y="130" textAnchor="middle" fontSize="30" fontWeight="800" fill="#fff">3</text>
-        <rect x="144" y="56" width="64" height="100" rx="8" fill="none" stroke="#2563eb" strokeWidth="3" />
-        <rect x="252" y="82" width="64" height="74" rx="8" fill="none" stroke="#2563eb" strokeWidth="3" />
-      </g>
-      {/* 入れ替えの矢印 */}
-      <path d="M 196 44 Q 230 22 264 44" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" />
-      <path d="M 264 44 l -12 -2 M 264 44 l -3 12" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" fill="none" />
-      <path d="M 264 168 Q 230 188 196 168" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" />
-      <path d="M 196 168 l 12 2 M 196 168 l 3 -12" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
-
-/** ステップ4の図：並べ替えた後の棚（達成のイメージ）。方法ではなくゴールの絵。 */
+/** 最終ステップの図：並び終わった棚とゴールの旗。 */
 function SortedFigure() {
   const values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   return (
-    <svg viewBox="0 0 460 210" width="100%" height="100%" role="img" aria-label="番号順に並んだ本棚の図" style={{ display: "block" }}>
+    <svg viewBox="0 0 460 210" width="100%" height="100%" role="img" aria-label="番号順に並んだ本棚とゴールの旗" style={{ display: "block" }}>
       <rect width="460" height="210" fill="#eef3f9" />
       <rect x="40" y="150" width="380" height="10" rx="3" fill="#8a6a52" />
       <rect x="56" y="160" width="10" height="34" fill="#8a6a52" />
@@ -66,9 +39,10 @@ function SortedFigure() {
           </g>
         );
       })}
-      {/* ゴールの旗 */}
-      <line x1="424" y1="150" x2="424" y2="86" stroke="#111827" strokeWidth="3" />
-      <path d="M 424 86 L 448 94 L 424 102 Z" fill="#dc2626" />
+      <g transform="translate(404 22)">
+        <rect x="-2" y="0" width="4" height="34" fill="#7c4a2d" />
+        <path d="M 2 2 L 24 8 L 2 15 Z" fill="#dc2626" />
+      </g>
     </svg>
   );
 }
@@ -125,6 +99,53 @@ function InsightFigure() {
   );
 }
 
+/** ステップ4の図：人間は棚を見渡して、だいたいの場所に置いていく（俯瞰と近似配置）。 */
+function PlaceFigure() {
+  // 並びかけの棚：[1, 2, 空き, 5, 7, 8, 9] の上に、本「3」が空きへ降りてくる
+  const placed: { value: number; height: number; color: string }[] = [
+    { value: 1, height: 51, color: BOOK_COLORS[0] },
+    { value: 2, height: 58, color: BOOK_COLORS[1] },
+  ];
+  const after: { value: number; height: number; color: string }[] = [
+    { value: 5, height: 79, color: BOOK_COLORS[4] },
+    { value: 7, height: 93, color: BOOK_COLORS[5] },
+    { value: 8, height: 100, color: BOOK_COLORS[6] },
+    { value: 9, height: 107, color: BOOK_COLORS[7] },
+  ];
+  return (
+    <svg viewBox="0 0 460 210" width="100%" height="100%" role="img" aria-label="本をだいたいの場所に置いていく図" style={{ display: "block" }}>
+      <rect width="460" height="210" fill="#eef3f9" />
+      {/* 俯瞰の弧 */}
+      <path d="M 70 44 Q 230 6 390 44" stroke="#2563eb" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeDasharray="1 9" />
+      <circle cx="70" cy="44" r="5" fill="#2563eb" />
+      <circle cx="390" cy="44" r="5" fill="#2563eb" />
+      <rect x="40" y="150" width="380" height="10" rx="3" fill="#8a6a52" />
+      <rect x="56" y="160" width="10" height="34" fill="#8a6a52" />
+      <rect x="394" y="160" width="10" height="34" fill="#8a6a52" />
+      {placed.map((book, index) => (
+        <g key={book.value}>
+          <rect x={58 + index * 39} y={150 - book.height} width="32" height={book.height} rx="4" fill={book.color} />
+          <text x={74 + index * 39} y={150 - book.height / 2 + 6} textAnchor="middle" fontSize="16" fontWeight="800" fill="#fff">{book.value}</text>
+        </g>
+      ))}
+      {/* 空き場所（差し込み先） */}
+      <rect x={58 + 2 * 39} y={150 - 65} width="32" height="65" rx="4" fill="none" stroke="#16a34a" strokeWidth="3" strokeDasharray="6 5" />
+      {after.map((book, index) => (
+        <g key={book.value}>
+          <rect x={58 + (index + 3) * 39} y={150 - book.height} width="32" height={book.height} rx="4" fill={book.color} />
+          <text x={74 + (index + 3) * 39} y={150 - book.height / 2 + 6} textAnchor="middle" fontSize="16" fontWeight="800" fill="#fff">{book.value}</text>
+        </g>
+      ))}
+      {/* 降りてくる本「3」 */}
+      <g>
+        <rect x={58 + 2 * 39} y="34" width="32" height="65" rx="4" fill={BOOK_COLORS[2]} stroke="#2563eb" strokeWidth="3" />
+        <text x={74 + 2 * 39} y={34 + 65 / 2 + 6} textAnchor="middle" fontSize="16" fontWeight="800" fill="#fff">3</text>
+        <path d="M 152 106 L 152 122 M 145 115 L 152 123 L 159 115" stroke="#16a34a" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
 /** ステップ5の図：コンピュータは曖昧な判断ができない（本当の差）。 */
 function GapFigure() {
   return (
@@ -172,15 +193,15 @@ const bubbleSortStory: MissionStory = {
       figure: <InsightFigure />,
     },
     {
-      caption: "人間の司書なら、隣同士の番号を見比べて、順番が逆なら入れ替えながら、棚を並べ替えることができます。",
-      figure: <SwapFigure />,
+      caption: "人間の司書なら、棚をざっと見渡して、本をだいたいの場所に置いていくことができます。",
+      figure: <PlaceFigure />,
     },
     {
-      caption: "でもコンピュータは、「だいたいこの順」という曖昧な判断ができません。比べる順番も、入れ替える条件も、終わりの決め方も、全部を正確に決めた手順が要ります。",
+      caption: "でもコンピュータは、棚を見渡して「この辺」と判断することができません。できるのは、隣同士の2冊を比べて、順番が逆なら入れ替えることだけです。",
       figure: <GapFigure />,
     },
     {
-      caption: "その手順がバブルソートです。この単元で手順を学び、最後は自分のコードで本棚を並べ替えましょう。",
+      caption: "その単純な手順を繰り返して並べ替えるのが、バブルソートです。この単元で手順を学び、最後は自分のコードで本棚を並べ替えましょう。",
       figure: <SortedFigure />,
     },
   ],
