@@ -4,13 +4,17 @@
 // この画面の目的は「次に学ぶものを選ぶ画面」。v3 の転換点はサムネイル主役：
 // - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
 // - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
-// - 状態はサムネの上に載る印だけにする（学習中チップ／ミッション達成の旗）
+// - 状態は2か所で表す：サムネの上の印（学習中チップ／ミッション達成の旗）と、
+//   題の下の状態行（未着手＝学習を始める／学習中＝段階の形＋続きから学ぶ／完了＝復習する）。
+//   状態行は全カード同じ位置に置き、3状態の違いが並べて分かるようにする（2026-11-23 Kanato）
 // - カード全体が単元画面へのリンク
 // グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
 // BFS のサムネだけ、目標ミッションの場面を描いた試作（MissionThumbnail）に差し替えてある。
 
 import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import Link from "next/link";
 
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
@@ -88,6 +92,45 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   return null;
 };
 
+/** 状態行：3状態の違いを、題の下の同じ位置で表す。学習中だけ段階の形（n/総数）を添える。 */
+const StateRow: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
+  if (unit.status === "COMPLETED") {
+    return (
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
+        <CheckCircleIcon sx={{ fontSize: 19, color: PRIMARY }} />
+        <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
+          復習する
+        </Typography>
+      </Stack>
+    );
+  }
+  if (unit.status === "IN_PROGRESS") {
+    return (
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.5 }}>
+        <Stack direction="row" spacing={0.5} aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}>
+          {Array.from({ length: unit.totalPhases }, (_, i) => (
+            <Box
+              key={i}
+              sx={{ width: 16, height: 6, borderRadius: 999, bgcolor: i < unit.completedPhases ? PRIMARY : "#dbe3ef" }}
+            />
+          ))}
+        </Stack>
+        <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
+          続きから学ぶ
+        </Typography>
+      </Stack>
+    );
+  }
+  return (
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
+      <PlayArrowIcon sx={{ fontSize: 19, color: PRIMARY }} />
+      <Typography fontSize={15} fontWeight={700} color={PRIMARY}>
+        学習を始める
+      </Typography>
+    </Stack>
+  );
+};
+
 const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const mission = findUnitMission(unit.id);
   const scene = missionThumbnailFor(unit.id);
@@ -126,6 +169,7 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
             {mission.title}
           </Typography>
         )}
+        <StateRow unit={unit} />
       </Box>
     </Paper>
   );
