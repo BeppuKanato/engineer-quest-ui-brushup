@@ -1,6 +1,8 @@
 "use client";
 
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
 import SearchIcon from "@mui/icons-material/Search";
@@ -130,6 +132,23 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   // そのもの（GPT レビュー §5）。選択の体裁と二重の進むボタンをやめる。
   const actionPhase = f?.actionHref ? new URL(f.actionHref, "http://localhost").searchParams.get("phase") : null;
   const actionIsNext = !!actionPhase && !!nextPhaseKey && actionPhase === nextPhaseKey;
+  // マスコットの表情の拍：節の役割に表情を対応させる（文章の内容解析はしない）。
+  // 受け渡し=point → praise が出たら celebrate → 改善点で thinking → 次の一歩で point に戻る。
+  // 全節に付けるのではなく、この2拍だけに絞る（切り替えすぎると落ち着かない）。
+  const [beat, setBeat] = useState<"point" | "celebrate" | "thinking">("point");
+  useEffect(() => {
+    if (stage !== "feedback" || !f || reduce) return;
+    if (fastForward) { setBeat("point"); return; }
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const at = (rowIndex: number, s: "celebrate" | "thinking" | "point") =>
+      timers.push(setTimeout(() => setBeat(s), (0.3 + rowIndex * 0.95 + 0.2) * 1000));
+    if (praise) at(0, "celebrate");
+    const impIdx = sections.findIndex(s => s.label === "改善点");
+    if (impIdx >= 0) at(impIdx + rowOffset, "thinking");
+    at(sections.length + rowOffset, "point");
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, fastForward]);
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
     <AnimatePresence mode="popLayout" initial={false}>
@@ -164,7 +183,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
             </Stack>
           : !f ? <FeedbackGenerating />
           : <Box sx={{ width: "100%", maxWidth: 760 }}>
-              <FeedbackDelivery />
+              <FeedbackDelivery state={beat} />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               <Box sx={{ mt: 1.5 }}>
                 {praise && <RevealRow key={`praise-${fastForward}`} index={0} fast={fastForward}>
@@ -215,12 +234,12 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
  * 到着の場面でマスコットが全体を手渡すことで、「システムの文書を読む」から
  * 「相棒が持ってきたものを受け取る」に変える。本文には一切触れない。
  */
-function FeedbackDelivery() {
+function FeedbackDelivery({ state = "point" }: { state?: "point" | "celebrate" | "thinking" }) {
   const reduce = useReducedMotion();
   return <motion.div initial={reduce ? false : { opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.35 }}
     style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-    <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="point" motion="float" grounding="shadow" />
+    <MascotFigure mascotId="red-panda" alt="相棒" size="M" state={state} motion="float" grounding="shadow" />
     <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
       <Typography sx={{ fontSize: 18, fontWeight: 700 }}>フィードバック、持ってきたよ。</Typography>
     </Box>
@@ -257,16 +276,26 @@ const SECTION_ICONS: Record<string, ReactNode> = {
 };
 
 /** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。
- *  headline（生成側の要点文）があれば、ラベルの下に太字で先に置く（見出し先行）。 */
+ *  headline（生成側の要点文）があれば、ラベルの下に太字で先に置く（見出し先行）。
+ *  要点がある節は本文（=根拠）を既定で畳み、「くわしく見る」でその場で開く——
+ *  既定で読む量は要約層だけにし、全文は読みたい人が開く形（2026-11-24）。 */
 function FeedbackCard({ label, body, headline }: { label: string; body: string; headline?: string | null }) {
   const icon = SECTION_ICONS[label];
+  const [expanded, setExpanded] = useState(false);
+  const collapsible = Boolean(headline);
   return <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "16px", px: 2.75, py: 2.25 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
       {icon}
       <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>{label}</Typography>
     </Box>
-    {headline && <Typography sx={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, mb: 0.5 }}>{headline}</Typography>}
-    <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>
+    {headline && <Typography sx={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, mb: collapsible && !expanded ? 0 : 0.5 }}>{headline}</Typography>}
+    {(!collapsible || expanded) && <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>}
+    {collapsible && <Button variant="text" size="small"
+      onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+      endIcon={expanded ? <ExpandLessIcon sx={{ fontSize: 18 }} /> : <ExpandMoreIcon sx={{ fontSize: 18 }} />}
+      sx={{ fontSize: 14, fontWeight: 700, color: playerTokens.focus, px: 0.5, mt: 0.75, "&:hover": { bgcolor: "transparent", textDecoration: "underline" } }}>
+      {expanded ? "閉じる" : "くわしく見る"}
+    </Button>}
   </Box>;
 }
 
