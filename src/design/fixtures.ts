@@ -395,5 +395,69 @@ const fixtures: Record<string, unknown> = {
 // パスに対応するフィクスチャを返す。無い場合は undefined。
 export const resolveFixture = (path: string): unknown => {
   const key = path.split("?")[0];
+  // フェーズ完了・単元完了の POST は動的パスなのでパターンで受ける。
+  // 最小の正常応答を返し、デザインモードでもフェーズ遷移を通せるようにする
+  // （報酬・実績の付与は行わない。遷移と画面の確認が目的）。
+  const phaseComplete = key.match(/^\/learning\/units\/([^/]+)\/phases\/([^/]+)\/complete$/);
+  if (phaseComplete) {
+    return {
+      courseId: decodeURIComponent(phaseComplete[1]),
+      phase: { phaseKey: decodeURIComponent(phaseComplete[2]), status: "COMPLETED" },
+      awardedCard: null,
+      unlockedAchievements: [],
+      achievedBigGoals: [],
+    };
+  }
+  // 大目標ゲート（現行フロー）を通すための最小応答。候補1件を提案し、確定で ACTIVE な目標を返す。
+  if (key === "/big-goals/proposals") {
+    return {
+      id: "design-proposal",
+      timing: "UNIT_START",
+      startCourseId: null,
+      status: "GENERATED",
+      failureCode: null,
+      candidates: [
+        {
+          candidateKey: "design-candidate-1",
+          type: "UNIT_COMPLETION",
+          params: {},
+          displayText: "この単元の仕組みを理解し、最後の課題を自分のコードで解けるようになる",
+          score: 1,
+          rationale: null,
+        },
+      ],
+      recommendedCandidateKey: "design-candidate-1",
+      selectedCandidateKey: null,
+      createdAt: "2026-11-23T00:00:00.000Z",
+      generatedAt: "2026-11-23T00:00:00.000Z",
+    };
+  }
+  if (/^\/big-goals\/proposals\/[^/]+\/confirm$/.test(key)) {
+    return {
+      goal: {
+        id: "design-goal",
+        type: "UNIT_COMPLETION",
+        params: {},
+        displayText: "この単元の仕組みを理解し、最後の課題を自分のコードで解けるようになる",
+        status: "ACTIVE",
+        confirmedAt: "2026-11-23T00:00:00.000Z",
+        progress: 0,
+        evaluation: null,
+        evaluatedAt: null,
+        closedAt: null,
+        createdAt: "2026-11-23T00:00:00.000Z",
+      },
+      proposalId: "design-proposal",
+    };
+  }
+  const unitComplete = key.match(/^\/learning\/units\/([^/]+)\/complete$/);
+  if (unitComplete) {
+    return {
+      courseId: decodeURIComponent(unitComplete[1]),
+      unit: { status: "COMPLETED" },
+      unlockedAchievements: [],
+      achievedBigGoals: [],
+    };
+  }
   return fixtures[key];
 };

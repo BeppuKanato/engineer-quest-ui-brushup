@@ -36,6 +36,7 @@ import { BigGoalAchievementBand, BigGoalAchievementZone } from "./bigGoal/BigGoa
 import { BigGoalNextProposal } from "./bigGoal/BigGoalNextProposal";
 import { bigGoalProgressFact } from "./bigGoal/bigGoalPresentation";
 import { FeedbackScreen, type FeedbackGoalSummary } from "./feedback/FeedbackScreen";
+import { isDesignMode } from "@/design/fixtures";
 import { MissionPresentation } from "@/design/MissionPresentation";
 import { hasSeenMissionStory } from "@/design/missionStoryStore";
 import { findUnitMission } from "./missionRegistry";
@@ -82,6 +83,9 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   const reviewIndex = unit.phases.findIndex(phase => phase.id === reviewPhaseKey);
   const initialPhase = reviewIndex >= 0 && reviewIndex <= (next ?? unit.phases.length - 1) ? reviewIndex : next;
   const getToken = useCallback(async () => {
+    // デザインモードでは実 Firebase の currentUser が無いため、セッション照合を省略する
+    // （これが無いと進捗保存がすべて失敗し、フェーズ遷移を確認できない）。
+    if (isDesignMode()) return "design-token";
     if (!firebaseUser || auth.currentUser?.uid !== uid) throw new Error("Session changed");
     return firebaseUser.getIdToken();
   }, [firebaseUser, uid]);
