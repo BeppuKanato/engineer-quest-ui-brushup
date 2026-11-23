@@ -222,17 +222,18 @@ const StateFilter: React.FC<{
 const STATE_ORDER: Record<string, number> = { IN_PROGRESS: 0, NOT_STARTED: 1, COMPLETED: 2 };
 
 /**
- * 学習内容の説明（2026-11-23 追加）：イラストとミッションの題が「課題」を担い、
- * この1行が「仕組み・特徴」を担う（GPTの役割分担提案を Kanato が採用）。
+ * 学習内容の説明（2026-11-23 追加）：役割分担は、ミッションの題＝この単元で挑む課題（場面）、
+ * この1行＝そのアルゴリズムで何ができるか（Kanato の指定）。仕組みの説明にすると
+ * 題と役割が重なるため、「〜できる」の形で書く。
  */
 const FEATURE_TEXT: Record<string, string> = {
-  "course-algorithm-breadth-first-search-v1": "近い場所から順に調べて、最短ルートを探す",
-  "course-algorithm-depth-first-search-v1": "一本道を深く進み、行き止まりなら戻る",
-  "course-algorithm-maze-digging-v1": "壁の中を1マスずつ掘って、通路をつなげていく",
-  "course-algorithm-wall-extension-v1": "柱から上下左右へ、壁を倒して伸ばす",
-  "course-algorithm-bubble-sort-v2": "隣り合う本を交換して、番号順に並べ替える",
-  "course-algorithm-binary-search-v1": "整列済みの商品を、半分ずつ絞って探す",
-  "course-algorithm-greedy-coins-v1": "毎回いちばん大きい硬貨から選んで払う",
+  "course-algorithm-breadth-first-search-v1": "道のつながりの中から、いちばん短い行き方が見つけられる",
+  "course-algorithm-depth-first-search-v1": "道を深くたどって、出口までの通り道が見つけられる",
+  "course-algorithm-maze-digging-v1": "全体がつながった、曲がりくねった迷路が作れる",
+  "course-algorithm-wall-extension-v1": "まっすぐな壁で仕切られた迷路が作れる",
+  "course-algorithm-bubble-sort-v2": "バラバラな並びを、順番どおりに並べ替えられる",
+  "course-algorithm-binary-search-v1": "順番に並んだものから、探しものを少ない回数で見つけられる",
+  "course-algorithm-greedy-coins-v1": "その場でいちばんいい選択を続けて、答えが出せる",
 };
 
 // 流す順序：同じ軸の単元を隣り合わせ、組が行の途中で割れないようにする。
