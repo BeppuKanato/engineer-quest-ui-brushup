@@ -519,13 +519,13 @@ export const DfsMethodThumbnail: React.FC = () => {
   );
 };
 
-/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。BFS/DFS は比較のため手法版を表示中。 */
+/** ミッション場面サムネがある単元はそれを、無い単元は null を返す。全単元が場面版にそろった。 */
 export const missionThumbnailFor = (courseId: string): React.ReactNode => {
   switch (courseId) {
     case "course-algorithm-breadth-first-search-v1":
-      return <BfsMethodThumbnail />;
+      return <BfsMissionThumbnail />;
     case "course-algorithm-depth-first-search-v1":
-      return <DfsMethodThumbnail />;
+      return <DfsMissionThumbnail />;
     case "course-algorithm-maze-digging-v1":
       return <DiggingMissionThumbnail />;
     case "course-algorithm-wall-extension-v1":

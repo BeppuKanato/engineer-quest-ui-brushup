@@ -12,6 +12,7 @@ import { getAchievements, type AchievementItem } from "@/api/achievements.api";
 import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { AppHeader } from "@/app/component/appHeader";
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
+import { missionThumbnailFor } from "@/design/MissionThumbnail";
 import { useUserSession } from "@/app/component/userSession";
 import { startLearningUnit } from "@/api/learning.api";
 import { appLearningTokens as tokens } from "./appLearning.tokens";
@@ -69,7 +70,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
             <Box component="section" aria-label="目標ミッション" sx={{ mt: 2.5, p: { xs: 2, md: 3 }, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 3 }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems={{ xs: "stretch", md: "center" }}>
                 <Box aria-hidden sx={{ width: { xs: "100%", md: 220 }, maxWidth: 280, flexShrink: 0, alignSelf: "center" }}>
-                  <CourseThumbnail courseId={unit.courseId} />
+                  {missionThumbnailFor(unit.courseId) ?? <CourseThumbnail courseId={unit.courseId} />}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
