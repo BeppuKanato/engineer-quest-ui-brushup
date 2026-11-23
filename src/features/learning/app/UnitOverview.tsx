@@ -119,7 +119,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
           <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
           <Box sx={{ mt: 1, display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, flexWrap: "wrap" }}>
-            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>任意フェーズは、学習段階の進捗には数えません。</Typography>
+            <Typography sx={{ fontSize: 14, color: "text.primary" }}>任意フェーズは、学習段階の進捗には数えません。</Typography>
             {findDevelopmentLinks(courseId).length > 0 && (
               <Link href="/missions" style={{ color: "#2563eb", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
                 発展ミッション一覧へ
@@ -309,7 +309,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               {/* 最終チャレンジが帯の単元ミッションと同一物だと分かるよう、題をそのまま出す
                   （2026-11-23、GPTレビュー9：ミッションと進捗のつながり）。 */}
               {isMission && <Typography sx={{ fontSize: 14 }}>{findUnitMission(unit.courseId)?.title}</Typography>}
-              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{status}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.primary" }}>{status}</Typography>
             </Box>
             </Box>
           </Box>
@@ -346,7 +346,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               }}
             >
               <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{o.label}</Typography>
-              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{o.timing}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.primary" }}>{o.timing}</Typography>
             </Box>
           </Box>
         );
@@ -379,10 +379,10 @@ function UnitKnowledgeCards({ courseId, completedCount, missionDone }: { courseI
             <Box key={card.id} sx={{ p: 2, border: `1.5px solid ${owned ? tone.border : tokens.border}`, borderRadius: 2, bgcolor: owned ? tone.bgcolor : uncollectedTone.background }}>
               <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                 <Typography sx={{ fontSize: 14, fontWeight: 800, color: owned ? tone.color : uncollectedTone.color }}>{tone.label}</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 700, color: owned ? "#15803d" : "text.secondary" }}>{owned ? "獲得済み" : "未獲得"}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, color: owned ? "#15803d"  : "text.primary" }}>{owned ? "獲得済み" : "未獲得"}</Typography>
               </Stack>
               <Typography sx={{ fontWeight: 700, fontSize: 15, mt: 1 }}>{owned ? card.title : "？？？"}</Typography>
-              <Typography sx={{ fontSize: 14, color: "text.secondary", mt: 0.5 }}>{owned ? card.description : slotHint(slot)}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.primary", mt: 0.5 }}>{owned ? card.description : slotHint(slot)}</Typography>
             </Box>
           );
         })}
@@ -421,7 +421,7 @@ function UnitAchievements({ courseId }: { courseId: string }) {
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{item.title}</Typography>
                   {achieved && <Chip label="達成済み" size="small" sx={{ height: 22, fontSize: 12, fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d" }} />}
                 </Stack>
-                <Typography sx={{ fontSize: 14, color: "text.secondary", mt: 0.5 }}>{item.conditionLabel ?? item.description}</Typography>
+                <Typography sx={{ fontSize: 14, color: "text.primary", mt: 0.5 }}>{item.conditionLabel ?? item.description}</Typography>
               </Box>
             </Box>
           );

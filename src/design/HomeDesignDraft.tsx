@@ -202,7 +202,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               <Typography fontSize={18} sx={{ mt: 1.25 }}>
                 {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
               </Typography>
-              <Typography fontSize={14} color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              <Typography fontSize={14} color="text.primary" sx={{ display: "block", mt: 0.5 }}>
                 今日の分はこの1問だけです
               </Typography>
               <Box sx={{ flex: 1 }} />
@@ -269,7 +269,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                       >
                         {day.learned ? <LocalFireDepartmentIcon sx={{ fontSize: 16 }} /> : Number(day.date.slice(8))}
                       </Box>
-                      <Typography fontSize={14} fontWeight={day.isToday ? 900 : 600} color={day.isToday ? "text.primary" : "text.secondary"}>
+                      <Typography fontSize={14} fontWeight={day.isToday ? 900 : 600} color="text.primary">
                         {day.label}
                       </Typography>
                     </Stack>
@@ -377,7 +377,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     <Typography fontSize={18} fontWeight={900} sx={{ mt: 0.5 }}>
                       {latestCard.title}
                     </Typography>
-                    <Typography fontSize={14} color="text.secondary">
+                    <Typography fontSize={14} color="text.primary">
                       二分探索で獲得
                     </Typography>
                   </Box>
@@ -407,7 +407,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
                             {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 14, fontWeight: 700 }} />}
                             {meta && (
-                              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
+                              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.primary" }}>
                                 <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
                                 <Typography fontSize={14} fontWeight={800}>
                                   {meta.replies}
