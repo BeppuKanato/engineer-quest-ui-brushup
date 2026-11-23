@@ -5,6 +5,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FlagIcon from "@mui/icons-material/Flag";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import ReplayIcon from "@mui/icons-material/Replay";
 import ScienceIcon from "@mui/icons-material/Science";
 import BuildIcon from "@mui/icons-material/Build";
@@ -18,6 +19,7 @@ import { AppHeader } from "@/app/component/appHeader";
 import { CourseThumbnail } from "@/app/courses/component/courseThumbnail";
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
 import { GoalFlag } from "@/design/GoalFlag";
+import { MissionStoryDialog } from "@/design/MissionStoryDialog";
 import { useUserSession } from "@/app/component/userSession";
 import { startLearningUnit } from "@/api/learning.api";
 import { appLearningTokens as tokens } from "./appLearning.tokens";
@@ -42,6 +44,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   const { firebaseUser } = useUserSession();
   const { progress, loading, error, reload, authenticated } = useLearningProgress(unit?.courseId);
   const [starting, setStarting] = useState(false), [startError, setStartError] = useState<string | null>(null);
+  const [storyOpen, setStoryOpen] = useState(false);
 
   const log = useLearningLog(courseId);
   const mission = unit ? findUnitMission(unit.courseId) : undefined;
@@ -101,11 +104,15 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                       <Button variant="contained" onClick={() => void start()} disabled={starting} sx={{ fontWeight: 800 }}>{progress.unit ? "学習を進める" : "学習を始める"}</Button>
                     </>
                   )}
-
+                  {/* ストーリーの入口（選ぶ動機・見直し）：帯からいつでも開ける（2026-11-23）。 */}
+                  <Button variant="text" startIcon={<PlayCircleOutlineIcon />} onClick={() => setStoryOpen(true)} sx={{ fontWeight: 700 }}>
+                    ミッションを見る
+                  </Button>
                 </Stack>
               </Stack>
             </Box>
           )}
+          <MissionStoryDialog courseId={courseId} open={storyOpen} onClose={() => setStoryOpen(false)} />
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
             <Typography sx={{ fontWeight: 700 }}>学習段階 {completed} / 6 完了</Typography>
             <Chip

@@ -24,6 +24,7 @@ import { useState } from "react";
 
 import { Box, Button, ButtonBase, Chip, Paper, Snackbar, Stack, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import ReplayIcon from "@mui/icons-material/Replay";
 import Link from "next/link";
 
@@ -34,6 +35,7 @@ import { homeFixture } from "@/design/fixtures";
 import { findUnitMission } from "@/features/learning/app/missionRegistry";
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
 import { GoalFlag } from "@/design/GoalFlag";
+import { MissionStoryDialog } from "@/design/MissionStoryDialog";
 
 const TEXT = "#111827";
 const PRIMARY = "#2563eb";
@@ -334,7 +336,7 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   );
 };
 
-const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoal: boolean) => void }> = ({ unit, onToggleGoal }) => {
+const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoal: boolean) => void; onShowStory: (unit: HomeUnit) => void }> = ({ unit, onToggleGoal, onShowStory }) => {
   const mission = findUnitMission(unit.id);
   const scene = missionThumbnailFor(unit.id);
   const inProgress = unit.status === "IN_PROGRESS";
@@ -419,6 +421,24 @@ const UnitCard: React.FC<{ unit: HomeUnit; onToggleGoal: (unit: HomeUnit, nowGoa
               次は「{unit.nextPhase}」
             </Typography>
           )}
+          {/* 開始前の入口（選ぶ動機）：ミッションストーリーを任意に開く。カード全体の
+              リンクとは独立した実ボタンにする（2026-11-23 決定）。 */}
+          {mission && (
+            <Box
+              component="button"
+              type="button"
+              aria-label={`${unit.title}のミッションを見る`}
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); onShowStory(unit); }}
+              sx={{
+                display: "inline-flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 0,
+                border: "none", background: "none", cursor: "pointer",
+                color: PRIMARY, fontSize: 15, fontWeight: 700, fontFamily: "inherit",
+              }}
+            >
+              <PlayCircleOutlineIcon sx={{ fontSize: 20 }} />
+              ミッションを見る
+            </Box>
+          )}
           <StateButton unit={unit} />
         </Box>
       </Box>
@@ -490,6 +510,7 @@ export const CoursesDesignDraft: React.FC = () => {
   const [axis, setAxis] = useState("すべて");
   const [stateFilter, setStateFilter] = useState("ALL");
   const [notice, setNotice] = useState<string | null>(null);
+  const [storyCourseId, setStoryCourseId] = useState<string | null>(null);
   // 目標トグルの通知：効果（ホームに表示される）を結果で伝える。
   const handleToggleGoal = (_unit: HomeUnit, nowGoal: boolean) => {
     setNotice(nowGoal ? "目標に設定しました。ホームの目標に表示されます" : "目標を外しました");
@@ -544,7 +565,7 @@ export const CoursesDesignDraft: React.FC = () => {
       <Box component="section" aria-label="単元">
         <CardGrid>
           {visibleUnits.map((unit) => (
-            <UnitCard key={unit.id} unit={unit} onToggleGoal={handleToggleGoal} />
+            <UnitCard key={unit.id} unit={unit} onToggleGoal={handleToggleGoal} onShowStory={(u) => setStoryCourseId(u.id)} />
           ))}
         </CardGrid>
       </Box>
@@ -589,6 +610,7 @@ export const CoursesDesignDraft: React.FC = () => {
         message={notice ?? ""}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
+      <MissionStoryDialog courseId={storyCourseId} open={storyCourseId !== null} onClose={() => setStoryCourseId(null)} />
     </Stack>
   );
 };

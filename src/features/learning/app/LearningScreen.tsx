@@ -36,15 +36,17 @@ import { BigGoalAchievementBand, BigGoalAchievementZone } from "./bigGoal/BigGoa
 import { BigGoalNextProposal } from "./bigGoal/BigGoalNextProposal";
 import { bigGoalProgressFact } from "./bigGoal/bigGoalPresentation";
 import { FeedbackScreen, type FeedbackGoalSummary } from "./feedback/FeedbackScreen";
-import { MissionPresentation, hasPresentedMission, markMissionPresented } from "@/design/MissionPresentation";
+import { MissionPresentation } from "@/design/MissionPresentation";
+import { hasSeenMissionStory } from "@/design/missionStoryStore";
 import { findUnitMission } from "./missionRegistry";
 
 export function LearningScreen({ courseId, reviewPhaseKey }: { courseId: string; reviewPhaseKey?: string }) {
   const unit = findLearningUnit(courseId), { firebaseUser } = useUserSession();
   const { progress, error, loading, reload, authenticated } = useLearningProgress(unit?.courseId);
   // 単元ミッションの提示（2026-11-23 決定）：別URLにせず、段階1の初回開始時にプレイヤーの
-  // 殻の中で開く状態として出す。未開始の単元でのみ、提示を通るまで学習本体を始めない。
-  const [gatePassed, setGatePassed] = useState(() => hasPresentedMission(courseId));
+  // 殻の中で開く状態として出す。役割は枠付けの保証——開始前の入口（一覧・帯）で
+  // ストーリーを見た人は素通りし、未開始かつ未見の人だけに提示を通す。
+  const [gatePassed, setGatePassed] = useState(() => hasSeenMissionStory(courseId));
   const mission = unit ? findUnitMission(courseId) : undefined;
   const showGate = !gatePassed && !reviewPhaseKey && !!mission && !!progress && progress.unit === null;
   return <Box sx={{ height: "100dvh", minHeight: 0, display: "flex", flexDirection: "column" }}>
@@ -52,7 +54,7 @@ export function LearningScreen({ courseId, reviewPhaseKey }: { courseId: string;
     <Box component={motion.main} initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       {!unit ? <Box sx={{ p: 3 }}><Typography>この単元は準備中です。</Typography><Button component={Link} href="/courses">コース一覧へ</Button></Box> : !authenticated && !loading ? <Button component={Link} href="/auth/login">ログインして学習する</Button> : error ?
         <Alert severity="error" action={<Button onClick={reload}>再読み込み</Button>}>{error}</Alert> : loading || !progress || !firebaseUser ? <ProgressLoadingSkeleton variant="screen" /> :
-          showGate && mission ? <MissionPresentation unit={unit} mission={mission} onStart={() => { markMissionPresented(courseId); setGatePassed(true); }} /> :
+          showGate && mission ? <MissionPresentation unit={unit} mission={mission} onStart={() => setGatePassed(true)} /> :
           <LearningRun key={`${firebaseUser.uid}:${courseId}`} unit={unit} progress={progress} reviewPhaseKey={reviewPhaseKey} />}
     </Box>
   </Box>;

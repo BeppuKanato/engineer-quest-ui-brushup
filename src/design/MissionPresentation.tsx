@@ -1,12 +1,11 @@
 "use client";
 /**
- * 単元ミッションの提示（2026-11-23 決定の形）。
- * 別URLの画面にしない：段階1の初回開始時に、/learn の殻（単元名＋段階チップ）の中で開く
- * 「状態」として出す。ブリッジ画面・フィードバック画面と同じ流儀。
- * 役割は「学習の前に課題を受け取る」最初の印象だけ。条件などの細部は単元画面の帯に
- * 常時あるので、ここでは場面・題・達成条件・始めるボタンに絞る。
- * ミッションはこの後も帯と最終チャレンジのノードで繰り返し出るので、
- * 1回の露出に理解を依存させない。
+ * 段階1の初回開始時のゲート（2026-11-23 決定の形）。
+ * 別URLの画面にしない：/learn の殻（単元名＋段階チップ）の中で開く「状態」。
+ * 中身はミッションストーリー（学習教材と同じ再生形式）。役割は「枠付けの保証」で、
+ * 開始前の入口（一覧・帯）で見なかった人にも、最終チャレンジの意味づけとして
+ * 最低1回は届ける。最後まで見たら閲覧フラグが立ち、次からは素通りになる。
+ * スキップもできる（その場合はフラグは立たないが、単元が開始されれば二度と出ない）。
  */
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -17,11 +16,9 @@ import type { UnitMission } from "@/features/learning/app/missionRegistry";
 import type { LearningUnit } from "@/features/learning/app/unitRegistry";
 import { playerTokens } from "@/features/learning/player/player.tokens";
 import { GoalFlag } from "./GoalFlag";
-import { missionThumbnailFor } from "./MissionThumbnail";
-
-const presentedCourses = new Set<string>();
-export const hasPresentedMission = (courseId: string) => presentedCourses.has(courseId);
-export const markMissionPresented = (courseId: string) => { presentedCourses.add(courseId); };
+import { missionStoryFor } from "./missionStories";
+import { markMissionStorySeen } from "./missionStoryStore";
+import { MissionStoryPlayer } from "./MissionStoryPlayer";
 
 export function MissionPresentation({ unit, mission, onStart }: {
   unit: LearningUnit;
@@ -29,7 +26,7 @@ export function MissionPresentation({ unit, mission, onStart }: {
   onStart: () => void;
 }) {
   const reduced = useReducedMotion();
-  const Scene = missionThumbnailFor(unit.courseId);
+  const story = missionStoryFor(unit.courseId);
   return (
     <Box sx={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column", bgcolor: playerTokens.background, color: playerTokens.text }}>
       {/* プレイヤーと同じヘッダー（単元名＋段階チップ）。操作はさせない、文脈を示すためのもの。
@@ -68,26 +65,42 @@ export function MissionPresentation({ unit, mission, onStart }: {
             <Chip label="単元ミッション" size="small" color="primary" sx={{ fontWeight: 800 }} />
             <GoalFlag courseId={unit.courseId} title={mission.title} />
           </Stack>
-          {Scene && (
-            <Box aria-hidden sx={{ mt: 2, height: { xs: 240, sm: 380 }, borderRadius: 3, overflow: "hidden", bgcolor: "#f1f5f9" }}>
-              {Scene}
+          <Typography component="h2" sx={{ mt: 2, fontSize: 24, fontWeight: 900 }}>{mission.title}</Typography>
+          {story ? (
+            <Box sx={{ mt: 2 }}>
+              <MissionStoryPlayer
+                story={story}
+                onReachEnd={() => markMissionStorySeen(unit.courseId)}
+                lastStepExtra={(
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <Typography sx={{ fontSize: 16 }}>
+                      <Box component="span" sx={{ fontWeight: 800 }}>達成の条件：</Box>
+                      {mission.successCondition}
+                    </Typography>
+                    <Button variant="contained" size="large" onClick={onStart}
+                      sx={{ minWidth: 260, height: 54, fontSize: 16, fontWeight: 800, borderRadius: 2 }}>
+                      学習を始める
+                    </Button>
+                  </Box>
+                )}
+              />
+              <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
+                <Button variant="text" onClick={onStart} sx={{ fontWeight: 700 }}>
+                  スキップして学習を始める
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <Box sx={{ mt: 2 }}>
+              <Typography sx={{ fontSize: 16 }}>{mission.description}</Typography>
+              <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+                <Button variant="contained" size="large" onClick={onStart}
+                  sx={{ minWidth: 260, height: 54, fontSize: 16, fontWeight: 800, borderRadius: 2 }}>
+                  学習を始める
+                </Button>
+              </Box>
             </Box>
           )}
-          <Typography component="h2" sx={{ mt: 3, fontSize: 24, fontWeight: 900 }}>{mission.title}</Typography>
-          <Typography sx={{ mt: 1.5, fontSize: 16, maxWidth: 680 }}>{mission.description}</Typography>
-          <Typography sx={{ mt: 2, fontSize: 16 }}>
-            <Box component="span" sx={{ fontWeight: 800 }}>達成の条件：</Box>
-            {mission.successCondition}
-          </Typography>
-          <Typography sx={{ mt: 1, fontSize: 16 }}>
-            学習の最後に、自分のコードでこの課題に挑戦します（最終チャレンジ）。
-          </Typography>
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-            <Button variant="contained" size="large" onClick={onStart}
-              sx={{ minWidth: 260, height: 54, fontSize: 16, fontWeight: 800, borderRadius: 2 }}>
-              学習を始める
-            </Button>
-          </Box>
         </Box>
       </Box>
     </Box>
