@@ -80,7 +80,8 @@ export function UnitOverview({ courseId }: { courseId: string }) {
                     {goalSet && <Chip icon={<CheckIcon />} label="自分の目標に設定済み" size="small" sx={{ fontWeight: 800, bgcolor: "#dcfce7", color: "#15803d", "& .MuiChip-icon": { color: "inherit" } }} />}
                   </Stack>
                   <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900, mt: 1.5, lineHeight: 1.5 }}>{mission.title}</Typography>
-                  <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>{mission.description}</Typography>
+                  {/* 学習開始後は説明文を畳む（2026-11-23決定）：未着手と、挑戦・結果が主役の状態では全文を出す。 */}
+                  {(!progress.unit || missionReady || missionDone) && <Typography sx={{ mt: 0.5, lineHeight: 1.8 }}>{mission.description}</Typography>}
                   <Typography sx={{ mt: 1, fontSize: 14 }}>達成の条件：{mission.successCondition}</Typography>
                 </Box>
                 <Stack spacing={1.5} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
