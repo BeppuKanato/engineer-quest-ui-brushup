@@ -4,10 +4,11 @@
 // この画面の目的は「次に学ぶものを選ぶ画面」。v3 の転換点はサムネイル主役：
 // - カードは図を全面に大きく置き、テキストは単元名とミッションの題だけに絞る
 // - 進捗バー・知識カード数・説明文はカードから落とす（管理情報はホームと単元画面の仕事）
-// - 状態は2か所で表す：サムネの上の印（学習中チップ／完了＝メダルのバッジ）と、
-//   カード下部の状態ボタン。ボタンは文字を読まなくても色と形で状態が分かること
-//   （2026-11-23 Kanato）：未着手＝青＋▶、学習中＝青＋段階の目盛り、完了＝緑＋円の矢印。
-//   グレーは操作できない状態だけに使う（完了に淡色を使うと「押せない」と読まれる）。
+// - 状態は、ボタンの色分けではなく「印と進捗の形」で表す（一般的な学習アプリの慣例、
+//   2026-11-23 Kanato と確認）：未着手＝印なし、学習中＝サムネ下端の進捗バー＋現在地の
+//   強調（青枠と学習中チップ）、完了＝緑のメダルバッジ。ボタンは主色にそろえ、
+//   文言だけが変わる（始める／続きから／復習する）。ただし完了の復習ボタンだけは
+//   バッジと同じ緑にする（色は意味で統一）。グレーは操作できない状態だけに使う。
 //   ボタンはカード全体リンクの中の見た目上のボタン（遷移はカード全体が担う）。
 // - カード全体が単元画面へのリンク
 // グループ分けは課題軸のまま（グループ自体が「同じ課題への別解法」という内容を持つため）。
@@ -104,9 +105,8 @@ const StateMark: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
 
 /**
  * 状態ボタン：カード下部に置く見た目上のボタン（遷移はカード全体のリンクが担う）。
- * 文字を読まなくても状態が分かるように、一般的なマークと色の役割で分ける：
- * 未着手＝青＋▶／学習中＝青＋段階の目盛り（白）／完了＝緑＋円の矢印。
- * グレーは操作できない状態だけに使うので、完了には使わない。
+ * 色は主色にそろえ、文言だけが変わる。状態の違いは印と進捗の形が担う。
+ * 例外は完了だけ：復習ボタンはバッジと同じ緑にする（色は意味で統一）。
  */
 const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   const base = {
@@ -130,19 +130,7 @@ const StateButton: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
   if (unit.status === "IN_PROGRESS") {
     return (
       <Box component="span" sx={{ ...base, bgcolor: PRIMARY, color: "#fff" }}>
-        <Stack direction="row" spacing={0.5} aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}>
-          {Array.from({ length: unit.totalPhases }, (_, i) => (
-            <Box
-              key={i}
-              sx={{
-                width: 18,
-                height: 8,
-                borderRadius: 999,
-                bgcolor: i < unit.completedPhases ? "#fff" : "rgba(255,255,255,0.35)",
-              }}
-            />
-          ))}
-        </Stack>
+        <PlayArrowIcon sx={{ fontSize: 19 }} />
         続きから学ぶ
       </Box>
     );
@@ -181,6 +169,14 @@ const UnitCard: React.FC<{ unit: HomeUnit }> = ({ unit }) => {
         {scene ?? (
           <Box sx={{ position: "absolute", inset: 0, p: 1.5 }}>
             <CourseThumbnail courseId={unit.id} />
+          </Box>
+        )}
+        {inProgress && (
+          <Box
+            aria-label={`段階 ${unit.completedPhases}/${unit.totalPhases} まで完了`}
+            sx={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 6, bgcolor: "#dbe3ef", zIndex: 1 }}
+          >
+            <Box sx={{ width: `${(unit.completedPhases / unit.totalPhases) * 100}%`, height: "100%", bgcolor: PRIMARY }} />
           </Box>
         )}
       </Box>
