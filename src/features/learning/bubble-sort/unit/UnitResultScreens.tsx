@@ -6,6 +6,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { MascotFigure } from "@/app/component/mascotFigure";
+
 import { DrawnCheck } from "../../app/DrawnCheck";
 import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { ResultConfetti } from "../../app/ResultConfetti";
@@ -30,34 +32,62 @@ const nextButtonSx = {
   "&:hover": { bgcolor: playerTokens.states.processing.stroke },
 } as const;
 
-/** フェーズ3・5の後に単元側が出すリザルト画面。到達状況（事実）と次フェーズの予告、次のフェーズへの導線を持つ。
- * スクロールはこの画面専用に持たず、単元コンテナのラッパーに一元化する（#298）。 */
-export function UnitResultScreen({ phase, summary, onNext, achievements, goalAchievement }: {
+/**
+ * フェーズ完了の称賛ブロック（2026-11-23 再設計）。
+ * フィードバック画面の頭に置き、称賛とフィードバックを1画面にする。
+ * 中身は「終わった」事実と成果だけ：紙吹雪＋見出し、正解数（ドットと事実文）、
+ * マスコットの反応、実績の解除。完成図は結果の棒グラフと誤読されるため出さない。
+ * フィードバックが無い場合の独立結果画面（UnitResultScreen）もこのブロックを使う。
+ */
+export function PhaseResultHeader({ phase, summary, achievements, goalAchievement }: {
   phase: BubbleSortUnitPhase;
   summary?: BubbleSortUnitPhaseSummary;
-  onNext: () => void;
   achievements?: ReactNode;
-  /** 大目標の達成の提示（#370）。ある場合は紙吹雪も最大級に引き上げる。 */
   goalAchievement?: ReactNode;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus(); }, []);
   if (!phase.result) return null;
-  return <Box component="section" aria-label={`${phase.formalName}のリザルト`}
-    sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "safe center", gap: 2, p: 2 }}>
+  return <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: "100%" }}>
     <UnitResultCelebration heading={phase.result.heading} headingRef={headingRef} preset={goalAchievement ? "final" : "phase"} />
-    <BubbleSortResultFigure />
     {summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined && (
       <>
         <ResultScoreDots total={summary.totalQuestions} firstAttemptCorrect={summary.firstAttemptCorrect} />
-        <Typography component="p" sx={{ textAlign: "center", fontSize: 17, fontWeight: 700 }}>
+        <Typography component="p" sx={{ textAlign: "center", fontSize: 20, fontWeight: 800 }}>
           全{summary.totalQuestions}問に正解しました（初回で{summary.firstAttemptCorrect}問正解）。
         </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, maxWidth: 640 }}>
+          <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="bounce" grounding="shadow"
+            state={summary.firstAttemptCorrect === summary.totalQuestions ? "happy" : "cheer"} />
+          <Typography component="p" sx={{ fontSize: 17, fontWeight: 700 }}>
+            {summary.firstAttemptCorrect === summary.totalQuestions
+              ? "全部、初回で正解だったよ。"
+              : "見直して直せた問題があったね。"}
+          </Typography>
+        </Box>
       </>
     )}
     {achievements}
     {goalAchievement}
-    <PhaseNextButton label="次へ進む" onClick={onNext} />
+  </Box>;
+}
+
+/** フィードバックが無い場合に単体で出すリザルト画面。称賛ブロック＋次への導線だけを持つ。 */
+export function UnitResultScreen({ phase, summary, onNext, nextLabel, achievements, goalAchievement }: {
+  phase: BubbleSortUnitPhase;
+  summary?: BubbleSortUnitPhaseSummary;
+  onNext: () => void;
+  /** 次の画面が分かるボタン名（フィードバック画面が続く場合は「フィードバックを見る」）。 */
+  nextLabel?: string;
+  achievements?: ReactNode;
+  /** 大目標の達成の提示（#370）。ある場合は紙吹雪も最大級に引き上げる。 */
+  goalAchievement?: ReactNode;
+}) {
+  if (!phase.result) return null;
+  return <Box component="section" aria-label={`${phase.formalName}のリザルト`}
+    sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "safe center", gap: 2, p: 2 }}>
+    <PhaseResultHeader phase={phase} summary={summary} achievements={achievements} goalAchievement={goalAchievement} />
+    <PhaseNextButton label={nextLabel ?? "次へ進む"} onClick={onNext} />
   </Box>;
 }
 

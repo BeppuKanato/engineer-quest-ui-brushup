@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Box, Button, LinearProgress, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import { useEffect, useRef, type ReactNode } from "react";
 
 import {
@@ -10,19 +10,7 @@ import {
   type FeedbackV1Kind,
 } from "@/app/component/feedbackV1";
 import { feedbackCandidates } from "@/api/feedbackV1.api";
-import { ConceptMap } from "./ConceptMap";
-import { BigGoalRequirements } from "../bigGoal/BigGoalRequirements";
-import type { BigGoalRequirement } from "@/api/bigGoal.api";
 import { playerTokens } from "../../player/player.tokens";
-
-/** 専用画面に出す大目標の進捗。数値は API のコード計算の結果をそのまま使う。 */
-export type FeedbackGoalSummary = {
-  displayText: string;
-  /** 達成条件の部分充足（0〜1）。定義できない型は null */
-  progress: number | null;
-  fact: string | null;
-  requirements?: BigGoalRequirement[];
-};
 
 const headingSx = {
   color: playerTokens.text, fontWeight: 700, textAlign: "center",
@@ -36,23 +24,24 @@ const primaryButtonSx = {
 } as const;
 
 /**
- * フィードバック専用画面（Issue #369、#299 の実装）。
- * 結果画面の後に続く独立した画面として、現在位置の図と4項目
- * （現在の状態／次の目標／次の一歩／この一歩の理由）を提示する。
+ * フィードバック画面（Issue #369、#299 の実装を 2026-11-23 に再設計）。
+ * フェーズのフィードバックは、完了の称賛（結果）と一体の画面にする：
+ * 呼び出し側が header に称賛ブロック（終わりました＋正解数＋マスコット）を
+ * 渡し、その下にフィードバック本文（現在の状態／フィードバック／次の目標／
+ * 次の一歩と理由）を続ける。header がある場合は見出しを header 側に譲る。
+ * 旧来の現在位置の図と概念マップは出さない（位置はフェーズチップが担い、
+ * 概念はカリキュラム側の記録で学習者の行動の手がかりにならないため）。
  * 推薦する行動が画面の主ボタンで、「そのまま次へ」の副次的な出口は
  * 生成中・失敗時を含め常時置く（着手は学習者の任意のまま）。
- * 称賛演出は直前の結果画面で済んでいるため、ここでは繰り返さず、
- * 到達の事実と進捗の表示で達成感を引き継ぐ（#370 と整合）。
  * フィードバックが適用されない学習者（割り当てなし等）では、
  * 画面に留めず onUnavailable で本来の導線へ自動で進める。
  */
-export function FeedbackScreen({ kind, eventId, heading, figure, goalSummary, onAction, onProceed, proceedLabel, onUnavailable, children }: {
+export function FeedbackScreen({ kind, eventId, heading, header, onAction, onProceed, proceedLabel, onUnavailable, children }: {
   kind: Extract<FeedbackV1Kind, "phase" | "unit">;
   eventId: string;
   heading: string;
-  /** 現在位置の図。学習状態を持つ単元コンテナが組み立てて渡す。 */
-  figure: ReactNode;
-  goalSummary?: FeedbackGoalSummary | null;
+  /** 称賛ブロック。ある場合は見出しの代わりに画面の頭になる。 */
+  header?: ReactNode;
   // Called when the recommended action is clicked. Return true to handle the
   // navigation in-app (e.g. moving between phases) instead of following the link.
   onAction?: (href: string | null) => boolean;
@@ -73,34 +62,11 @@ export function FeedbackScreen({ kind, eventId, heading, figure, goalSummary, on
     }
   }, [unavailable, onUnavailable]);
   const f = result?.feedback;
-  // 生成時に保存された大目標の状態を優先。単元完了後にACTIVEが消えても表示できる。
-  const shownGoal: FeedbackGoalSummary | null = result?.goalSnapshot
-    ? {
-      displayText: result.goalSnapshot.displayText,
-      progress: result.goalSnapshot.progress,
-      fact: result.goalSnapshot.status === "ACHIEVED" ? "大目標を達成しました" : result.goalSnapshot.status === "CLOSED_UNMET" ? "この大目標は未達成で終了しました" : null,
-      requirements: result.goalSnapshot.requirements ?? [],
-    }
-    : goalSummary ?? null;
   const failed = error || result?.status === "FAILED";
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
-    <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{heading}</Typography>
+    {header ?? <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{heading}</Typography>}
     <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, pb: 2 }}>
-    <Box sx={{ width: "100%", maxWidth: 360 }}>{figure}</Box>
-    {shownGoal && <Box sx={{ width: "100%", maxWidth: 640 }}>
-      <Typography sx={{ fontSize: 13, fontWeight: 800, color: playerTokens.control }}>大目標</Typography>
-      <Typography sx={{ fontWeight: 700, fontSize: 16 }}>{shownGoal.displayText}</Typography>
-      {shownGoal.progress !== null && <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.75 }}>
-        <LinearProgress variant="determinate" value={Math.round(shownGoal.progress * 100)}
-          aria-label="大目標の進み具合"
-          sx={{ flex: 1, height: 8, borderRadius: 999, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: playerTokens.focus, borderRadius: 999 } }} />
-        <Typography sx={{ fontWeight: 800, fontSize: 15 }}>{Math.round(shownGoal.progress * 100)}%</Typography>
-      </Box>}
-      {shownGoal.fact && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{shownGoal.fact}</Typography>}
-      <BigGoalRequirements requirements={shownGoal.requirements} />
-    </Box>}
-    {result?.conceptSnapshot && <Box sx={{ width: "100%", maxWidth: 1040 }}><ConceptMap snapshot={result.conceptSnapshot} /></Box>}
     {unavailable ? <Typography role="status" color="text.secondary">フィードバックはありません。次へ進みます。</Typography>
       : failed && !retrying ? <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 640 }}>
           <Alert severity="warning">フィードバックを生成できませんでした。学習は続けられます。</Alert>

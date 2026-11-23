@@ -128,11 +128,11 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     startFeedback("phase", phaseFeedbackEventId(phaseKey, nextPhaseKey));
   }, [startFeedback, phaseFeedbackEventId]);
   // 大目標は再設計で廃止（2026-11-22 決定）。フィードバック画面へ目標サマリは渡さない。
-  const renderPhaseFeedbackScreen = useCallback((phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode }) => {
+  const renderPhaseFeedbackScreen = useCallback((phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode }) => {
     const phase = unit.phases.find(item => item.id === phaseKey);
     return <FeedbackScreen kind="phase" eventId={phaseFeedbackEventId(phaseKey, nextPhaseKey)}
       heading={phase ? `${phase.formalName}のフィードバック` : "フィードバック"}
-      figure={nav.figure} goalSummary={null}
+      header={nav.header}
       onAction={href => {
         if (!href) return false;
         const target = new URL(href, window.location.origin).searchParams.get("phase");
@@ -145,7 +145,6 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   }, [phaseFeedbackEventId, unit]);
   const renderUnitFeedbackScreen = useCallback((nav: { goBack: () => void; figure: ReactNode }) => (
     <FeedbackScreen kind="unit" eventId={courseId} heading="単元のフィードバック"
-      figure={nav.figure} goalSummary={null}
       onProceed={nav.goBack} proceedLabel="結果に戻る"
       onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }} />
   ), [courseId]);
