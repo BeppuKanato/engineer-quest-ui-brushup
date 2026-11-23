@@ -111,7 +111,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
         style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
         {header}
         <Button variant="text" onClick={advance}
-          sx={{ minHeight: 48, px: 2, fontSize: 15, fontWeight: 700, color: playerTokens.control }}>
+          sx={{ minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control }}>
           フィードバックを見る
         </Button>
       </motion.div>
@@ -144,7 +144,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
                     <MascotFigure mascotId="red-panda" alt="相棒" size="S" state="point" grounding="shadow" />
                     <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
-                      <Typography sx={{ fontSize: 15, fontWeight: 700 }}>次の一歩、持ってきたよ。</Typography>
+                      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>次の一歩、持ってきたよ。</Typography>
                     </Box>
                   </Box>
                   <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} />
@@ -158,7 +158,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, onAction, onPro
     </AnimatePresence>
     <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ justifyContent: "center", mt: 1, flexShrink: 0 }}>
       <Button data-feedback-skip variant={f?.actionHref ? "text" : "contained"} onClick={onProceed}
-        sx={f?.actionHref ? { minHeight: 48, px: 2, fontSize: 15, fontWeight: 700, color: playerTokens.control } : primaryButtonSx}>
+        sx={f?.actionHref ? { minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control } : primaryButtonSx}>
         {proceedLabel}
       </Button>
     </Stack>
@@ -190,7 +190,7 @@ function FeedbackGenerating() {
 /** フィードバック本文のカード。文章の役割（節）ごとに1枚にし、本文の受け皿を広く取る。 */
 function FeedbackCard({ label, body }: { label: string; body: string }) {
   return <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "16px", px: 2.75, py: 2.25 }}>
-    <Typography sx={{ fontSize: 15, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>{label}</Typography>
+    <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>{label}</Typography>
     <Typography sx={{ fontSize: 16, lineHeight: 1.8, overflowWrap: "anywhere" }}>{body}</Typography>
   </Box>;
 }

@@ -32,7 +32,7 @@ export function UnitResultCelebration({ heading, headingRef, preset = "phase" }:
       transition={{ duration: reduced ? 0 : 0.6, delay: reduced ? 0 : 0.08, repeat: 0, ease: "easeOut" }}
       sx={reducedStyle}>
       <Typography ref={headingRef} component="h2" tabIndex={-1}
-        sx={{ color: playerTokens.text, fontWeight: 700, textAlign: "center", fontSize: "clamp(20px, 1.8vw, 32px)", outline: "none" }}>{heading}</Typography>
+        sx={{ color: playerTokens.text, fontWeight: 900, textAlign: "center", fontSize: 24, outline: "none" }}>{heading}</Typography>
     </Box>
   </Box>;
 }

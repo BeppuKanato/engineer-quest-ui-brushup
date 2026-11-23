@@ -23,8 +23,8 @@ import type { BubbleSortUnitPhaseSummary } from "./unit.types";
 import { BubbleSortResultFigure } from "./BubbleSortResultFigure";
 
 const headingSx = {
-  color: playerTokens.text, fontWeight: 700, textAlign: "center",
-  fontSize: "clamp(20px, 1.8vw, 32px)", outline: "none",
+  color: playerTokens.text, fontWeight: 900, textAlign: "center",
+  fontSize: 24, outline: "none",
 } as const;
 
 const nextButtonSx = {
@@ -53,7 +53,7 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
     {summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined && (
       <>
         <ResultScoreDots total={summary.totalQuestions} firstAttemptCorrect={summary.firstAttemptCorrect} />
-        <Typography component="p" sx={{ textAlign: "center", fontSize: 20, fontWeight: 800 }}>
+        <Typography component="p" sx={{ textAlign: "center", fontSize: 22, fontWeight: 900 }}>
           全{summary.totalQuestions}問に正解しました（初回で{summary.firstAttemptCorrect}問正解）。
         </Typography>
         <ResultMascotReaction perfect={summary.firstAttemptCorrect === summary.totalQuestions} />
@@ -84,7 +84,7 @@ function ResultMascotReaction({ perfect }: { perfect: boolean }) {
       animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <MascotFigure mascotId="red-panda" alt="相棒" size="L" motion="bounce" grounding="shadow" state={state} />
     </motion.div>
-    <Typography component="p" sx={{ fontSize: 17, fontWeight: 700 }}>
+    <Typography component="p" sx={{ fontSize: 18, fontWeight: 700 }}>
       {perfect
         ? "すごい…！一問も止まらずに解き切ったね！"
         : "つまずいても、見直して自分の力で直せたね。そこがすごいよ。"}
@@ -127,8 +127,8 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
 /** 最終リザルトの要約タイル。値は記録（サマリ）からの事実だけを出す。 */
 function StatTile({ label, value }: { label: string; value: string }) {
   return <Box sx={{ flex: "1 1 150px", maxWidth: 204, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.25, textAlign: "center" }}>
-    <Typography component="p" sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
-    <Typography component="p" sx={{ fontSize: 13 }}>{label}</Typography>
+    <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
+    <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
   </Box>;
 }
 
@@ -173,7 +173,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 640 }}>
       {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} />)}
     </Box>}
-    <Typography component="p" sx={{ fontWeight: 700, fontSize: 17 }}>{bubbleSortUnitText.summaryHeading}</Typography>
+    <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
     <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 560 }}>
       {bubbleSortUnitPhases.map((phase, index) => {
         const line = summaryLine(index, summaries[index]);
@@ -191,7 +191,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     {newAchievements}
     {goalAchievement}
     {rewards && renderRewards?.(rewards)}
-    <Typography component="p" sx={{ textAlign: "center", fontSize: 15 }}>{bubbleSortUnitText.reviewNote}</Typography>
+    <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{bubbleSortUnitText.reviewNote}</Typography>
     {onShowFeedback ? <>
       <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
       <Button variant="text" component={Link} href="/courses" sx={{ mb: 2, minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
