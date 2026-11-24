@@ -344,6 +344,53 @@ export const BubbleSortMissionThumbnail: React.FC = () => {
   );
 };
 
+/**
+ * バブルソートのミッション解決後の棚（2026-11-24）。開始時のサムネイルと
+ * 同じ本（色・高さは本ごとに同じ）が、番号順に並んだ状態。開始時の問いへの
+ * 答えとして、単元リザルトで使う。
+ */
+export const BubbleSortSolvedThumbnail: React.FC = () => {
+  const books: { h: number; color: string; num: number }[] = [
+    { h: 76, color: "#8d7da3", num: 1 },
+    { h: 88, color: "#7d8ca3", num: 2 },
+    { h: 84, color: "#a3826d", num: 3 },
+    { h: 80, color: "#7da383", num: 4 },
+    { h: 66, color: "#a3826d", num: 5 },
+    { h: 58, color: "#8d7da3", num: 6 },
+    { h: 64, color: "#7d8ca3", num: 7 },
+    { h: 60, color: "#a37d7d", num: 8 },
+    { h: 56, color: "#7da383", num: 9 },
+  ];
+  const sparkle = (x: number, y: number, r: number) =>
+    `M${x} ${y - r} L${x + r * 0.28} ${y - r * 0.28} L${x + r} ${y} L${x + r * 0.28} ${y + r * 0.28} L${x} ${y + r} L${x - r * 0.28} ${y + r * 0.28} L${x - r} ${y} L${x - r * 0.28} ${y - r * 0.28} Z`;
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="番号順に並んだ本棚"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      <rect x="26" y="126" width="9" height="58" fill="#8d6e63" />
+      <rect x="425" y="126" width="9" height="58" fill="#8d6e63" />
+      {books.map((b, i) => (
+        <g key={b.num}>
+          <rect x={44 + i * 40} y={126 - b.h} width="36" height={b.h} rx="3" fill={b.color} />
+          <text x={44 + i * 40 + 18} y={126 - b.h / 2 + 7} textAnchor="middle" fontSize="18" fontWeight="900" fill="#ffffff">
+            {b.num}
+          </text>
+        </g>
+      ))}
+      <rect x="22" y="126" width="416" height="9" rx="3" fill="#8d6e63" />
+      <path d={sparkle(72, 34, 11)} fill="#d97706" />
+      <path d={sparkle(392, 26, 9)} fill="#d97706" />
+      <path d={sparkle(228, 20, 8)} fill="#d97706" />
+    </Box>
+  );
+};
+
 /** 二分探索：番号順に並んだ長い箱の列の前で、探し物に困っているロボット。 */
 export const BinarySearchMissionThumbnail: React.FC = () => {
   const boxes = [3, 7, 12, 19, 25, 31, 42, 50, 58, 66];

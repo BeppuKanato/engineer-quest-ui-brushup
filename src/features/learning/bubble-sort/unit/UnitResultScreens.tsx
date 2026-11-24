@@ -8,7 +8,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MascotFigure } from "@/app/component/mascotFigure";
+import { BubbleSortSolvedThumbnail } from "@/design/MissionThumbnail";
 
+import { findUnitMission } from "../../app/missionRegistry";
 import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { ResultConfetti } from "../../app/ResultConfetti";
 import { ResultScoreDots } from "../../app/ResultScoreDots";
@@ -238,10 +240,11 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
   return null;
 }
 
-/** 最終リザルトの要約タイル。値は記録（サマリ）からの事実だけを出す。 */
-function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return <Box sx={{ flex: "1 1 150px", maxWidth: 204, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.25, textAlign: "center" }}>
-    <Typography component="p" sx={{ fontSize: 30, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
+/** 最終リザルトの要約タイル。主役は数値ではなく達成の見出し（2026-11-24）。 */
+function StatTile({ headline, value, label, sub }: { headline: string; value: string; label: string; sub?: string }) {
+  return <Box sx={{ flex: "1 1 200px", maxWidth: 272, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.5, textAlign: "center" }}>
+    <Typography component="p" sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}>{headline}</Typography>
+    <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.25, color: playerTokens.focus }}>{value}</Typography>
     <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
     {sub && <Typography component="p" sx={{ fontSize: 14 }}>{sub}</Typography>}
   </Box>;
@@ -264,16 +267,29 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const headingRef = useRef<HTMLParagraphElement>(null);
   const reduced = useReducedMotion();
   useEffect(() => { headingRef.current?.focus(); }, []);
-  // 実績ゾーンの出現は、完了チェック→学習経路の描画→ゴールの鼓動が終わった後に
-  // 遅らせる（2026-11-24）。マウント即時だと、画面上部を見ている間に下で解除音と
-  // 出現アニメーションが終わってしまい、獲得の瞬間を見られないため。
-  // ゾーンはミニマップ直後に置き、この遅延で出現させる（音も出現に合わせて鳴る）。
-  const [rewardsReady, setRewardsReady] = useState(false);
+  // 実績ゾーンの出現は2条件（2026-11-24）：(1) トロフィー→学習経路の描画→
+  // ゴールの鼓動という冒頭の流れが終わること、(2) ゾーンの位置が実際に画面内に
+  // 入っていること。小さい画面で下に隠れている間に解除音と出現が終わってしまう
+  // のを防ぐ（時間で遅らせるだけでは「見た」ことにならないため）。
+  const [pathDone, setPathDone] = useState(false);
+  const [zoneSeen, setZoneSeen] = useState(false);
+  const zoneAnchorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (reduced) { setRewardsReady(true); return; }
-    const timer = setTimeout(() => setRewardsReady(true), 2300);
+    if (reduced) { setPathDone(true); return; }
+    const timer = setTimeout(() => setPathDone(true), 2300);
     return () => clearTimeout(timer);
   }, [reduced]);
+  useEffect(() => {
+    const el = zoneAnchorRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setZoneSeen(true); return; }
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) { setZoneSeen(true); io.disconnect(); }
+    }, { threshold: 0.1 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const rewardsReady = pathDone && zoneSeen;
+  const mission = findUnitMission("course-algorithm-bubble-sort-v2");
   // 要約タイルはサマリにある記録だけから組み立てる（記録のない項目は出さない）。
   const assessed = bubbleSortUnitPhases.map((_, index) => summaries[index])
     .filter(summary => summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined);
@@ -282,37 +298,50 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const questionTotal = assessed.reduce((sum, summary) => sum + (summary?.totalQuestions ?? 0), 0);
   const implementation = summaries[bubbleSortUnitPhases.length - 1];
   const hintTotal = (implementation?.hintUsage ?? []).reduce((sum, count) => sum + count, 0);
-  const tiles: { label: string; value: string; sub?: string }[] = [];
-  // 数値には達成としての意味を添える（2026-11-24）。どの値でも肯定として読める文にする。
-  if (questionTotal > 0) tiles.push({ label: "正解（確認問題・応用問題）", value: `${eventuallyTotal} / ${questionTotal} 問`, sub: eventuallyTotal === questionTotal ? `全問正解・初回で正解 ${firstCorrectTotal} 問` : `初回で正解 ${firstCorrectTotal} 問` });
-  if (implementation?.testRuns !== undefined) tiles.push({ label: "自分で実装のテスト実行", value: `${implementation.testRuns} 回`, sub: implementation.testRuns === 1 ? "一発でクリア" : implementation.testRuns > 1 ? "試行錯誤してクリア" : undefined });
-  if (implementation?.hintUsage !== undefined) tiles.push({ label: "ヒント使用", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", sub: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア" });
+  const tiles: { headline: string; value: string; label: string; sub?: string }[] = [];
+  // 見出し＝達成、数値＝その証拠（2026-11-24）。どの値でも肯定として読める文にする。
+  if (questionTotal > 0) tiles.push({ headline: eventuallyTotal === questionTotal ? "全問正解" : `${eventuallyTotal} 問正解`, value: `${eventuallyTotal} / ${questionTotal} 問`, label: "正解（確認問題・応用問題）", sub: `初回で正解 ${firstCorrectTotal} 問` });
+  if (implementation?.testRuns !== undefined) tiles.push({ headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
+  if (implementation?.hintUsage !== undefined) tiles.push({ headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, p: 2 }}>
     <ResultConfetti preset="final" />
     {/* 修了の象徴はチェックではなくトロフィー（2026-11-24、Kanato の指定）。
         金はこの画面とゴールの星ノードに限る特別色として使う。 */}
-    <Box component={motion.div} aria-hidden="true" data-final-result-mark
-      initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
-      sx={{ width: 144, height: 144, flexShrink: 0, borderRadius: "50%", bgcolor: "#fef3c7", border: "3px solid #d97706", display: "grid", placeItems: "center", mt: 1 }}>
-      <EmojiEventsIcon sx={{ fontSize: 84, color: "#d97706" }} />
-    </Box>
-    <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
-    {/* 称賛の担い手はマスコット（2026-11-24、Kanato は賞賛あり派）。紙吹雪・音は
-        モーダルに譲り、ここでは表情・大きさ・一言で称賛を出す。 */}
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 880 }}>
-      <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
-      <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
-        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
+    {/* 称賛は一つのシーンとして出す（2026-11-24）：トロフィー・見出し・マスコットを
+        淡い金の放射光の中に寄せ、視線を一箇所に集める。 */}
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, width: "100%", maxWidth: 880, py: 2.5, borderRadius: 4,
+      background: "radial-gradient(ellipse 72% 92% at 50% 38%, rgba(217, 119, 6, 0.13), rgba(217, 119, 6, 0) 70%)" }}>
+      <Box component={motion.div} aria-hidden="true" data-final-result-mark
+        initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
+        sx={{ width: 144, height: 144, flexShrink: 0, borderRadius: "50%", bgcolor: "#fef3c7", border: "3px solid #d97706", display: "grid", placeItems: "center" }}>
+        <EmojiEventsIcon sx={{ fontSize: 84, color: "#d97706" }} />
+      </Box>
+      <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
+        <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
+          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>動きを理解するところから、自分でコードを書けるところまで到達したね！</Typography>
+        </Box>
       </Box>
     </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
+    {/* 開始時の問いへの答え（2026-11-24）：ミッションの棚が並んだ姿を見せる。 */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 880, p: 2, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 2 }}>
+      <Box sx={{ width: 300, flexShrink: 0 }}><BubbleSortSolvedThumbnail /></Box>
+      <Box>
+        <Box component="span" sx={{ display: "inline-block", bgcolor: "#e3ecfd", color: "#2563eb", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999 }}>単元ミッション</Box>
+        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mt: 0.75 }}>{mission?.title}</Typography>
+        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>バラバラだった棚が、番号順に整いました。探したい本が、すぐ見つかる棚になりました。</Typography>
+      </Box>
+    </Box>
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 880 }}>
-      {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} sub={tile.sub} />)}
+      {tiles.map(tile => <StatTile key={tile.label} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
+    <Box ref={zoneAnchorRef} sx={{ width: "100%", maxWidth: 880 }} />
     {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
     <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 880 }}>
