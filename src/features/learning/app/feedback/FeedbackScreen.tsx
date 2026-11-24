@@ -205,7 +205,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
               <Button variant="outlined" onClick={retry} disabled={retrying} sx={{ alignSelf: "center", minHeight: 44 }}>再生成</Button>
             </Stack>
           : !f ? <FeedbackGenerating />
-          : <Box sx={{ width: "100%", maxWidth: 760 }}>
+          : <Box sx={{ width: "100%", maxWidth: 1060 }}>
               <FeedbackDelivery state={beat} />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               {spotlightActive ? (
@@ -254,7 +254,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
                 </RevealRow>}
                 {sections.map((section, i) => (
                   <RevealRow key={`${section.label}-${fastForward}`} index={i + rowOffset} fast={fastForward}>
-                    <FeedbackCard label={section.label} body={section.body} headline={section.headline} />
+                    <Box sx={{ maxWidth: 760 }}>
+                      <FeedbackCard label={section.label} body={section.body} headline={section.headline} />
+                    </Box>
                   </RevealRow>
                 ))}
                 <RevealRow key={`next-${fastForward}`} index={sections.length + rowOffset} last fast={fastForward}>
@@ -262,7 +264,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
                     <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
                   </Box>
-                  <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} hideFirstAction={showActionBar} />
+                  <Box sx={{ maxWidth: 760 }}>
+                    <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} hideFirstAction={showActionBar} />
+                  </Box>
                 </RevealRow>
               </Box>
               )}
@@ -277,12 +281,12 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
       initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
       transition={{ delay: reduce || fastForward ? 0 : rowDelay(sections.length + rowOffset), duration: 0.35 }}
       style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30, backgroundColor: "#fff", borderTop: "1px solid #dbe3ef", boxShadow: "0 -4px 16px rgba(15, 23, 42, 0.06)" }}>
-      <Box sx={{ maxWidth: 760, mx: "auto", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ maxWidth: 1060, mx: "auto", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
           <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
           <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
         </Box>
-        <Button variant="contained" sx={{ ...primaryButtonSx, flex: 1, minHeight: 52 }}
+        <Button variant="contained" sx={{ ...primaryButtonSx, flex: 1, minHeight: 52, maxWidth: 760 }}
           onClick={() => { if (!onAction?.(topCandidate.actionHref) && topCandidate.actionHref) window.location.href = topCandidate.actionHref; }}>
           {topCandidate.actionLabel}
         </Button>
@@ -416,7 +420,9 @@ function RevealRow({ children, index = 0, last = false, fast = false }: { childr
     <Box sx={{ width: 20, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
       <motion.div initial={{ scale: instant ? 1 : 0 }} animate={{ scale: 1 }}
         transition={{ duration: 0.25, delay }} style={{ marginTop: 24, display: "flex" }}>
-        <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${playerTokens.focus}` }} />
+        {last
+          ? <FlagIcon sx={{ fontSize: 18, color: playerTokens.focus }} />
+          : <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "#fff", border: `2.5px solid ${playerTokens.focus}` }} />}
       </motion.div>
       {!last && <Box sx={{ position: "relative", width: 2, flex: 1, minHeight: 12, mt: 0.75 }}>
         <Box sx={{ position: "absolute", left: 0, top: 0, bottom: -32, width: 2, bgcolor: "#dbe3ef" }}>

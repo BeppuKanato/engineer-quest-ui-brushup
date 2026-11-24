@@ -54,7 +54,7 @@ function CorrectedScene({ position, prompt, canvas, firstLabel, lastLabel }: {
   return <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #dbe3ef" }}>
     <Typography sx={{ fontSize: 14, fontWeight: 800, mb: 1.5 }}>あの場面（{position}問目）</Typography>
     <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-      <Box sx={{ width: 300, height: 220, flexShrink: 0, border: "1px solid #dbe3ef", borderRadius: 2, overflow: "hidden" }}>
+      <Box sx={{ width: 440, height: 300, flexShrink: 0, border: "1px solid #dbe3ef", borderRadius: 2, overflow: "hidden" }}>
         <BubbleSortExecutionCanvas canvas={canvas} />
       </Box>
       <Stack spacing={1.25} sx={{ flex: 1, minWidth: 220, justifyContent: "center" }}>
