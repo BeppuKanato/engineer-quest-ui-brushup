@@ -23,7 +23,8 @@ import { BubbleSortResultFigure } from "./BubbleSortResultFigure";
 
 const headingSx = {
   color: playerTokens.text, fontWeight: 900, textAlign: "center",
-  fontSize: 24, outline: "none",
+  // 単元修了の見出しだけは通常の主役サイズ（24）を超える（2026-11-24、Kanato の指定）。
+  fontSize: 32, outline: "none",
 } as const;
 
 const nextButtonSx = {
