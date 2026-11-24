@@ -1,10 +1,10 @@
 import { Box, Typography } from "@mui/material";
 
 import { ImplementationTestResults, type ImplementationTestRow } from "../../implementation/ImplementationTestResults";
-import { ArrayDrawing } from "../../player/ArrayDrawing";
 import { playerTokens } from "../../player/player.tokens";
+import { BookShelfFigure } from "./BookShelfFigure";
 import { bubbleSortImplementationContent as content } from "./implementation.content";
-import { arrayBarsCanvas, isDrawableArrayValue, resultKinds, type TestOutcome } from "./implementation";
+import { isDrawableArrayValue, resultKinds, type TestOutcome } from "./implementation";
 
 import { ArrayOutput } from "./ArrayOutput";
 
@@ -17,13 +17,13 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes }: { ou
     const status = !outcome ? labels.statuses.unexecuted : outcome.passed ? labels.statuses.passed : labels.statuses.failed;
     const statusKey = !outcome ? "unexecuted" : outcome.passed ? "passed" : "failed";
     const input = test.args[0];
-    const expectedCanvas = isDrawableArrayValue(test.expected) ? arrayBarsCanvas(test.expected) : null;
+    const expectedValues = isDrawableArrayValue(test.expected) ? test.expected : null;
     return {
       id: test.id, label: test.label, statusKey, statusIcon: status.icon, statusLabel: status.label,
       details: test.visibility === "display" ? <>
         <Typography component="p" sx={{ fontSize: 16 }}>{labels.inputLabel}：{Array.isArray(input) ? `[${input.join(", ")}]` : labels.noOutput}</Typography>
         <Typography component="p" sx={{ fontSize: 16 }}>{labels.expectedLabel}：</Typography>
-        {expectedCanvas && <Box sx={{ height: 210, display: "flex", bgcolor: playerTokens.surface, border: "1px solid #e5e7eb", borderRadius: 1, my: 1 }}><ArrayDrawing canvas={expectedCanvas} label={labels.expectedLabel} /></Box>}
+        {expectedValues && <Box sx={{ height: 210, display: "flex", bgcolor: playerTokens.surface, border: "1px solid #e5e7eb", borderRadius: 1, my: 1 }}><BookShelfFigure values={expectedValues} label={labels.expectedLabel} /></Box>}
         <Typography component="p" sx={{ fontSize: 16 }}>{labels.actualLabel}：
           {!outcome || outcome.error ? labels.noOutput : null}
         </Typography>
