@@ -23,14 +23,12 @@ function FlowArrow() {
   </Box>;
 }
 
-export function ImplementationHints({ level, onInsert, onClose }: {
-  level: HintLevel; onInsert: (token: string) => void; onClose: () => void;
+/** ヒントの中身だけ（モーダルに閉じず、コードを見ながら使えるようパネルにも置ける形）。 */
+export function ImplementationHintContent({ level, onInsert }: {
+  level: HintLevel; onInsert: (token: string) => void;
 }) {
   const textColor = playerTokens.text;
-  return <Dialog open onClose={onClose} maxWidth={false} aria-labelledby="implementation-hint-title"
-    slotProps={{ paper: { sx: { width: "min(92vw, 760px)", maxHeight: "90dvh", m: 1, bgcolor: playerTokens.surface, color: textColor } } }}>
-    <DialogTitle id="implementation-hint-title">{content.hints.labels[level - 1]}</DialogTitle>
-    <DialogContent>
+  return <Box sx={{ color: textColor }}>
       {level === 1 && <>
         {content.hints.variables.map(variable => <Typography component="p" key={variable.name} sx={{ mb: 1, fontSize: 16 }}><code>{variable.name}</code>＝{variable.description}</Typography>)}
         <Typography component="p" sx={{ my: 1 }}>{content.hints.tokenInstruction}</Typography>
@@ -56,6 +54,18 @@ export function ImplementationHints({ level, onInsert, onClose }: {
         <Typography component="p" sx={{ mb: 1 }}>{content.hints.parsonsQuestion.instruction}</Typography>
         <Box sx={{ bgcolor: playerTokens.surface, color: playerTokens.text }}><ParsonsBoard question={content.hints.parsonsQuestion} code={bubbleSortCode} /></Box>
       </>}
+  </Box>;
+}
+
+export function ImplementationHints({ level, onInsert, onClose }: {
+  level: HintLevel; onInsert: (token: string) => void; onClose: () => void;
+}) {
+  const textColor = playerTokens.text;
+  return <Dialog open onClose={onClose} maxWidth={false} aria-labelledby="implementation-hint-title"
+    slotProps={{ paper: { sx: { width: "min(92vw, 760px)", maxHeight: "90dvh", m: 1, bgcolor: playerTokens.surface, color: textColor } } }}>
+    <DialogTitle id="implementation-hint-title">{content.hints.labels[level - 1]}</DialogTitle>
+    <DialogContent>
+      <ImplementationHintContent level={level} onInsert={onInsert} />
       <Button onClick={onClose} sx={{ mt: 2, minHeight: 44, color: playerTokens.control }}>{content.hints.closeLabel}</Button>
     </DialogContent>
   </Dialog>;

@@ -8,12 +8,16 @@ import { Box } from "@mui/material";
  */
 const PALETTE = ["#7d8ca3", "#a3826d", "#7da383", "#8d7da3", "#a37d7d"] as const;
 
-export function BookShelfFigure({ values, differences = [], label }: {
+export function BookShelfFigure({ values, differences = [], label, ghost, hiddenValues = false }: {
   values: readonly number[];
   differences?: readonly number[];
   label: string;
+  /** 期待する並び。実物（values）の後ろに点線の輪郭で重ね、ズレを一目で見せる。 */
+  ghost?: readonly number[];
+  /** 非公開テスト用：背の数字を「？」にして中身を伏せる。 */
+  hiddenValues?: boolean;
 }) {
-  const max = Math.max(...values, 1);
+  const max = Math.max(...values, ...(ghost ?? []), 1);
   const n = values.length;
   const shelfX = 22, shelfW = 416, shelfY = 126;
   const gap = 6;
@@ -26,6 +30,12 @@ export function BookShelfFigure({ values, differences = [], label }: {
       <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
       <rect x="26" y="126" width="9" height="58" fill="#8d6e63" />
       <rect x="425" y="126" width="9" height="58" fill="#8d6e63" />
+      {ghost && ghost.map((value, index) => {
+        const h = 26 + (value / max) * 74;
+        const x = startX + index * (bookW + gap);
+        return <rect key={`ghost-${index}`} x={x} y={shelfY - h} width={bookW} height={h} rx="3"
+          fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="5 4" />;
+      })}
       {values.map((value, index) => {
         const h = 26 + (value / max) * 74;
         const x = startX + index * (bookW + gap);
@@ -36,7 +46,7 @@ export function BookShelfFigure({ values, differences = [], label }: {
               fill={PALETTE[index % PALETTE.length]}
               stroke={different ? "#2563eb" : "none"} strokeWidth={different ? 3.5 : 0} />
             <text x={x + bookW / 2} y={shelfY - h / 2 + 6} textAnchor="middle"
-              fontSize="16" fontWeight="900" fill="#ffffff">{value}</text>
+              fontSize="16" fontWeight="900" fill="#ffffff">{hiddenValues ? "?" : value}</text>
           </g>
         );
       })}

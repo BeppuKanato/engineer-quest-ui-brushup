@@ -89,7 +89,7 @@ export const bubbleSortImplementationContent = {
       { name: "n", description: "リストの長さ" },
     ],
     tokens: ["result", "values", "n", "for", "if", "list(values)", "len(result)", "range(n - 1)", "range(n - 1 - i)", "result[j] > result[j + 1]", "result[j], result[j + 1] = result[j + 1], result[j]", "return"],
-    tokenInstruction: "トークンを選ぶとヒントを閉じ、カーソル位置に挿入します。",
+    tokenInstruction: "トークンを選ぶと、カーソル位置に挿入します。",
     tokenGroupLabel: "使う部品のトークン",
     flow: [
       "左端から右端まで、隣同士を比べていく",

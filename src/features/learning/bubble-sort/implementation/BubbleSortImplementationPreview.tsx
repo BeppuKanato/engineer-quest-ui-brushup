@@ -7,8 +7,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { disposePyodideRunner, preparePyodide } from "../../../../lib/pyodideRunner";
 import type { LearningInstrumentation } from "../../instrumentation/useLearningVisit";
-import { ImplementationLevelSelector } from "../../implementation/ImplementationLevelSelector";
-import type { ImplementationInputLevel } from "../../implementation/inputLevel";
+import { implementationInputLevels, implementationInputLevelText, type ImplementationInputLevel } from "../../implementation/inputLevel";
 import { useImplementationInputLevel } from "../../implementation/useImplementationInputLevel";
 
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
@@ -27,7 +26,7 @@ import { FreeExecutionConsole } from "./FreeExecutionConsole";
 import { runBubbleSortFreeCode, type FreeExecutionResult } from "./freeExecution";
 import { bubbleSortEditorText as text } from "./editor.content";
 import { editorTokens as colors } from "./editor.tokens";
-import { ImplementationHints } from "./ImplementationHints";
+import { ImplementationHintContent } from "./ImplementationHints";
 import { ImplementationResults } from "./ImplementationResults";
 import { bubbleSortImplementationContent as content } from "./implementation.content";
 import { allTestsPassed, runImplementationTests, recordHintUsage, runningMessage, type BubbleSortImplementationSummary, type HintLevel, type HintUsage, type TestOutcome } from "./implementation";
@@ -42,7 +41,10 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   const [tracing, setTracing] = useState(false);
   const [freeStatus, setFreeStatus] = useState<"idle" | "preparing" | "running">("idle");
   const [freeResult, setFreeResult] = useState<FreeExecutionResult | null>(null);
-  const [panel, setPanel] = useState<"tests" | "console">("tests");
+  const [panel, setPanel] = useState<"tests" | "console" | "hints">("tests");
+  // 書く量は挑戦を始める前に選ぶ（開始前ゲート）。開始後はコンパクト表示のみ。
+  const [started, setStarted] = useState(false);
+  const [celebrationDismissed, setCelebrationDismissed] = useState(false);
   const freeRunning = freeStatus !== "idle";
   const busy = running || tracing || freeRunning;
   const panelId = useId();
@@ -83,7 +85,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
       completedRef.current = true;
       onComplete?.({ testRuns: runs, hintUsage: usage, inputLevel: level, code });
     }
-    if (!complete) completedRef.current = false;
+    if (!complete) { completedRef.current = false; setCelebrationDismissed(false); }
   }, [complete, onComplete, runs, usage, level, code]);
   // テストが新たに通過するたび、小さな確認音で採点の進みを伝える（#305 案A'）。
   // 全通過時の紙吹雪と歓声は ResultConfetti が担当し、演出の強弱を分ける。
@@ -179,7 +181,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   };
   return <Box component={embedded ? "div" : "main"} sx={{ height: embedded ? "100%" : "100dvh", minHeight: 0, bgcolor: colors.background, color: colors.text, p: { xs: 1, sm: 2 } }}>
     <Box component="section" aria-label="バブルソートの自分で実装"
-      sx={{ width: "100%", height: "100%", minHeight: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+      sx={{ width: "100%", height: "100%", minHeight: 0, display: "flex", flexDirection: "column", gap: 1, position: "relative" }}>
       <Typography component="p" sx={{ textAlign: "center", fontWeight: 700, fontSize: "clamp(18px, 1.5vw, 24px)", flexShrink: 0 }}>
         {content.caption}
       </Typography>
@@ -202,11 +204,28 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
         </Box>;
       })()}
       {complete && <ResultConfetti />}
+      {!started && !complete ? (
+        <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, py: 3 }}>
+          <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, textAlign: "center" }}>書き方を選んで、挑戦を始めましょう</Typography>
+          <Typography component="p" sx={{ fontSize: 16, textAlign: "center" }}>どの書き方でも、テストと達成の条件は同じです。あとから変えることもできます。</Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, gap: 2, width: "100%", maxWidth: 1060, mt: 1 }}>
+            {implementationInputLevels.map(candidate => (
+              <Button key={candidate} variant="outlined" onClick={() => { changeLevel(candidate); setStarted(true); }}
+                sx={{ display: "block", textAlign: "left", p: 2.5, borderRadius: 3, border: "2px solid #dbe3ef", bgcolor: "#fff", color: colors.text, textTransform: "none", "&:hover": { borderColor: "#2563eb", bgcolor: "#fff" } }}>
+                <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 0.75 }}>{implementationInputLevelText.levels[candidate].label}</Typography>
+                <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>{implementationInputLevelText.levels[candidate].description}</Typography>
+              </Button>
+            ))}
+          </Box>
+          <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>{implementationInputLevelText.note}</Typography>
+        </Box>
+      ) : <>
       <Typography component="p" role="status" aria-live="polite" sx={{ textAlign: "center", fontSize: 16, flexShrink: 0 }}>{passed}/{content.tests.length} 本通過</Typography>
       <LinearProgress aria-label="テスト通過数" variant="determinate" value={passed / content.tests.length * 100}
         sx={{ flexShrink: 0, bgcolor: colors.button, "& .MuiLinearProgress-bar": { bgcolor: playerTokens.focus } }} />
-      {!complete && <Box sx={{ flexShrink: 0 }}>
-        <ImplementationLevelSelector level={level} onChange={changeLevel} disabled={busy || !editorReady} />
+      {!complete && <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+        <Typography component="p" sx={{ fontSize: 15 }}>書き方：<Box component="span" sx={{ fontWeight: 800 }}>{implementationInputLevelText.levels[level].label}</Box></Typography>
+        <Button size="small" onClick={() => setStarted(false)} sx={{ minHeight: 36, color: playerTokens.focus, fontWeight: 700 }}>書き方を変える</Button>
       </Box>}
       <>
         <Box data-editor-workspace sx={{ flex: 1, minHeight: 0, overflowY: { xs: "auto", md: "hidden" }, display: { xs: "block", md: "grid" }, gridTemplateColumns: "minmax(0, 2.4fr) minmax(300px, 1fr)", gap: 2 }}>
@@ -220,16 +239,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                 sx={{ minHeight: 44, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke }, "&.Mui-disabled": { bgcolor: colors.button, color: colors.text, opacity: 0.45 } }}>{content.controls.run}</Button>
             </Box>
             <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
-              {complete && <Box data-completion-banner sx={{ position: "absolute", top: 8, right: 8, zIndex: 6, maxWidth: "min(440px, calc(100% - 16px))", display: "flex", gap: 1.25, alignItems: "flex-start", p: 1.5, bgcolor: colors.panel, border: `2px solid ${colors.focus}`, borderRadius: 1.5, boxShadow: 3 }}>
-                <Box sx={{ flexShrink: 0 }}><DrawnCheck size={44} /></Box>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography component="p" sx={{ fontWeight: 800, fontSize: 17 }}>{content.result.title}</Typography>
-                  <Typography component="p" sx={{ fontSize: 13.5, mt: 0.25 }}>{content.result.closing}</Typography>
-                  <Typography component="p" sx={{ fontSize: 13.5, mt: 0.5 }}>{content.result.runsLabel.replace("{count}", String(runs))}</Typography>
-                  {onShowFinalResult && <Button variant="contained" onClick={onShowFinalResult}
-                    sx={{ mt: 1, minHeight: 44, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke } }}>{content.result.finalButton}</Button>}
-                </Box>
-              </Box>}
+
               <Editor height="100%" language="python" theme={LEARNING_EDITOR_THEME} beforeMount={setupLearningEditor} value={code} loading={content.status.editorLoading}
                 onMount={instance => { editor.current = instance; setEditorReady(true); }}
                 onChange={next => { setCode(next ?? ""); setOutcomes([]); setTraceError(null); setFreeResult(null); setErrorLine(undefined); }}
@@ -238,10 +248,11 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Box>
           </Box>
           <Box component="aside" ref={sidePanel} sx={{ minWidth: 0, minHeight: 0, mt: { xs: 2, md: 0 }, height: { xs: "74dvh", md: "100%" }, display: "flex", flexDirection: "column", border: `1px solid ${colors.border}`, borderRadius: 1.5, overflow: "hidden", bgcolor: colors.panel }}>
-            <Tabs value={panel} onChange={(_, value: "tests" | "console") => setPanel(value)} textColor="inherit" aria-label={text.panel}
+            <Tabs value={panel} onChange={(_, value: "tests" | "console" | "hints") => setPanel(value)} textColor="inherit" aria-label={text.panel}
               sx={{ flexShrink: 0, borderBottom: `1px solid ${colors.border}`, "& .MuiTabs-indicator": { bgcolor: colors.focus }, "& .MuiTab-root": { fontSize: 16 } }}>
               <Tab value="tests" label={text.testsTab} id={`${panelId}-tests`} aria-controls={`${panelId}-tests-panel`} />
               <Tab value="console" label={text.consoleTab} id={`${panelId}-console`} aria-controls={`${panelId}-console-panel`} />
+              <Tab value="hints" label={text.hints} id={`${panelId}-hints`} aria-controls={`${panelId}-hints-panel`} />
             </Tabs>
             <Box role="tabpanel" hidden={panel !== "tests"} id={`${panelId}-tests-panel`} aria-labelledby={`${panelId}-tests`}
               sx={{ display: panel === "tests" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
@@ -251,15 +262,23 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
               sx={{ display: panel === "console" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto" }}>
               <FreeExecutionConsole result={freeResult} busy={freeRunning} />
             </Box>
-            <Box role="group" aria-label={content.hints.groupLabel} sx={{ p: 1, flexShrink: 0, borderTop: `1px solid ${colors.border}` }}>
-              <Typography component="p" sx={{ fontSize: 16, mb: 0.5 }}>{text.hints}</Typography>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1 }}>
-                {content.hints.labels.map((label, index) => <Button key={label} aria-label={label} title={label} variant="outlined" disabled={busy || !editorReady || (index > 0 && usage[index - 1] === 0)} onClick={() => openHint((index + 1) as HintLevel)}
-                  sx={{ ...outlinedButton, minWidth: 0, display: "block", textTransform: "none", fontSize: 15, py: 0.5, px: 0.5 }}>
-                  <Box component="span" sx={{ display: "block" }}>{content.hints.compactLabels[index]}</Box>
-                  <Box component="span" sx={{ display: "block" }}>{text.hintNames[index]}</Box>
-                </Button>)}
+            {/* ヒントはモーダルにせず、コードを見ながら使えるようパネルのタブに常駐させる。 */}
+            <Box role="tabpanel" hidden={panel !== "hints"} id={`${panelId}-hints-panel`} aria-labelledby={`${panelId}-hints`}
+              sx={{ display: panel === "hints" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
+              <Box role="group" aria-label={content.hints.groupLabel}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1 }}>
+                  {content.hints.labels.map((label, index) => <Button key={label} aria-label={label} title={label} variant={hint === index + 1 ? "contained" : "outlined"} disabled={busy || !editorReady || (index > 0 && usage[index - 1] === 0)} onClick={() => openHint((index + 1) as HintLevel)}
+                    sx={{ ...(hint === index + 1 ? { minHeight: 44, bgcolor: playerTokens.focus, color: playerTokens.surface } : outlinedButton), minWidth: 0, display: "block", textTransform: "none", fontSize: 15, py: 0.5, px: 0.5 }}>
+                    <Box component="span" sx={{ display: "block" }}>{content.hints.compactLabels[index]}</Box>
+                    <Box component="span" sx={{ display: "block" }}>{text.hintNames[index]}</Box>
+                  </Button>)}
+                </Box>
               </Box>
+              {hint && <Box sx={{ mt: 2, borderTop: `1px solid ${colors.border}`, pt: 2 }}>
+                <Typography component="p" sx={{ fontSize: 16, fontWeight: 800, mb: 1 }}>{content.hints.labels[hint - 1]}</Typography>
+                <ImplementationHintContent level={hint} onInsert={token => insert(token)} />
+                <Button onClick={() => setHint(null)} sx={{ mt: 1.5, minHeight: 44, color: playerTokens.control }}>{content.hints.closeLabel}</Button>
+              </Box>}
             </Box>
           </Box>
         </Box>
@@ -269,9 +288,24 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           {runtime === "error" && <Button onClick={() => void prepare()} sx={outlinedButton}>{content.controls.reload}</Button>}
         </Box>
       </>
+      </>}
       {traceError && <Typography component="p" role="alert">{traceError}</Typography>}
+      {/* 全テスト通過の瞬間の賞賛。集大成の達成なので大きく出す。
+          閉じれば完成したコードはそのまま見返せる。 */}
+      {complete && !celebrationDismissed && <Box data-completion-celebration sx={{ position: "absolute", inset: 0, zIndex: 8, display: "grid", placeItems: "center", bgcolor: "rgba(238, 244, 252, 0.85)", p: 2 }}>
+        <Box sx={{ bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 4, px: 4, py: 3.5, maxWidth: 560, width: "100%", textAlign: "center", boxShadow: 6 }}>
+          <Box component="img" src="/images/mascots/red-panda/celebrate.png" alt="" sx={{ width: 132, height: 132, objectFit: "contain", mx: "auto", display: "block" }} />
+          <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, mt: 1 }}>{content.result.title}</Typography>
+          <Typography component="p" sx={{ fontSize: 16, mt: 1 }}>{content.result.closing}</Typography>
+          <Typography component="p" sx={{ fontSize: 14, mt: 0.75 }}>{content.result.runsLabel.replace("{count}", String(runs))}</Typography>
+          <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", mt: 2.5, flexWrap: "wrap" }}>
+            {onShowFinalResult && <Button variant="contained" onClick={onShowFinalResult}
+              sx={{ minHeight: 48, px: 3, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke } }}>{content.result.finalButton}</Button>}
+            <Button variant="outlined" onClick={() => setCelebrationDismissed(true)} sx={{ ...outlinedButton, minHeight: 48, px: 3 }}>コードを見る</Button>
+          </Box>
+        </Box>
+      </Box>}
     </Box>
     {tracePlayback && <BubbleSortTraceDialog onLearningEvent={onLearningEvent} active={active} playback={tracePlayback} onClose={() => setTracePlayback(null)} />}
-    {hint && <ImplementationHints level={hint} onInsert={token => { setHint(null); requestAnimationFrame(() => insert(token)); }} onClose={() => setHint(null)} />}
   </Box>;
 }
