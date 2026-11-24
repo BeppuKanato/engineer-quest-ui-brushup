@@ -69,6 +69,21 @@ function SortingShelfCelebration() {
   </svg>;
 }
 
+/** 書き方カードの「自分で書く量」イラスト。青い行＝自分で書く、灰色の行＝用意されている。
+    読まなくても、スカスカ／半分／ほぼ埋まってるが量で伝わる。 */
+function LevelFillIllustration({ level }: { level: ImplementationInputLevel }) {
+  const rows: Record<ImplementationInputLevel, readonly { w: number; write: boolean }[]> = {
+    "full": [{ w: 0.5, write: false }, { w: 0.85, write: true }, { w: 0.65, write: true }, { w: 0.92, write: true }, { w: 0.72, write: true }, { w: 0.8, write: true }, { w: 0.45, write: true }],
+    "skeleton": [{ w: 0.5, write: false }, { w: 0.7, write: false }, { w: 0.6, write: true }, { w: 0.85, write: false }, { w: 0.75, write: true }, { w: 0.62, write: true }, { w: 0.45, write: false }],
+    "fill-in": [{ w: 0.5, write: false }, { w: 0.82, write: false }, { w: 0.66, write: false }, { w: 0.7, write: true }, { w: 0.9, write: false }, { w: 0.6, write: false }, { w: 0.45, write: true }],
+  };
+  const list = rows[level];
+  return <svg viewBox="0 0 300 96" aria-hidden style={{ display: "block", width: "100%", height: "auto" }}>
+    <rect x="1" y="1" width="298" height="94" rx="8" fill="#f8fafc" stroke="#dbe3ef" strokeWidth="2" />
+    {list.map((row, i) => <rect key={i} x="16" y={12 + i * 11} width={268 * row.w} height="7" rx="3.5" fill={row.write ? "#2563eb" : "#dbe3ef"} />)}
+  </svg>;
+}
+
 /** embedded / onComplete は単元フロー接続（後続Issue）からの埋め込み用。未指定なら単品ページとして従来どおり動く。 */
 export function BubbleSortImplementationPreview({ embedded = false, onComplete, onLearningEvent, active = true, codeDraftBaseKey, onCodeDraftError, onShowFinalResult }: LearningInstrumentation & { embedded?: boolean; onComplete?: (summary: BubbleSortImplementationSummary) => void; codeDraftBaseKey?: string; onCodeDraftError?: (failed: boolean) => void; onShowFinalResult?: () => void }) {
   // 入力量レベルとレベル別下書き（Issue #328）。単品ページではプレビュー専用のキーで下書きを分ける。
@@ -250,7 +265,8 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             {implementationInputLevels.map(candidate => (
               <Button key={candidate} variant="outlined" onClick={() => { changeLevel(candidate); setStarted(true); }}
                 sx={{ display: "block", textAlign: "left", p: 2.5, borderRadius: 3, border: "2px solid #dbe3ef", bgcolor: "#fff", color: colors.text, textTransform: "none", "&:hover": { borderColor: "#2563eb", bgcolor: "#fff" } }}>
-                <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 0.75 }}>{implementationInputLevelText.levels[candidate].label}</Typography>
+                <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 1 }}>{implementationInputLevelText.levels[candidate].label}</Typography>
+                <Box sx={{ mb: 1.5 }}><LevelFillIllustration level={candidate} /></Box>
                 <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7, mb: 1.5 }}>{implementationInputLevelText.levels[candidate].description}</Typography>
                 {/* 実際のテンプレートの冒頭。読む前に「どこまで自分で書くか」が見える。 */}
                 <Box component="pre" aria-hidden sx={{ m: 0, p: 1.5, height: 176, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.65, whiteSpace: "pre", overflow: "hidden", color: colors.text, WebkitMaskImage: "linear-gradient(to right, black 88%, transparent)", maskImage: "linear-gradient(to right, black 88%, transparent)" }}>
@@ -259,6 +275,14 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                 </Box>
               </Button>
             ))}
+          </Box>
+          <Box sx={{ display: "flex", gap: 2.5, alignItems: "center" }}>
+            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
+              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#2563eb" }} />自分で書く
+            </Box>
+            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
+              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#dbe3ef" }} />用意されている
+            </Box>
           </Box>
           <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>{implementationInputLevelText.note}</Typography>
         </Box>
