@@ -104,8 +104,11 @@ export function AchievementBand({ items, phaseKey, onEvent, placement = "phase-r
 /** 最終リザルトの「新しい実績」ゾーン（#333）。フェーズ7と単元完了で解除された分を1件ずつ出す。 */
 export function NewAchievementZone({ items, onEvent }: { items: readonly AchievementPresentationItem[]; onEvent?: LearningObserver }) {
   if (!items.length) return null;
-  return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 880, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
-    <Typography component="h2" sx={{ fontWeight: 800, fontSize: 22, mb: 2 }}>{text.newAchievements}</Typography>
+  return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 1060, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+      <Typography component="h2" sx={{ fontWeight: 800, fontSize: 22 }}>新しい実績を獲得！</Typography>
+      <Box component="span" sx={{ bgcolor: "#fef3c7", color: "#b45309", fontWeight: 900, fontSize: 14, px: 1.25, py: 0.25, borderRadius: 999 }}>{items.length} 件</Box>
+    </Box>
     <UnlockList items={items} stagger={0.35} onEvent={onEvent} placement="unit-result-new" layout="card" />
   </Box>;
 }
