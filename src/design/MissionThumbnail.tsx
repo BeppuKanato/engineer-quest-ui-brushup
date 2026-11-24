@@ -14,6 +14,7 @@
 // 枠の形はカードのサムネ領域（約 2.2 : 1）に合わせてある。
 
 import { Box } from "@mui/material";
+import { motion, useReducedMotion } from "framer-motion";
 
 /** BFS：広い倉庫で、たくさんの通路の前に困っている配送ロボット（幅の場面）。 */
 export const BfsMissionThumbnail: React.FC = () => (
@@ -387,6 +388,65 @@ export const BubbleSortSolvedThumbnail: React.FC = () => {
       <path d={sparkle(72, 34, 11)} fill="#d97706" />
       <path d={sparkle(392, 26, 9)} fill="#d97706" />
       <path d={sparkle(228, 20, 8)} fill="#d97706" />
+    </Box>
+  );
+};
+
+/**
+ * バブルソート解決後（アニメーション版、2026-11-24）：単元リザルトのミッション
+ * バンド専用。本が学習前のバラバラな位置から番号順の位置へ滑って並ぶ。
+ * 「並べ替えられるようになった」ことを動きで回収する。色と高さは本ごとに
+ * 固定で、静止画版（BubbleSortSolvedThumbnail）と一致させる。
+ */
+export const BubbleSortSolvedAnimatedThumbnail: React.FC = () => {
+  const reduced = useReducedMotion();
+  const books: { h: number; color: string; num: number }[] = [
+    { h: 76, color: "#8d7da3", num: 1 },
+    { h: 88, color: "#7d8ca3", num: 2 },
+    { h: 84, color: "#a3826d", num: 3 },
+    { h: 80, color: "#7da383", num: 4 },
+    { h: 66, color: "#a3826d", num: 5 },
+    { h: 58, color: "#8d7da3", num: 6 },
+    { h: 64, color: "#7d8ca3", num: 7 },
+    { h: 60, color: "#a37d7d", num: 8 },
+    { h: 56, color: "#7da383", num: 9 },
+  ];
+  // 学習前の並び（ミッションサムネと同じ）：スロット順に 7,3,9,1,8,2,5,4,6。
+  const startSlot: Record<number, number> = { 7: 0, 3: 1, 9: 2, 1: 3, 8: 4, 2: 5, 5: 6, 4: 7, 6: 8 };
+  const sparkle = (x: number, y: number, r: number) =>
+    `M${x} ${y - r} L${x + r * 0.28} ${y - r * 0.28} L${x + r} ${y} L${x + r * 0.28} ${y + r * 0.28} L${x} ${y + r} L${x - r * 0.28} ${y + r * 0.28} L${x - r} ${y} L${x - r * 0.28} ${y - r * 0.28} Z`;
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 460 210"
+      preserveAspectRatio="xMidYMid slice"
+      sx={{ width: "100%", height: "100%", display: "block" }}
+      role="img"
+      aria-label="本が番号順に並び替わる本棚"
+    >
+      <rect x="0" y="0" width="460" height="210" fill="#eef4fc" />
+      <rect x="26" y="126" width="9" height="58" fill="#8d6e63" />
+      <rect x="425" y="126" width="9" height="58" fill="#8d6e63" />
+      {books.map((b) => {
+        const offset = reduced ? 0 : (startSlot[b.num] - (b.num - 1)) * 40;
+        return (
+          <motion.g key={b.num}
+            initial={{ x: offset }}
+            animate={{ x: 0 }}
+            transition={{ delay: reduced ? 0 : 0.9, type: "spring", stiffness: 90, damping: 17 }}>
+            <rect x={44 + (b.num - 1) * 40} y={126 - b.h} width="36" height={b.h} rx="3" fill={b.color} />
+            <text x={44 + (b.num - 1) * 40 + 18} y={126 - b.h / 2 + 7} textAnchor="middle" fontSize="18" fontWeight="900" fill="#ffffff">
+              {b.num}
+            </text>
+          </motion.g>
+        );
+      })}
+      <rect x="22" y="126" width="416" height="9" rx="3" fill="#8d6e63" />
+      <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: reduced ? 0 : 1.9, duration: 0.5 }}>
+        <path d={sparkle(72, 34, 11)} fill="#d97706" />
+        <path d={sparkle(392, 26, 9)} fill="#d97706" />
+        <path d={sparkle(228, 20, 8)} fill="#d97706" />
+      </motion.g>
     </Box>
   );
 };

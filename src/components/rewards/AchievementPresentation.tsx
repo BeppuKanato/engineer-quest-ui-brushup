@@ -38,7 +38,8 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey,
   // 獲得感はレアリティで差をつける（2026-11-24）：高いレアリティほどトロフィーを
   // 大きくし、登場の縮小率（spec.scale）も大きくする。発光・放射は従来どおり spec 依存。
   const badgeSizeBase = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
-  const badgeSize = layout === "card" ? badgeSizeBase - 8 : badgeSizeBase;
+  // カード形ではメダルを主役にするため一回り大きくする（2026-11-24）。
+  const badgeSize = layout === "card" ? badgeSizeBase + 16 : badgeSizeBase;
   const Icon = (item.iconKey && achievementIcons[item.iconKey]) || EmojiEventsIcon;
   // メダルの造形もレアリティで変える（2026-11-24）：色を見る前に形で特別さが
   // 伝わるようにする。コモン＝素のメダル、レア＝リボン付き、エピック＝リボン＋
@@ -59,8 +60,10 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey,
     {medalTier >= 3 && <Box aria-hidden sx={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 18 }} /></Box>}
   </Box>;
   const texts = <Box sx={{ minWidth: 0 }}>
-    <Typography sx={{ fontSize: 12, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>
-    <Typography component="h3" sx={{ fontWeight: 800, fontSize: layout === "card" ? 16 : 18 }}>{item.title}</Typography>
+    {layout === "card"
+      ? <Box component="span" sx={{ display: "inline-block", bgcolor: "#ffffff", border: `1.5px solid ${tone.border}`, color: tone.color, fontSize: 12, fontWeight: 800, px: 1, py: 0.125, borderRadius: 999 }}>{tone.label}</Box>
+      : <Typography sx={{ fontSize: 12, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>}
+    <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18, mt: layout === "card" ? 0.5 : 0 }}>{item.title}</Typography>
     <Typography sx={{ fontSize: layout === "card" ? 14 : 15 }}>{item.description}</Typography>
   </Box>;
   // 縦カード形（2026-11-24、Kanato の指定）：トロフィーを上に置き、レアリティ→
@@ -68,8 +71,10 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey,
   if (layout === "card") return <Box component={motion.div} data-achievement-id={item.id}
     initial={reduced ? false : { opacity: 0, scale: spec.scale, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
     transition={{ duration: reduced ? 0 : 0.45, delay, ease: "easeOut" }}
-    sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, p: 1.5, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "center",
+    sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, p: 2, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "center",
       boxShadow: !reduced && spec.glow ? `0 0 ${spec.glow}px ${tone.border}` : "none" }}>
+    <AutoAwesomeIcon aria-hidden sx={{ position: "absolute", top: 8, left: 10, fontSize: 16, color: tone.color, opacity: 0.75 }} />
+    <AutoAwesomeIcon aria-hidden sx={{ position: "absolute", top: 12, right: 12, fontSize: 12, color: tone.color, opacity: 0.6 }} />
     {badge}
     {texts}
   </Box>;
@@ -117,6 +122,7 @@ export function NewAchievementZone({ items, onEvent }: { items: readonly Achieve
   if (!items.length) return null;
   return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 1060, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+      <EmojiEventsIcon aria-hidden sx={{ fontSize: 28, color: "#d97706" }} />
       <Typography component="h2" sx={{ fontWeight: 800, fontSize: 22 }}>新しい実績を獲得！</Typography>
       <Box component="span" sx={{ bgcolor: "#fef3c7", color: "#b45309", fontWeight: 900, fontSize: 14, px: 1.25, py: 0.25, borderRadius: 999 }}>{items.length} 件</Box>
     </Box>
@@ -140,8 +146,8 @@ export function NextAchievementRow({ title, description, rarity, progress, goal 
       <Typography component="a" href="/achievements" sx={{ fontSize: 14, fontWeight: 700, color: "#2563eb", textDecoration: "none", whiteSpace: "nowrap" }}>実績一覧を見る</Typography>
     </Box>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "#dbeafe", color: "#1d4ed8", display: "grid", placeItems: "center", flexShrink: 0 }}>
-        <EmojiEventsIcon sx={{ fontSize: 24 }} />
+      <Box sx={{ width: 52, height: 52, borderRadius: "50%", bgcolor: "#dbeafe", color: "#1d4ed8", display: "grid", placeItems: "center", flexShrink: 0 }}>
+        <EmojiEventsIcon sx={{ fontSize: 30 }} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontWeight: 900, fontSize: 18, lineHeight: 1.4 }}>{title}</Typography>
@@ -161,8 +167,8 @@ export function NextAchievementRow({ title, description, rarity, progress, goal 
           <Box sx={{ width: `${Math.min(100, (progress / goal) * 100)}%`, height: "100%", bgcolor: "#16a34a" }} />
         </Box>
       )}
-      <Typography sx={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap" }}>{progress} / {goal}</Typography>
-      {goal > progress && <Box component="span" sx={{ bgcolor: "#dcfce7", color: "#15803d", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999, whiteSpace: "nowrap" }}>あと {goal - progress}</Box>}
+      <Typography sx={{ fontSize: 16, fontWeight: 900, whiteSpace: "nowrap" }}>{progress} / {goal}</Typography>
+      {goal > progress && <Box component="span" sx={{ bgcolor: "#dcfce7", color: "#15803d", fontWeight: 900, fontSize: 15, px: 1.5, py: 0.5, borderRadius: 999, whiteSpace: "nowrap" }}>あと {goal - progress}</Box>}
     </Box>
   </Box>;
 }

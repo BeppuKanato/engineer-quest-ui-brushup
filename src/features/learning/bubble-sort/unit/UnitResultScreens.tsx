@@ -4,8 +4,11 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import BuildIcon from "@mui/icons-material/Build";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import StarsIcon from "@mui/icons-material/Stars";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
@@ -13,7 +16,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MascotFigure } from "@/app/component/mascotFigure";
-import { BubbleSortMissionThumbnail, BubbleSortSolvedThumbnail } from "@/design/MissionThumbnail";
+import { BubbleSortMissionThumbnail, BubbleSortSolvedAnimatedThumbnail } from "@/design/MissionThumbnail";
 
 import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { ResultConfetti } from "../../app/ResultConfetti";
@@ -244,14 +247,15 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
   return null;
 }
 
-/** 最終リザルトの要約タイル。主役は数値ではなく達成の見出し（2026-11-24）。 */
-function StatTile({ icon, headline, value, label, sub }: { icon: ReactNode; headline: string; value: string; label: string; sub?: string }) {
-  return <Box sx={{ flex: "1 1 0", minWidth: 200, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.5, textAlign: "center" }}>
-    <Box aria-hidden sx={{ color: playerTokens.focus, lineHeight: 0, mb: 0.5 }}>{icon}</Box>
-    <Typography component="p" sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}>{headline}</Typography>
-    <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.25, color: playerTokens.focus }}>{value}</Typography>
-    <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
-    {sub && <Typography component="p" sx={{ fontSize: 14 }}>{sub}</Typography>}
+/** 最終リザルトの要約タイル。数値を主役にし、補足はピルに畳む（2026-11-24）。 */
+function StatTile({ icon, headline, value, pill }: { icon: ReactNode; headline: string; value: string; pill?: string }) {
+  return <Box sx={{ flex: "1 1 0", minWidth: 220, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 2, py: 2, textAlign: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75 }}>
+      <Box aria-hidden sx={{ color: playerTokens.focus, lineHeight: 0 }}>{icon}</Box>
+      <Typography component="p" sx={{ fontSize: 17, fontWeight: 900, lineHeight: 1.3 }}>{headline}</Typography>
+    </Box>
+    <Typography component="p" sx={{ fontSize: 38, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus, mt: 0.5 }}>{value}</Typography>
+    {pill && <Box component="span" sx={{ display: "inline-block", mt: 0.75, bgcolor: "#eef4fc", fontSize: 14, fontWeight: 700, px: 1.25, py: 0.375, borderRadius: 999 }}>{pill}</Box>}
   </Box>;
 }
 
@@ -315,13 +319,14 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const questionTotal = assessed.reduce((sum, summary) => sum + (summary?.totalQuestions ?? 0), 0);
   const implementation = summaries[bubbleSortUnitPhases.length - 1];
   const hintTotal = (implementation?.hintUsage ?? []).reduce((sum, count) => sum + count, 0);
-  const tiles: { icon: ReactNode; headline: string; value: string; label: string; sub?: string }[] = [];
+  const tiles: { icon: ReactNode; headline: string; value: string; pill?: string }[] = [];
   // 見出し＝達成、数値＝その証拠（2026-11-24）。どの値でも肯定として読める文にする。
   // 「全問正解」は初回で全問正解のときだけ（見直して直した分まで初回正解に見える
   // 言い方にしない）。最終的に全問正解なら「全問題クリア」とする（2026-11-24）。
-  if (questionTotal > 0) tiles.push({ icon: <StarsIcon sx={{ fontSize: 30 }} />, headline: firstCorrectTotal === questionTotal ? "全問正解" : eventuallyTotal === questionTotal ? "全問題クリア" : `${eventuallyTotal} 問クリア`, value: `${eventuallyTotal} / ${questionTotal} 問`, label: "正解（確認問題・応用問題）", sub: `初回で正解 ${firstCorrectTotal} 問` });
-  if (implementation?.testRuns !== undefined) tiles.push({ icon: <BuildIcon sx={{ fontSize: 30 }} />, headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
-  if (implementation?.hintUsage !== undefined) tiles.push({ icon: <EmojiObjectsIcon sx={{ fontSize: 30 }} />, headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
+  // 補足はピルに畳み、タイル2は最終チャレンジ限りの成果だと分かる文にする。
+  if (questionTotal > 0) tiles.push({ icon: <StarsIcon sx={{ fontSize: 26 }} />, headline: firstCorrectTotal === questionTotal ? "全問正解" : eventuallyTotal === questionTotal ? "全問題クリア" : `${eventuallyTotal} 問クリア`, value: `${eventuallyTotal} / ${questionTotal} 問`, pill: `初回正解 ${firstCorrectTotal} 問` });
+  if (implementation?.testRuns !== undefined) tiles.push({ icon: <BuildIcon sx={{ fontSize: 26 }} />, headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, pill: "最終チャレンジのテスト実行" });
+  if (implementation?.hintUsage !== undefined) tiles.push({ icon: <EmojiObjectsIcon sx={{ fontSize: 26 }} />, headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: `${hintTotal} 回`, pill: hintTotal > 0 ? "ヒントを手がかりに" : "ヒント未使用" });
   // 称賛の主見出しは、今回の学習結果に応じた具体的なものにする（2026-11-24）：
   // 修了の事実は見出し（修了！）が担い、ここは「この学習者ならでは」の成果を言う。
   const praiseHeadline = implementation?.hintUsage !== undefined && hintTotal === 0 && implementation?.testRuns === 1
@@ -348,8 +353,11 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         金はこの画面とゴールの星ノードに限る特別色として使う。 */}
     {/* 称賛は一つのシーンとして出す（2026-11-24）：トロフィー・見出し・マスコットを
         淡い金の放射光の中に寄せ、視線を一箇所に集める。 */}
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.25, width: "100%", maxWidth: 1060, py: 3, px: 2, borderRadius: 4,
-      background: "radial-gradient(ellipse 72% 92% at 50% 30%, rgba(217, 119, 6, 0.20), rgba(217, 119, 6, 0) 72%), linear-gradient(180deg, #fffdf4, #ffffff)" }}>
+    <Box sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, width: "100%", maxWidth: 1060, py: 3.5, px: 2.5, borderRadius: 4,
+      background: "radial-gradient(ellipse 72% 92% at 50% 30%, rgba(217, 119, 6, 0.26), rgba(217, 119, 6, 0) 72%), linear-gradient(180deg, #fff8e1, #ffffff)" }}>
+      <AutoAwesomeIcon aria-hidden sx={{ position: "absolute", top: 26, left: "9%", fontSize: 30, color: "#d97706", opacity: 0.85 }} />
+      <AutoAwesomeIcon aria-hidden sx={{ position: "absolute", top: 64, right: "7%", fontSize: 22, color: "#d97706", opacity: 0.7 }} />
+      <AutoAwesomeIcon aria-hidden sx={{ position: "absolute", top: 150, left: "4%", fontSize: 18, color: "#d97706", opacity: 0.6 }} />
       <Box component={motion.div} aria-hidden="true" data-final-result-mark
         initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
@@ -358,47 +366,63 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       </Box>
       <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
       <Typography component="p" sx={{ fontSize: 26, fontWeight: 900, textAlign: "center", lineHeight: 1.4 }}>{praiseHeadline}</Typography>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
-        <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>動きを理解するところから、<Box component="span" sx={{ fontWeight: 900, color: "#b45309" }}>自分でコードを書ける</Box>ところまで到達したね！</Typography>
+      {/* マスコットと吹き出しは重ねて一つのシーンにする（2026-11-24）：キャラクターが
+          浮かず、セリフがキャラクターの言葉として読める。マスコットは通常の
+          1.3倍に拡大する。 */}
+      <Box sx={{ display: "flex", alignItems: "center", width: "100%", maxWidth: 880 }}>
+        <Box sx={{ position: "relative", zIndex: 1, flexShrink: 0 }}>
+          <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" sx={{ width: { xs: 240, md: 300 }, height: { xs: 240, md: 300 } }} />
+        </Box>
+        <Box sx={{ ml: -3.5, bgcolor: "#fff", border: "2px solid #f3d9a4", borderRadius: "18px", px: 2.5, py: 1.75, boxShadow: "0 6px 18px rgba(217, 119, 6, 0.14)" }}>
+          <Typography sx={{ fontSize: 20, fontWeight: 700 }}>動きを理解するところから、<Box component="span" sx={{ fontWeight: 900, color: "#b45309" }}>自分でコードを書ける</Box>ところまで到達したね！</Typography>
         </Box>
       </Box>
-    </Box>
-    <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
-    {/* 開始時の問いへの答え（2026-11-24）：ミッションの棚が並んだ姿を見せる。 */}
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 1060, p: 2, bgcolor: "#fffbeb", border: "2px solid #d97706", borderRadius: 2 }}>
-      <Box sx={{ width: 230, flexShrink: 0 }}>
+    {/* 開始時の問いへの答え（2026-11-24）：ミッション達成は称賛シーンの一部として
+        金の面の中に置く。前後の棚は同サイズで、本が並び替わるアニメーションつき。 */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", p: 2.5, bgcolor: "#fffbeb", border: "2px solid #d97706", borderRadius: 2 }}>
+      <Box sx={{ width: 300, flexShrink: 0 }}>
         <BubbleSortMissionThumbnail />
         <Typography component="p" sx={{ fontSize: 13, textAlign: "center", mt: 0.5 }}>学習前</Typography>
       </Box>
-      <ArrowForwardIcon aria-hidden sx={{ color: "#d97706", flexShrink: 0 }} />
-      <Box sx={{ width: 330, flexShrink: 0 }}>
-        <BubbleSortSolvedThumbnail />
+      <ArrowForwardIcon aria-hidden sx={{ color: "#d97706", fontSize: 40, flexShrink: 0 }} />
+      <Box sx={{ width: 300, flexShrink: 0 }}>
+        <BubbleSortSolvedAnimatedThumbnail />
         <Typography component="p" sx={{ fontSize: 13, textAlign: "center", mt: 0.5 }}>学習後</Typography>
       </Box>
       <Box>
         <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, bgcolor: "#fef3c7", color: "#b45309", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999 }}>
           <CheckCircleIcon aria-hidden sx={{ fontSize: 15 }} />単元ミッション達成
         </Box>
-        <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, mt: 0.75 }}>本を番号順に並べ替えた！</Typography>
-        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>バブルソートを使って、バラバラだった本を順番に並べられるようになりました。</Typography>
+        <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, mt: 0.75 }}>本を番号順に並べ替えた！</Typography>
+        <Typography component="p" sx={{ fontSize: 15, mt: 0.5 }}>バブルソートを使って、バラバラだった本を順番に並べられるようになりました。</Typography>
       </Box>
     </Box>
+    </Box>
+    <Box sx={{ width: "100%", maxWidth: 1060 }}>
+      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, bgcolor: "#e3ecfd", color: "#2563eb", fontWeight: 800, fontSize: 14, px: 1.5, py: 0.5, borderRadius: 999, mb: 0.5 }}>
+        <MenuBookIcon aria-hidden sx={{ fontSize: 18 }} />この単元で学んだステップ
+      </Box>
+      <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
+    </Box>
     {staged && (pathDone ? (
-      <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.4 }}>
-        <Button variant="contained" onClick={() => setStage(2)} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>
+      <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.4 }} sx={{ width: "100%", maxWidth: 720 }}>
+        <Button variant="contained" fullWidth onClick={() => setStage(2)} startIcon={<LeaderboardIcon />} endIcon={<ArrowForwardIcon />}
+          sx={{ ...nextButtonSx, minHeight: 56, px: 3, fontSize: 17, fontWeight: 800, borderRadius: 999 }}>
           学習成果を見る{newAchievementCount ? `（新しい実績 ${newAchievementCount} 件）` : ""}
         </Button>
       </Box>
-    ) : <Box sx={{ height: 48 }} />)}
+    ) : <Box sx={{ height: 56 }} />)}
     </Box>}
     {showStage2 && <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.35 }}
       sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, width: "100%" }}>
-    <Typography ref={stage2HeadingRef} component="h3" tabIndex={-1} sx={{ fontSize: 22, fontWeight: 900, outline: "none" }}>今回の学習成果</Typography>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <AutoAwesomeIcon aria-hidden sx={{ fontSize: 24, color: "#d97706" }} />
+      <Typography ref={stage2HeadingRef} component="h3" tabIndex={-1} sx={{ fontSize: 24, fontWeight: 900, outline: "none" }}>今回の学習成果</Typography>
+      <AutoAwesomeIcon aria-hidden sx={{ fontSize: 24, color: "#d97706" }} />
+    </Box>
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 1060 }}>
-      {tiles.map(tile => <StatTile key={tile.label} icon={tile.icon} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
+      {tiles.map(tile => <StatTile key={tile.headline} icon={tile.icon} headline={tile.headline} value={tile.value} pill={tile.pill} />)}
     </Box>}
     {rewardsReady && newAchievements}
     {/* 到達状況はアコーディオン（2026-11-24、Kanato の指定）：枠つきのバーが
@@ -438,10 +462,19 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         枠つきブロックに一本化する。 */}
     {/* 出口はフィードバックのみ（2026-11-24、Kanato の指示）：コース一覧への
         戻りボタンは置かず、フィードバックを必ず通る形にする。 */}
-    {onShowFeedback && <Box sx={{ width: "100%", maxWidth: 1060, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, p: 2.5, display: "flex", flexDirection: "column", alignItems: "center", gap: 1, mb: 2 }}>
-      <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>今回の学習を振り返ろう</Typography>
-      <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>学習結果をもとに、成長した点と次の一歩を確認できます。</Typography>
-      <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
+    {/* フィードバックへの導線はバナーにする（2026-11-24）：マスコットが案内し、
+        得られるものを一文で伝え、白ピルのボタンで受ける。画面の出口はこれ一つ。 */}
+    {onShowFeedback && <Box sx={{ width: "100%", maxWidth: 1060, borderRadius: 2, p: 2.5, mb: 2, display: "flex", alignItems: "center", gap: 2,
+      background: "linear-gradient(90deg, #2563eb, #1d4ed8)", color: "#fff" }}>
+      <MascotFigure mascotId="red-panda" alt="相棒" size="L" state="point" motion="none" grounding="shadow" sx={{ width: 110, height: 110 }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography component="p" sx={{ fontSize: 20, fontWeight: 900 }}>今回の成長を振り返ろう！</Typography>
+        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>できるようになったことや、次に挑戦するとよいことを確認しよう。</Typography>
+      </Box>
+      <Button onClick={onShowFeedback} endIcon={<ArrowForwardIcon />}
+        sx={{ flexShrink: 0, bgcolor: "#fff", color: "#2563eb", fontWeight: 800, fontSize: 16, minHeight: 52, px: 3, borderRadius: 999, "&:hover": { bgcolor: "#eaf2ff" } }}>
+        自分へのフィードバックを見る
+      </Button>
     </Box>}
     </Box>}
   </Box>;
