@@ -18,7 +18,6 @@ import { MazeDiggingUnitPreview } from "../maze-digging/unit/MazeDiggingUnitPrev
 import { BinarySearchUnitPreview } from "../binary-search/unit/BinarySearchUnitPreview";
 import { GreedyCoinsUnitPreview } from "../greedy-coins/unit/GreedyCoinsUnitPreview";
 import { LearningRewardBoundary } from "../rewards/LearningRewardBoundary";
-import { FinalLearningRewards } from "../rewards/FinalLearningRewards";
 import { UnitCardKeywords } from "../rewards/UnitCardKeywords";
 import { AchievementBand, NewAchievementZone, NextAchievementRow } from "../../../components/rewards/AchievementPresentation";
 import { phaseResultAchievements } from "../rewards/presentation";
@@ -208,7 +207,9 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     onFinalResult,
     onLearningEvent: log,
     rewards,
-    renderRewards: (value: LearningRewards) => <><FinalLearningRewards rewards={value} onEvent={log} /><UnitCardKeywords courseId={courseId} /></>,
+    // 「この単元で獲得した実績」の行一覧は、新しい実績のカードゾーンと
+    // 同じ4件の繰り返しになるため出さない（2026-11-24）。知識カードだけ残す。
+    renderRewards: (value: LearningRewards) => <UnitCardKeywords courseId={courseId} />,
     renderPhaseAchievements: (phaseKey: string) => {
       const items = phaseUnlocks[phaseKey];
       return items?.length ? <AchievementBand items={items} phaseKey={phaseKey} onEvent={log} /> : null;

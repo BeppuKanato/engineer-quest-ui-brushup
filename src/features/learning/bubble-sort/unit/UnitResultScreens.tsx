@@ -420,7 +420,8 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     </Box>
     <Typography component="p" sx={{ textAlign: "center", fontSize: 16, maxWidth: 640 }}>{bubbleSortImplementationContent.result.closing}</Typography>
     {goalAchievement}
-    {rewards && renderRewards?.(rewards)}
+    {/* 「この単元で獲得した実績」の一覧は出さない（2026-11-24、Kanato の指示）：
+        新しい実績ゾーンと同じ内容の二重表示になるため。 */}
     <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{bubbleSortUnitText.reviewNote}</Typography>
     {onShowFeedback && <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>}
     {/* 次の行動の選択肢（2026-11-24）：学んだことを使う／新しい単元へ進む。
