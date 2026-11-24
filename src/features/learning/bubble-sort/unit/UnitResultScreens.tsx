@@ -436,12 +436,13 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     {/* 後半に文字だけの段落（締めの文・復習の注記）は置かない（2026-11-24、
         Kanato の指示）：他のセクションと浮いて見えるため。出口はフィードバックの
         枠つきブロックに一本化する。 */}
-    {onShowFeedback ? <Box sx={{ width: "100%", maxWidth: 1060, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, p: 2.5, display: "flex", flexDirection: "column", alignItems: "center", gap: 1, mb: 2 }}>
+    {/* 出口はフィードバックのみ（2026-11-24、Kanato の指示）：コース一覧への
+        戻りボタンは置かず、フィードバックを必ず通る形にする。 */}
+    {onShowFeedback && <Box sx={{ width: "100%", maxWidth: 1060, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, p: 2.5, display: "flex", flexDirection: "column", alignItems: "center", gap: 1, mb: 2 }}>
       <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>今回の学習を振り返ろう</Typography>
       <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>学習結果をもとに、成長した点と次の一歩を確認できます。</Typography>
       <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
-      <Button variant="text" component={Link} href="/courses" sx={{ minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
-    </Box> : <Button variant="contained" component={Link} href="/courses" sx={{ ...nextButtonSx, mb: 2 }}>{bubbleSortUnitText.backToCourses}</Button>}
+    </Box>}
     </Box>}
   </Box>;
 }
