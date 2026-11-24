@@ -27,14 +27,6 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes }: { ou
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, mb: 1 }}>
       <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>{passed} / {content.tests.length} 本通過</Typography>
     </Box>
-    <Box aria-hidden sx={{ display: "flex", gap: 0.75, mb: 2.5 }}>
-      {content.tests.map(test => {
-        const outcome = outcomes.find(item => item.id === test.id);
-        const state = !outcome ? "todo" : outcome.passed ? "passed" : "failed";
-        return <Box key={test.id} sx={{ flex: 1, height: 8, borderRadius: 999,
-          bgcolor: state === "passed" ? "#16a34a" : state === "failed" ? "#64748b" : "#e5e7eb" }} />;
-      })}
-    </Box>
     {content.tests.map(test => {
       const outcome = outcomes.find(item => item.id === test.id);
       const status = !outcome ? labels.statuses.unexecuted : outcome.passed ? labels.statuses.passed : labels.statuses.failed;
@@ -74,6 +66,14 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes }: { ou
             </>
           : actual && expected
           ? <>
+              {differences && differences.length > 0 && <Box sx={{ display: "flex", gap: 2, mb: 0.75, alignItems: "center" }}>
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontSize: 14 }}>
+                  <Box aria-hidden sx={{ width: 14, height: 14, bgcolor: "#7d8ca3", borderRadius: 0.5 }} />あなたの結果
+                </Box>
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontSize: 14 }}>
+                  <Box aria-hidden sx={{ width: 14, height: 14, border: "2px dashed #64748b", borderRadius: 0.5 }} />期待する並び
+                </Box>
+              </Box>}
               <Box sx={{ height: 168, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
                 <BookShelfFigure values={actual} differences={differences ?? []} ghost={outcome?.passed ? undefined : expected} label={labels.actualLabel} />
               </Box>
