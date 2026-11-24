@@ -428,9 +428,35 @@ export const resolveFixture = (path: string): unknown => {
  * 他は初回正解）に合わせている。大目標は再設計で廃止済みのため goalSnapshot は null。
  */
 function designFeedbackResult(key: string) {
+  // イベントIDは {courseId}:{phaseKey}:{nextPhaseKey} の形で、次フェーズの
+  // キーも含む。フェーズの判定は自フェーズの区切り位置で行うこと
+  // （素朴な includes だと次フェーズ名に誤マッチする）。
+  const normKey = key.replaceAll("%3A", ":");
+  // フェーズ6（応用問題）用の文面。想定する記録は、実際に歩けるケース
+  // （1問目＝新しい配列での入れ替えペアを初回誤答→見直して正解、他は初回正解）。
+  if (normKey.includes(":bubble-sort-consolidation:")) {
+    const actionHref = "/courses/roadmap/course-algorithm-bubble-sort-v2/learn?phase=bubble-sort-implementation";
+    const nextStep = "自分で実装に進み、バブルソートを自分の手で完成させる";
+    const reason = "動き・コード・応用までの理解がそろったので、最後は自分の手でコードを組み立てて確かめます。";
+    return {
+      id: "design-feedback-6", status: "COMPLETED", goalSnapshot: null,
+      conceptSnapshot: null,
+      feedback: {
+        praise: "初めて見る配列で、2周目に最初に入れ替えが起きるペアを一度取り違えたあと、周の進み方を追い直して正しく直せました。習った動きを新しい場面に当てはめられたのが、今回いちばんの収穫です。",
+        praiseHeadline: "新しい配列でも、2周目の入れ替えを見つけて直せた！",
+        strength: "最初から並んでいる配列・逆向きの配列・同じ値のペアという、交換が起きるかどうかが分かれる場面を、すべて初回で正しく判断できています。コード全体の並びも、流れの順に組み立てられました。",
+        strengthHeadline: "交換の起きない場面の判断は、初回でそろっている",
+        improvement: "2周目の入れ替えの位置は、初回では取り違えました。新しい配列では、1周終わった時点の並びを先に確定させてから次を追うと、取り違えが減ります。次の実装でも、途中の状態を確かめながら進めてみましょう。",
+        improvementHeadline: "新しい配列では、周ごとの状態を書き出してから答える",
+        nextGoal: "仕組みの理解を、自分のコードで再現する",
+        nextStep, reason, actionLabel: "自分で実装へ進む", actionHref,
+        recommendations: [{ candidateId: "candidate-1", nextStep, reason, actionLabel: "自分で実装へ進む", actionHref }],
+      },
+    };
+  }
   // フェーズ5（コードの確認）用の文面。想定する記録は、実際に歩ける
   // ケース（1問目コピーの行を初回誤答→見直して正解、他は初回正解）。
-  if (key.includes("code-check")) {
+  if (normKey.includes(":bubble-sort-code-check:")) {
     const actionHref = "/courses/roadmap/course-algorithm-bubble-sort-v2/learn?phase=bubble-sort-consolidation";
     const nextStep = "応用問題で、コード全体の動きを自分で組み立てる";
     const reason = "行ごとの意味は確認できたので、次は断片ではなく全体の動きとしてコードを扱うと、実装の土台になります。";

@@ -46,7 +46,7 @@ export function buildCorrectedScene(summary: BubbleSortUnitPhaseSummary | undefi
   const replay = firstAnswer.kind === "node" && lastAnswer.kind === "node" && firstAnswer.nodeId !== lastAnswer.nodeId
     ? { first: Number(firstAnswer.nodeId), last: Number(lastAnswer.nodeId) }
     : null;
-  return <CorrectedScene position={questionIndex + 1} prompt={question.prompt} canvas={step.canvas} firstLabel={firstLabel} lastLabel={lastLabel} replay={replay} />;
+  return <LogScene position={questionIndex + 1} prompt={question.prompt} canvas={step.canvas} firstLabel={firstLabel} lastLabel={lastLabel} replay={replay} />;
 }
 
 function answerLabel(question: BubbleSortCheckQuestion, answer: AssessmentAnswer): string | null {
@@ -55,7 +55,7 @@ function answerLabel(question: BubbleSortCheckQuestion, answer: AssessmentAnswer
   return null;
 }
 
-function CorrectedScene({ position, prompt, canvas, firstLabel, lastLabel, replay }: {
+export function LogScene({ position, prompt, canvas, firstLabel, lastLabel, replay }: {
   position: number; prompt: string;
   canvas: Parameters<typeof BubbleSortExecutionCanvas>[0]["canvas"];
   firstLabel: string; lastLabel: string;

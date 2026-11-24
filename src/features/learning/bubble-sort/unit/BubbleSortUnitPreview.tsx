@@ -16,6 +16,7 @@ import { PhaseBridgeScreen } from "../../bfs/unit/PhaseBridgeScreen";
 import { playerTokens } from "../../player/player.tokens";
 import { buildCorrectedScene } from "./CorrectedScene";
 import { buildCodeBlankScene } from "./CodeBlankScene";
+import { buildConsolidationScene } from "./ConsolidationScene";
 import { BubbleSortCheckPreview } from "../check/BubbleSortCheckPreview";
 import { BubbleSortCodeCheckPreview } from "../code-check/BubbleSortCodeCheckPreview";
 import { BubbleSortCodeMappingPreview } from "../code-mapping/BubbleSortCodeMappingPreview";
@@ -301,7 +302,9 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
           goNext: () => setScreen({ kind: "bridge", index: screen.index + 1 }),
           goBack: () => setScreen({ kind: "result", index: screen.index }),
           figure: buildFeedbackFigure(screen.index, false),
-          header: isCheckPhase(bubbleSortUnitPhases[screen.index]) ? (
+          // フェーズ6のリザルトは診断画面そのもの（教材側の設計）なので、
+          // 祝祭ヘッダーは付けない。要約行と場面だけをフィードバックに渡す。
+          header: isCheckPhase(bubbleSortUnitPhases[screen.index]) && bubbleSortUnitPhases[screen.index].phase !== 6 ? (
             <PhaseResultHeader phase={bubbleSortUnitPhases[screen.index]} summary={summaries[screen.index]}
               achievements={renderPhaseAchievements?.(bubbleSortUnitPhases[screen.index].id)}
               goalAchievement={renderPhaseGoalAchievement?.(bubbleSortUnitPhases[screen.index].id)} />
@@ -312,6 +315,7 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
           // ログと結び付けた場面は、形が作れるフェーズ3だけ（5はコード行の形になる）
           scene: screen.index === 2 ? buildCorrectedScene(summaries[screen.index]) ?? undefined
             : screen.index === 4 ? buildCodeBlankScene(summaries[screen.index]) ?? undefined
+            : screen.index === 5 ? buildConsolidationScene(summaries[screen.index]) ?? undefined
             : undefined,
         })}
         {screen.kind === "bridge" && (
