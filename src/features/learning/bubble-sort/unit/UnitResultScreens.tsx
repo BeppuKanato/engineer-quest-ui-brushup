@@ -5,6 +5,7 @@ import BuildIcon from "@mui/icons-material/Build";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarsIcon from "@mui/icons-material/Stars";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
@@ -400,17 +401,19 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       {tiles.map(tile => <StatTile key={tile.label} icon={tile.icon} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
     {rewardsReady && newAchievements}
-    <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
-    {/* 到達状況は要約を既定にする（2026-11-24）：全ステップ完了＋復習候補の数と
-        名前。7行の詳細は開いた人だけが見る（フィードバック画面の要約層と同じ形）。 */}
-    <Box sx={{ textAlign: "center" }}>
-      <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>全{bubbleSortUnitPhases.length}ステップ完了</Typography>
-      {reviewCandidates.length > 0 && <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>復習候補：{reviewCandidates.length}ステップ（{reviewCandidates.map(phase => phase.shortName).join("、")}）</Typography>}
-      <Button onClick={() => setDetailOpen(value => !value)} sx={{ mt: 0.5, minHeight: 40, fontWeight: 700, color: playerTokens.control }}>
-        {detailOpen ? "閉じる" : "到達状況を詳しく見る"}
+    {/* 到達状況はアコーディオン（2026-11-24、Kanato の指定）：枠つきのバーが
+        要約（全ステップ完了＋復習候補の数）を担い、開くと元の7行が中に出る。 */}
+    <Box component="section" aria-label={bubbleSortUnitText.summaryHeading} sx={{ width: "100%", maxWidth: 1060, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface }}>
+      <Button onClick={() => setDetailOpen(value => !value)} aria-expanded={detailOpen}
+        sx={{ width: "100%", display: "flex", alignItems: "center", gap: 1.5, p: 2, color: "inherit", textTransform: "none", justifyContent: "flex-start" }}>
+        <CheckCircleIcon aria-hidden sx={{ fontSize: 26, color: playerTokens.focus, flexShrink: 0 }} />
+        <Box sx={{ flex: 1, textAlign: "left" }}>
+          <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>全{bubbleSortUnitPhases.length}ステップ完了</Typography>
+          {reviewCandidates.length > 0 && <Typography component="p" sx={{ fontSize: 14, mt: 0.25 }}>復習候補：{reviewCandidates.length}ステップ</Typography>}
+        </Box>
+        <ExpandMoreIcon aria-hidden sx={{ flexShrink: 0, transform: detailOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
       </Button>
-    </Box>
-    {detailOpen && <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 1060 }}>
+      {detailOpen && <Box component="ul" sx={{ listStyle: "none", m: 0, px: 2, pb: 1 }}>
       {bubbleSortUnitPhases.map((phase, index) => {
         const line = summaryLine(index, summaries[index]);
         const phaseSummary = summaries[index];
@@ -428,22 +431,17 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         </Box>;
       })}
     </Box>}
-    <Typography component="p" sx={{ textAlign: "center", fontSize: 16, maxWidth: 640 }}>{bubbleSortImplementationContent.result.closing}</Typography>
+    </Box>
     {goalAchievement}
-    {/* 「この単元で獲得した実績」の一覧は出さない（2026-11-24、Kanato の指示）：
-        新しい実績ゾーンと同じ内容の二重表示になるため。 */}
-    <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{bubbleSortUnitText.reviewNote}</Typography>
-    {/* 出口はフィードバックに一本化する（2026-11-24、Kanato の指示）：次の学習の
-        選択肢はフィードバックの後に出すもので、ここで競合させない。何が得られるかは
-        見出しと一文で先に伝える。 */}
-    {onShowFeedback ? <>
-      <Box sx={{ textAlign: "center", mt: 1 }}>
-        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>今回の学習を振り返ろう</Typography>
-        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>学習結果をもとに、成長した点と次の一歩を確認できます。</Typography>
-      </Box>
+    {/* 後半に文字だけの段落（締めの文・復習の注記）は置かない（2026-11-24、
+        Kanato の指示）：他のセクションと浮いて見えるため。出口はフィードバックの
+        枠つきブロックに一本化する。 */}
+    {onShowFeedback ? <Box sx={{ width: "100%", maxWidth: 1060, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, p: 2.5, display: "flex", flexDirection: "column", alignItems: "center", gap: 1, mb: 2 }}>
+      <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>今回の学習を振り返ろう</Typography>
+      <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>学習結果をもとに、成長した点と次の一歩を確認できます。</Typography>
       <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
-      <Button variant="text" component={Link} href="/courses" sx={{ mb: 2, minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
-    </> : <Button variant="contained" component={Link} href="/courses" sx={{ ...nextButtonSx, mb: 2 }}>{bubbleSortUnitText.backToCourses}</Button>}
+      <Button variant="text" component={Link} href="/courses" sx={{ minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
+    </Box> : <Button variant="contained" component={Link} href="/courses" sx={{ ...nextButtonSx, mb: 2 }}>{bubbleSortUnitText.backToCourses}</Button>}
     </Box>}
   </Box>;
 }
