@@ -69,8 +69,9 @@ function SortingShelfCelebration() {
   </svg>;
 }
 
-/** 書き方カードの「自分で書く量」イラスト。青い行＝自分で書く、灰色の行＝用意されている。
-    読まなくても、スカスカ／半分／ほぼ埋まってるが量で伝わる。 */
+/** 書き方カードのイラスト。描いているのは「始める時点のコード」そのもの：
+    実線の行＝もう書かれている、青い点線の空白＝自分で書く場所。
+    埋まっている量がコードの埋まり具合と一致する（スカスカ→半分→ほぼ埋まってる）。 */
 function LevelFillIllustration({ level }: { level: ImplementationInputLevel }) {
   const rows: Record<ImplementationInputLevel, readonly { w: number; write: boolean }[]> = {
     "full": [{ w: 0.5, write: false }, { w: 0.85, write: true }, { w: 0.65, write: true }, { w: 0.92, write: true }, { w: 0.72, write: true }, { w: 0.8, write: true }, { w: 0.45, write: true }],
@@ -80,7 +81,9 @@ function LevelFillIllustration({ level }: { level: ImplementationInputLevel }) {
   const list = rows[level];
   return <svg viewBox="0 0 300 96" aria-hidden style={{ display: "block", width: "100%", height: "auto" }}>
     <rect x="1" y="1" width="298" height="94" rx="8" fill="#f8fafc" stroke="#dbe3ef" strokeWidth="2" />
-    {list.map((row, i) => <rect key={i} x="16" y={12 + i * 11} width={268 * row.w} height="7" rx="3.5" fill={row.write ? "#2563eb" : "#dbe3ef"} />)}
+    {list.map((row, i) => row.write
+      ? <rect key={i} x="16" y={12 + i * 11} width={268 * row.w} height="7" rx="3.5" fill="#ffffff" stroke="#2563eb" strokeWidth="1.6" strokeDasharray="4 3" />
+      : <rect key={i} x="16" y={12 + i * 11} width={268 * row.w} height="7" rx="3.5" fill="#94a3b8" />)}
   </svg>;
 }
 
@@ -278,10 +281,10 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           </Box>
           <Box sx={{ display: "flex", gap: 2.5, alignItems: "center" }}>
             <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
-              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#2563eb" }} />自分で書く
+              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#94a3b8" }} />用意されている
             </Box>
             <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
-              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#dbe3ef" }} />用意されている
+              <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#fff", border: "1.6px dashed #2563eb" }} />自分で書く
             </Box>
           </Box>
           <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>{implementationInputLevelText.note}</Typography>
