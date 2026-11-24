@@ -296,8 +296,8 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     <Box component={motion.div} aria-hidden="true" data-final-result-mark
       initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
-      sx={{ width: 96, height: 96, borderRadius: "50%", bgcolor: "#fef3c7", border: "2px solid #d97706", display: "grid", placeItems: "center", mt: 1 }}>
-      <EmojiEventsIcon sx={{ fontSize: 52, color: "#d97706" }} />
+      sx={{ width: 144, height: 144, flexShrink: 0, borderRadius: "50%", bgcolor: "#fef3c7", border: "3px solid #d97706", display: "grid", placeItems: "center", mt: 1 }}>
+      <EmojiEventsIcon sx={{ fontSize: 84, color: "#d97706" }} />
     </Box>
     <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
     {/* 称賛の担い手はマスコット（2026-11-24、Kanato は賞賛あり派）。紙吹雪・音は
