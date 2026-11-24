@@ -80,6 +80,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   const [stage, setStage] = useState<"celebration" | "feedback">(header ? "celebration" : "feedback");
   // 第2段の出現演出をタップで即時完了させる（繰り返し見る際の待ち時間対策）。
   const [fastForward, setFastForward] = useState(false);
+
   const advance = useCallback(() => {
     // フィードバックが無い場合は、称賛の段を終えてから本来の導線へ進める。
     if (unavailableRef.current) {
@@ -136,19 +137,34 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   // 受け渡し=point → praise が出たら celebrate → 改善点で thinking → 次の一歩で point に戻る。
   // 全節に付けるのではなく、この2拍だけに絞る（切り替えすぎると落ち着かない）。
   const [beat, setBeat] = useState<"point" | "celebrate" | "thinking">("point");
+  // 発見の瞬間（2026-11-24）：見出し（praiseHeadline）がある場合、第2段は
+  // まず見出しだけを中央に大きく単独表示し（スポットライト）、その後
+  // 見出しが「あなたの学び」カードへレイアウトアニメーションで収まる。
+  // 第1段の予告台詞（約束）に対する回収の拍。タップは全演出スキップに従う。
+  const [spotlightDone, setSpotlightDone] = useState(false);
+  const hadSpotlightRef = useRef(false);
+  const spotlightActive = stage === "feedback" && !!f?.praiseHeadline && !reduce && !fastForward && !spotlightDone;
+  useEffect(() => { if (spotlightActive) hadSpotlightRef.current = true; }, [spotlightActive]);
+  useEffect(() => {
+    if (!spotlightActive) return;
+    const t = setTimeout(() => setSpotlightDone(true), 1700);
+    return () => clearTimeout(t);
+  }, [spotlightActive]);
   useEffect(() => {
     if (stage !== "feedback" || !f || reduce) return;
     if (fastForward) { setBeat("point"); return; }
+    // スポットライト中は「発見」に合わせて喜ぶ。本体の拍は本体が出てから数える。
+    if (spotlightActive) { setBeat("celebrate"); return; }
     const timers: ReturnType<typeof setTimeout>[] = [];
     const at = (rowIndex: number, s: "celebrate" | "thinking" | "point") =>
       timers.push(setTimeout(() => setBeat(s), (0.3 + rowIndex * 0.95 + 0.2) * 1000));
-    if (praise) at(0, "celebrate");
+    if (praise && !hadSpotlightRef.current) at(0, "celebrate");
     const impIdx = sections.findIndex(s => s.label === "改善点");
     if (impIdx >= 0) at(impIdx + rowOffset, "thinking");
     at(sections.length + rowOffset, "point");
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage, fastForward]);
+  }, [stage, fastForward, spotlightActive]);
   return <Box component="section" data-feedback-scope aria-label={heading}
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2, width: "100%" }}>
     <AnimatePresence mode="popLayout" initial={false}>
@@ -185,8 +201,15 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
           : <Box sx={{ width: "100%", maxWidth: 760 }}>
               <FeedbackDelivery state={beat} />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
+              {spotlightActive ? (
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300, px: 2 }}>
+                  <motion.div layoutId="praise-headline" transition={{ layout: { type: "spring", stiffness: 240, damping: 30 } }}>
+                    <Typography sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.6, textAlign: "center" }}>{f.praiseHeadline}</Typography>
+                  </motion.div>
+                </Box>
+              ) : (
               <Box sx={{ mt: 1.5 }}>
-                {praise && <RevealRow key={`praise-${fastForward}`} index={0} fast={fastForward}>
+                {praise && <RevealRow key={`praise-${fastForward}`} index={0} fast={fastForward || hadSpotlightRef.current}>
                   {/* 主役: praise は根拠のある称賛。画面で1つだけの強調面（2px 枠）で出し、
                       出現時に枠が一度だけ光って気づきへ注意を引く（常時の発光はしない）。
                       見出し（生成側の praiseHeadline）があれば、結論を先に置いて
@@ -196,7 +219,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
                     transition={{ duration: 1.2, delay: 0.55, times: [0, 0.35, 1] }}
                     style={{ backgroundColor: "#fff", border: `2px solid ${playerTokens.focus}`, borderRadius: 16, padding: "20px 22px" }}>
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control, mb: 0.75 }}>あなたの学び</Typography>
-                    {f?.praiseHeadline && <Typography sx={{ fontSize: 22, fontWeight: 900, lineHeight: 1.5, mb: 1 }}>{f.praiseHeadline}</Typography>}
+                    {f?.praiseHeadline && <motion.div layoutId="praise-headline" transition={{ layout: { type: "spring", stiffness: 240, damping: 30 } }} style={{ marginBottom: 8 }}>
+                      <Typography sx={{ fontSize: 22, fontWeight: 900, lineHeight: 1.5 }}>{f.praiseHeadline}</Typography>
+                    </motion.div>}
                     <Typography sx={{ fontSize: 18, fontWeight: f?.praiseHeadline ? 500 : 700, lineHeight: 1.8 }}>{praise}</Typography>
                   </motion.div>
                 </RevealRow>}
@@ -213,6 +238,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
                   <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} />
                 </RevealRow>
               </Box>
+              )}
             </Box>}
         {children}
         </Box>

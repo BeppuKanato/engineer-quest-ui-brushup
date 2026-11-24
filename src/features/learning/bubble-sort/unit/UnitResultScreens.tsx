@@ -86,6 +86,13 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
               : `全${total}問に正解しました（初回で${first}問正解）。`}
           </Typography>
         </motion.p>}
+        {reacted && tier !== "perfect" && <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          {/* ドットの凡例：輪が「未正解」に誤読される（GPT レビュー第5弾⑤）ため、
+              初回全問正解以外のケースでは意味を言葉で添える */}
+          <LegendDot kind="filled" label="初回で正解" />
+          {eventual !== undefined && eventual > first && <LegendDot kind="ring" label="見直して正解" />}
+          {tier === "remaining" && <LegendDot kind="grey" label="まだ解けていない" />}
+        </Box>}
         <ResultMascotReaction tier={tier} reacted={reacted} remainingCount={total - (eventual ?? total)} />
       </>
     )}
@@ -95,6 +102,16 @@ export function PhaseResultHeader({ phase, summary, achievements, goalAchievemen
 }
 
 type ResultTier = "perfect" | "corrected" | "remaining";
+
+/** ドットの凡例（見本＋言葉）。ドット本体（ResultScoreDots）と同じ見た目で示す。 */
+function LegendDot({ kind, label }: { kind: "filled" | "ring" | "grey"; label: string }) {
+  return <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+    <Box sx={{ width: 12, height: 12, borderRadius: "50%", flexShrink: 0,
+      bgcolor: kind === "filled" ? "#2563eb" : "transparent",
+      border: kind === "grey" ? "2.5px solid #c3cad4" : "2.5px solid #2563eb" }} />
+    <Typography sx={{ fontSize: 14 }}>{label}</Typography>
+  </Box>;
+}
 
 /**
  * 結果画面のマスコット（反応役。2026-11-20 方針の場面表）。
