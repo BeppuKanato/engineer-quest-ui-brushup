@@ -63,12 +63,10 @@ export function UnitPathMiniMap({ count, labels }: { count: number; labels?: rea
             // （2026-11-24）。金は修了の象徴としてこのノードとリザルトのトロフィーに限る。
             <polygon points={starPoints(point.x, point.y, 21)} fill={playerTokens.surface} />
           ) : (
-            <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>
+            // 番号ではなくチェックを入れる（2026-11-24、Kanato の指定）。
+            // 何番の段階かはノード下のフェーズ名が担う。
+            <path d={`M ${point.x - 15} ${point.y} l 10 10 l 20 -22`} fill="none" stroke={playerTokens.surface} strokeWidth={7.5} strokeLinecap="round" strokeLinejoin="round" />
           )}
-          {/* 踏破の印（2026-11-24）：全ノードに緑のチェックバッジを付け、
-              学習前のロードマップではなく「達成した道のり」として読ませる。 */}
-          <circle cx={point.x + 31} cy={point.y - 31} r={13} fill="#16a34a" stroke="#ffffff" strokeWidth={3} />
-          <path d={`M ${point.x + 25.5} ${point.y - 31} l 3.8 3.8 l 7 -7.5`} fill="none" stroke="#ffffff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
         </motion.g>
         {labels?.[index] && (
           // 番号が何の段階かを示すフェーズ名（2026-11-24）。ノードの下に置き、
