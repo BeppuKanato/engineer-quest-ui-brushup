@@ -10,7 +10,6 @@ import { MascotFigure } from "@/app/component/mascotFigure";
 
 import { DrawnCheck } from "../../app/DrawnCheck";
 import { PhaseNextButton } from "../../app/PhaseNextButton";
-import { ResultConfetti } from "../../app/ResultConfetti";
 import { ResultScoreDots } from "../../app/ResultScoreDots";
 import { UnitPathMiniMap } from "../../app/UnitPathMiniMap";
 import type { LearningRewards } from "../../app/rewards";
@@ -245,7 +244,9 @@ function StatTile({ label, value }: { label: string; value: string }) {
   </Box>;
 }
 
-/** 単元完了時の最終リザルト。称号と締めの文はフェーズ7の完了表示と文言を揃える。 */
+/** 単元完了時の最終リザルト。役割は「成果を認識する（記録）」：祝うのは達成モーダル、
+ * 次の一歩はフィードバックが担うため、この画面は紙吹雪・音なしの静かな記録にする
+ * （役割分担 2026-11-24）。見出しは称号ではなく、単元を完了した事実を述べる。 */
 export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewards, onShowFeedback, newAchievements, goalAchievement }: {
   rewards?: LearningRewards;
   renderRewards?: (rewards: LearningRewards) => ReactNode;
@@ -254,7 +255,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   onReviewPhase: (index: number) => void;
   /** フィードバック専用画面への入口（#369）。単元のフィードバックがある場合だけ渡される。 */
   onShowFeedback?: () => void;
-  /** 大目標の達成の提示（#370）。単元完了と重なる達成を結果の一部として出す。紙吹雪はこの画面の既存の最大級が担い、追加では発火しない。 */
+  /** 大目標の達成の提示（#370）。単元完了と重なる達成を結果の一部として出す。 */
   goalAchievement?: ReactNode;
 }) {
   const headingRef = useRef<HTMLParagraphElement>(null);
@@ -274,18 +275,16 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2 }}>
-    <ResultConfetti preset="final" />
     <Box component={motion.div} aria-hidden="true" data-final-result-mark
       initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
       sx={{ width: 96, height: 96, borderRadius: "50%", bgcolor: playerTokens.layers.layer0, display: "grid", placeItems: "center", mt: 2 }}>
       <DrawnCheck />
     </Box>
-    <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortImplementationContent.result.title}</Typography>
-    {/* 単元完了の反応（2026-11-24、段階の結果画面と同じ役割）。称賛の見出しは
-        既にあるため、マスコットは学習者のやり切りに反応する一言だけを添える。 */}
+    <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
+    {/* 記録の画面なので、マスコットは跳ねずに静かな一言だけを添える。 */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 640 }}>
-      <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="celebrate" motion="float" grounding="shadow" />
+      <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="happy" grounding="shadow" />
       <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
       </Box>

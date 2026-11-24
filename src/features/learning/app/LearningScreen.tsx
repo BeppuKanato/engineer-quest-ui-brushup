@@ -102,7 +102,9 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   }, [getToken, courseId, unit, initialPhase, log, progress.unit, entryRevision]);
   const completePhase = useCallback(async (phaseKey: string, summary?: UnitPhaseSummary) => {
     const result = await completeLearningPhase(await getToken(), courseId, phaseKey, summary);
-    if (auth.currentUser?.uid !== uid) return;
+    // デザインモードでは getToken と同様にセッション照合を省略する（無いと保存後の
+    // 実績・カード提示がすべて黙って落ち、最終リザルトの新着ゾーンを確認できない）。
+    if (!isDesignMode() && auth.currentUser?.uid !== uid) return;
     setRewards(current => mergeLearningRewards(current, result));
     // 実績は解除されたフェーズの結果画面で提示する（#333）。最終フェーズ分は最終リザルトの新着へ。
     const forResult = phaseResultAchievements(phaseKey, unit.phases.at(-1)?.id, result.unlockedAchievements);

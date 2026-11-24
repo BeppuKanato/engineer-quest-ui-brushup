@@ -392,6 +392,24 @@ const fixtures: Record<string, unknown> = {
   "/learning/units/course-algorithm-wall-extension-v1/concept-progress": wallExtensionConcepts,
 };
 
+type AchievementMaster = { id: string; title: string; description: string; category: string; conditionType: string; rarity: string; iconKey: string; courseId?: string; phaseKey?: string };
+
+/** 完了保存で解除される実績をマスタ（achievements.json）から組み立てる。
+ * phaseKey を渡すとそのフェーズの実績（自分で実装クリア／ノーヒントクリア）、
+ * null なら単元完了の実績を返す。該当が無ければ空。 */
+function designUnlockedAchievements(courseId: string, phaseKey: string | null) {
+  return (achievementsData as AchievementMaster[])
+    .filter(a => a.courseId === courseId && (phaseKey === null
+      ? a.conditionType === "UNIT_COMPLETE"
+      : a.phaseKey === phaseKey && (a.conditionType === "PHASE_COMPLETED" || a.conditionType === "PHASE_NO_HINT_COMPLETE")))
+    .map(a => ({
+      id: a.id, title: a.title, description: a.description,
+      category: a.category, categoryLabel: a.category,
+      rarity: a.rarity, iconKey: a.iconKey,
+      achievedAt: "2026-11-24T16:55:00+09:00",
+    }));
+}
+
 // パスに対応するフィクスチャを返す。無い場合は undefined。
 export const resolveFixture = (path: string): unknown => {
   const key = path.split("?")[0];
@@ -400,20 +418,26 @@ export const resolveFixture = (path: string): unknown => {
   // （報酬・実績の付与は行わない。遷移と画面の確認が目的）。
   const phaseComplete = key.match(/^\/learning\/units\/([^/]+)\/phases\/([^/]+)\/complete$/);
   if (phaseComplete) {
+    const courseId = decodeURIComponent(phaseComplete[1]);
+    const phaseKey = decodeURIComponent(phaseComplete[2]);
     return {
-      courseId: decodeURIComponent(phaseComplete[1]),
-      phase: { phaseKey: decodeURIComponent(phaseComplete[2]), status: "COMPLETED" },
+      courseId,
+      phase: { phaseKey, status: "COMPLETED" },
       awardedCard: null,
-      unlockedAchievements: [],
+      // 最終フェーズ（自分で実装）の保存では、実績マスタにある該当実績を解除済みとして返す。
+      // これがないと最終リザルトの「新しい実績」ゾーンが常に空になり、目視確認できない
+      // （2026-11-24）。歩行ケースはヒント未使用のため、ノーヒントも含める。
+      unlockedAchievements: designUnlockedAchievements(courseId, phaseKey),
       achievedBigGoals: [],
     };
   }
   const unitComplete = key.match(/^\/learning\/units\/([^/]+)\/complete$/);
   if (unitComplete) {
+    const courseId = decodeURIComponent(unitComplete[1]);
     return {
-      courseId: decodeURIComponent(unitComplete[1]),
+      courseId,
       unit: { status: "COMPLETED" },
-      unlockedAchievements: [],
+      unlockedAchievements: designUnlockedAchievements(courseId, null),
       achievedBigGoals: [],
     };
   }
