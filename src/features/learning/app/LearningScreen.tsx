@@ -214,7 +214,7 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
       return items?.length ? <AchievementBand items={items} phaseKey={phaseKey} onEvent={log} /> : null;
     },
     renderNewAchievements: () => finalUnlocks.length ? (
-      <Box sx={{ width: "100%", maxWidth: 880, display: "grid", gap: 1.5 }}>
+      <Box sx={{ width: "100%", maxWidth: 1060, display: "grid", gap: 1.5 }}>
         <NewAchievementZone items={finalUnlocks} onEvent={log} />
         {nextAchievement && <NextAchievementRow title={nextAchievement.title} description={nextAchievement.description} rarity={nextAchievement.rarity} progress={nextAchievement.progress} goal={nextAchievement.goal} />}
       </Box>

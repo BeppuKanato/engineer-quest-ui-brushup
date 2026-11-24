@@ -1,16 +1,19 @@
 "use client";
 
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import BuildIcon from "@mui/icons-material/Build";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
+import StarsIcon from "@mui/icons-material/Stars";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MascotFigure } from "@/app/component/mascotFigure";
-import { BubbleSortSolvedThumbnail } from "@/design/MissionThumbnail";
+import { BubbleSortMissionThumbnail, BubbleSortSolvedThumbnail } from "@/design/MissionThumbnail";
 
-import { findUnitMission } from "../../app/missionRegistry";
 import { PhaseNextButton } from "../../app/PhaseNextButton";
 import { ResultConfetti } from "../../app/ResultConfetti";
 import { ResultScoreDots } from "../../app/ResultScoreDots";
@@ -27,7 +30,7 @@ import { BubbleSortResultFigure } from "./BubbleSortResultFigure";
 const headingSx = {
   color: playerTokens.text, fontWeight: 900, textAlign: "center",
   // 単元修了の見出しだけは通常の主役サイズ（24）を超える（2026-11-24、Kanato の指定）。
-  fontSize: 32, outline: "none",
+  fontSize: 44, outline: "none",
 } as const;
 
 const nextButtonSx = {
@@ -241,8 +244,9 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
 }
 
 /** 最終リザルトの要約タイル。主役は数値ではなく達成の見出し（2026-11-24）。 */
-function StatTile({ headline, value, label, sub }: { headline: string; value: string; label: string; sub?: string }) {
+function StatTile({ icon, headline, value, label, sub }: { icon: ReactNode; headline: string; value: string; label: string; sub?: string }) {
   return <Box sx={{ flex: "1 1 200px", maxWidth: 272, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.5, textAlign: "center" }}>
+    <Box aria-hidden sx={{ color: playerTokens.focus, lineHeight: 0, mb: 0.5 }}>{icon}</Box>
     <Typography component="p" sx={{ fontSize: 20, fontWeight: 900, lineHeight: 1.3 }}>{headline}</Typography>
     <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.25, color: playerTokens.focus }}>{value}</Typography>
     <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
@@ -289,7 +293,6 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     return () => io.disconnect();
   }, []);
   const rewardsReady = pathDone && zoneSeen;
-  const mission = findUnitMission("course-algorithm-bubble-sort-v2");
   // 要約タイルはサマリにある記録だけから組み立てる（記録のない項目は出さない）。
   const assessed = bubbleSortUnitPhases.map((_, index) => summaries[index])
     .filter(summary => summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined);
@@ -298,11 +301,11 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const questionTotal = assessed.reduce((sum, summary) => sum + (summary?.totalQuestions ?? 0), 0);
   const implementation = summaries[bubbleSortUnitPhases.length - 1];
   const hintTotal = (implementation?.hintUsage ?? []).reduce((sum, count) => sum + count, 0);
-  const tiles: { headline: string; value: string; label: string; sub?: string }[] = [];
+  const tiles: { icon: ReactNode; headline: string; value: string; label: string; sub?: string }[] = [];
   // 見出し＝達成、数値＝その証拠（2026-11-24）。どの値でも肯定として読める文にする。
-  if (questionTotal > 0) tiles.push({ headline: eventuallyTotal === questionTotal ? "全問正解" : `${eventuallyTotal} 問正解`, value: `${eventuallyTotal} / ${questionTotal} 問`, label: "正解（確認問題・応用問題）", sub: `初回で正解 ${firstCorrectTotal} 問` });
-  if (implementation?.testRuns !== undefined) tiles.push({ headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
-  if (implementation?.hintUsage !== undefined) tiles.push({ headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
+  if (questionTotal > 0) tiles.push({ icon: <StarsIcon sx={{ fontSize: 30 }} />, headline: eventuallyTotal === questionTotal ? "全問正解" : `${eventuallyTotal} 問正解`, value: `${eventuallyTotal} / ${questionTotal} 問`, label: "正解（確認問題・応用問題）", sub: `初回で正解 ${firstCorrectTotal} 問` });
+  if (implementation?.testRuns !== undefined) tiles.push({ icon: <BuildIcon sx={{ fontSize: 30 }} />, headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
+  if (implementation?.hintUsage !== undefined) tiles.push({ icon: <EmojiObjectsIcon sx={{ fontSize: 30 }} />, headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, p: 2 }}>
@@ -311,8 +314,8 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         金はこの画面とゴールの星ノードに限る特別色として使う。 */}
     {/* 称賛は一つのシーンとして出す（2026-11-24）：トロフィー・見出し・マスコットを
         淡い金の放射光の中に寄せ、視線を一箇所に集める。 */}
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, width: "100%", maxWidth: 880, py: 2.5, borderRadius: 4,
-      background: "radial-gradient(ellipse 72% 92% at 50% 38%, rgba(217, 119, 6, 0.13), rgba(217, 119, 6, 0) 70%)" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, width: "100%", maxWidth: 1060, py: 2.5, borderRadius: 4,
+      background: "radial-gradient(ellipse 72% 92% at 50% 38%, rgba(217, 119, 6, 0.18), rgba(217, 119, 6, 0) 70%)" }}>
       <Box component={motion.div} aria-hidden="true" data-final-result-mark
         initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
@@ -323,28 +326,38 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
         <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>動きを理解するところから、自分でコードを書けるところまで到達したね！</Typography>
+          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>動きを理解するところから、<Box component="span" sx={{ fontWeight: 900, color: "#b45309" }}>自分でコードを書ける</Box>ところまで到達したね！</Typography>
         </Box>
       </Box>
     </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
     {/* 開始時の問いへの答え（2026-11-24）：ミッションの棚が並んだ姿を見せる。 */}
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 880, p: 2, bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 2 }}>
-      <Box sx={{ width: 300, flexShrink: 0 }}><BubbleSortSolvedThumbnail /></Box>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 1060, p: 2, bgcolor: "#fff", border: "2px solid #16a34a", borderRadius: 2 }}>
+      <Box sx={{ width: 190, flexShrink: 0 }}>
+        <BubbleSortMissionThumbnail />
+        <Typography component="p" sx={{ fontSize: 13, textAlign: "center", mt: 0.5 }}>学習前</Typography>
+      </Box>
+      <ArrowForwardIcon aria-hidden sx={{ color: "#16a34a", flexShrink: 0 }} />
+      <Box sx={{ width: 280, flexShrink: 0 }}>
+        <BubbleSortSolvedThumbnail />
+        <Typography component="p" sx={{ fontSize: 13, textAlign: "center", mt: 0.5 }}>学習後</Typography>
+      </Box>
       <Box>
-        <Box component="span" sx={{ display: "inline-block", bgcolor: "#e3ecfd", color: "#2563eb", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999 }}>単元ミッション</Box>
-        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mt: 0.75 }}>{mission?.title}</Typography>
-        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>バラバラだった棚が、番号順に整いました。探したい本が、すぐ見つかる棚になりました。</Typography>
+        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, bgcolor: "#dcfce7", color: "#15803d", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999 }}>
+          <CheckCircleIcon aria-hidden sx={{ fontSize: 15 }} />単元ミッション達成
+        </Box>
+        <Typography component="p" sx={{ fontSize: 20, fontWeight: 900, mt: 0.75 }}>本を番号順に並べ替えた！</Typography>
+        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>バブルソートを使って、バラバラだった本を順番に並べられるようになりました。</Typography>
       </Box>
     </Box>
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
-    {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 880 }}>
-      {tiles.map(tile => <StatTile key={tile.label} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
+    {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 1060 }}>
+      {tiles.map(tile => <StatTile key={tile.label} icon={tile.icon} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
-    <Box ref={zoneAnchorRef} sx={{ width: "100%", maxWidth: 880 }} />
+    <Box ref={zoneAnchorRef} sx={{ width: "100%", maxWidth: 1060 }} />
     {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
-    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 880 }}>
+    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 1060 }}>
       {bubbleSortUnitPhases.map((phase, index) => {
         const line = summaryLine(index, summaries[index]);
         return <Box component="li" key={phase.id} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.75, borderBottom: `1px solid ${playerTokens.layers.layer1}` }}>

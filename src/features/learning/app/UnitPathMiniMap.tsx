@@ -34,8 +34,8 @@ export function UnitPathMiniMap({ count, labels }: { count: number; labels?: rea
     initial={{ scale: 1 }}
     animate={reduced ? { scale: 1 } : { scale: [1, 1.05, 1.03] }}
     transition={reduced ? { duration: 0 } : { duration: 0.6, delay: 0.15 + DRAW_SECONDS + 0.1, times: [0, 0.55, 1], ease: "easeOut", repeat: 0 }}
-    sx={{ width: "100%", maxWidth: 880 }}>
-    <svg viewBox={`0 0 ${WAVE.width} ${WAVE.height}`} width="100%" style={{ display: "block" }}>
+    sx={{ width: "100%", maxWidth: 1060 }}>
+    <svg viewBox="0 70 1200 350" width="100%" style={{ display: "block" }}>
       <path d={wavePath(1)} fill="none" stroke="#c3d4ec" strokeWidth={9} strokeLinecap="round" />
       <motion.path d={wavePath(1)} fill="none" stroke={playerTokens.focus} strokeWidth={9} strokeLinecap="round"
         initial={reduced ? false : { pathLength: 0 }} animate={{ pathLength: 1 }}
@@ -65,6 +65,10 @@ export function UnitPathMiniMap({ count, labels }: { count: number; labels?: rea
           ) : (
             <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>
           )}
+          {/* 踏破の印（2026-11-24）：全ノードに緑のチェックバッジを付け、
+              学習前のロードマップではなく「達成した道のり」として読ませる。 */}
+          <circle cx={point.x + 31} cy={point.y - 31} r={13} fill="#16a34a" stroke="#ffffff" strokeWidth={3} />
+          <path d={`M ${point.x + 25.5} ${point.y - 31} l 3.8 3.8 l 7 -7.5`} fill="none" stroke="#ffffff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
         </motion.g>
         {labels?.[index] && (
           // 番号が何の段階かを示すフェーズ名（2026-11-24）。ノードの下に置き、
