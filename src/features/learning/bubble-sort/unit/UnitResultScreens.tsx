@@ -237,10 +237,11 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
 }
 
 /** 最終リザルトの要約タイル。値は記録（サマリ）からの事実だけを出す。 */
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return <Box sx={{ flex: "1 1 150px", maxWidth: 204, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.25, textAlign: "center" }}>
     <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
     <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
+    {sub && <Typography component="p" sx={{ fontSize: 14 }}>{sub}</Typography>}
   </Box>;
 }
 
@@ -261,15 +262,26 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const headingRef = useRef<HTMLParagraphElement>(null);
   const reduced = useReducedMotion();
   useEffect(() => { headingRef.current?.focus(); }, []);
+  // 実績ゾーンの出現は、完了チェック→学習経路の描画→ゴールの鼓動が終わった後に
+  // 遅らせる（2026-11-24）。マウント即時だと、画面上部を見ている間に下で解除音と
+  // 出現アニメーションが終わってしまい、獲得の瞬間を見られないため。
+  // ゾーンはミニマップ直後に置き、この遅延で出現させる（音も出現に合わせて鳴る）。
+  const [rewardsReady, setRewardsReady] = useState(false);
+  useEffect(() => {
+    if (reduced) { setRewardsReady(true); return; }
+    const timer = setTimeout(() => setRewardsReady(true), 2300);
+    return () => clearTimeout(timer);
+  }, [reduced]);
   // 要約タイルはサマリにある記録だけから組み立てる（記録のない項目は出さない）。
   const assessed = bubbleSortUnitPhases.map((_, index) => summaries[index])
     .filter(summary => summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined);
   const firstCorrectTotal = assessed.reduce((sum, summary) => sum + (summary?.firstAttemptCorrect ?? 0), 0);
+  const eventuallyTotal = assessed.reduce((sum, summary) => sum + (summary?.eventuallyCorrect ?? summary?.firstAttemptCorrect ?? 0), 0);
   const questionTotal = assessed.reduce((sum, summary) => sum + (summary?.totalQuestions ?? 0), 0);
   const implementation = summaries[bubbleSortUnitPhases.length - 1];
   const hintTotal = (implementation?.hintUsage ?? []).reduce((sum, count) => sum + count, 0);
-  const tiles: { label: string; value: string }[] = [];
-  if (questionTotal > 0) tiles.push({ label: "初回正解（確認問題・応用問題）", value: `${firstCorrectTotal} / ${questionTotal} 問` });
+  const tiles: { label: string; value: string; sub?: string }[] = [];
+  if (questionTotal > 0) tiles.push({ label: "正解（確認問題・応用問題）", value: `${eventuallyTotal} / ${questionTotal} 問`, sub: `初回で正解 ${firstCorrectTotal} 問` });
   if (implementation?.testRuns !== undefined) tiles.push({ label: "自分で実装のテスト実行", value: `${implementation.testRuns} 回` });
   if (implementation?.hintUsage !== undefined) tiles.push({ label: "ヒント使用", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
@@ -290,8 +302,9 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       </Box>
     </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} />
+    {rewardsReady && newAchievements}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 640 }}>
-      {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} />)}
+      {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
     <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 560 }}>
@@ -308,7 +321,6 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       })}
     </Box>
     <Typography component="p" sx={{ textAlign: "center", fontSize: 16, maxWidth: 640 }}>{bubbleSortImplementationContent.result.closing}</Typography>
-    {newAchievements}
     {goalAchievement}
     {rewards && renderRewards?.(rewards)}
     <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{bubbleSortUnitText.reviewNote}</Typography>

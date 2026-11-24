@@ -342,9 +342,15 @@ const achievementsFixture = {
   groups: [{
     category: "ALL",
     label: "すべて",
-    achievements: (achievementsData as { id: string; title: string; description: string; category: string; conditionType: string; conditionValue: number | null; rarity: string; iconKey: string; isSecret: boolean; courseId?: string }[]).map(a => {
+    achievements: (achievementsData as { id: string; title: string; description: string; category: string; conditionType: string; conditionValue: number | null; conditionUnitIds?: string[]; rarity: string; iconKey: string; isSecret: boolean; courseId?: string }[]).map(a => {
       const achieved = designAchievedIds.has(a.id);
-      const goal = a.conditionValue ?? 1;
+      // 系コンプリート（UNIT_GROUP_COMPLETE）は conditionValue を持たず、分母は対象単元数。
+      const goal = a.conditionValue ?? a.conditionUnitIds?.length ?? 1;
+      // ペルソナの部分進捗（ホームの仮状態と一致させる）：ストリーク4日、完了2単元、カード7枚、探索系2/4。
+      const partialProgress: Record<string, number> = {
+        "ach-streak-7": 4, "ach-unit-count-lv2": 2, "ach-unit-count-lv3": 2,
+        "ach-knowledge-lv2": 7, "ach-unit-exploration-complete": 2,
+      };
       return {
         id: a.id,
         category: a.category,
@@ -359,7 +365,7 @@ const achievementsFixture = {
         description: a.description,
         conditionLabel: null,
         goal,
-        progress: achieved ? goal : 0,
+        progress: achieved ? goal : (partialProgress[a.id] ?? 0),
         href: "/achievements",
         actionLabel: "",
         achievedAt: achieved ? "2026-11-20T00:00:00+09:00" : null,
@@ -392,16 +398,22 @@ const fixtures: Record<string, unknown> = {
   "/learning/units/course-algorithm-wall-extension-v1/concept-progress": wallExtensionConcepts,
 };
 
-type AchievementMaster = { id: string; title: string; description: string; category: string; conditionType: string; rarity: string; iconKey: string; courseId?: string; phaseKey?: string };
+type AchievementMaster = { id: string; title: string; description: string; category: string; conditionType: string; conditionValue?: number | null; rarity: string; iconKey: string; courseId?: string; phaseKey?: string };
 
 /** 完了保存で解除される実績をマスタ（achievements.json）から組み立てる。
  * phaseKey を渡すとそのフェーズの実績（自分で実装クリア／ノーヒントクリア）、
- * null なら単元完了の実績を返す。該当が無ければ空。 */
+ * null なら単元完了の実績を返す。単元完了時は、完了単元数の段位もあわせて返す
+ * （ペルソナは BFS・DFS 完了済みなので、この単元で 3 単元目 = Lv.2 が届く。
+ * ホームの「次の実績」が Lv.2 を progress 2/3 で出している前提と一致する）。
+ * 該当が無ければ空。 */
 function designUnlockedAchievements(courseId: string, phaseKey: string | null) {
-  return (achievementsData as AchievementMaster[])
-    .filter(a => a.courseId === courseId && (phaseKey === null
-      ? a.conditionType === "UNIT_COMPLETE"
-      : a.phaseKey === phaseKey && (a.conditionType === "PHASE_COMPLETED" || a.conditionType === "PHASE_NO_HINT_COMPLETE")))
+  const masters = achievementsData as AchievementMaster[];
+  const priorUnitCompletes = masters.filter(a => a.conditionType === "UNIT_COMPLETE" && designAchievedIds.has(a.id)).length;
+  return masters
+    .filter(a => phaseKey === null
+      ? (a.courseId === courseId && a.conditionType === "UNIT_COMPLETE")
+        || (a.conditionType === "UNIT_COMPLETED_COUNT" && a.conditionValue === priorUnitCompletes + 1)
+      : a.courseId === courseId && a.phaseKey === phaseKey && (a.conditionType === "PHASE_COMPLETED" || a.conditionType === "PHASE_NO_HINT_COMPLETE"))
     .map(a => ({
       id: a.id, title: a.title, description: a.description,
       category: a.category, categoryLabel: a.category,

@@ -81,3 +81,45 @@ export function NewAchievementZone({ items, onEvent }: { items: readonly Achieve
     <UnlockList items={items} stagger={0.35} onEvent={onEvent} placement="unit-result-new" />
   </Box>;
 }
+
+/**
+ * ゾーンの下に置く「次の実績」（2026-11-24）。獲得の記録で終わらせず、次に近い
+ * 未獲得実績を条件・進捗つきで示し、次の行動への出口にする。形はホームの
+ * 「次の実績」の行と揃える（トロフィーの丸＋タイトル＋レアリティ＋進捗の形）。
+ * 進捗ゲージの塗りは色の意味の統一に従い緑（完了した量）。
+ */
+export function NextAchievementRow({ title, description, rarity, progress, goal }: {
+  title: string; description: string; rarity: string; progress: number; goal: number;
+}) {
+  const tone = presentationFor(rarity).tone;
+  return <Box component="section" aria-label="次の実績" data-next-achievement sx={{ width: "100%", maxWidth: 640, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 1.5 }}>
+      <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>次の実績</Typography>
+      <Typography component="a" href="/achievements" sx={{ fontSize: 14, fontWeight: 700, color: "#2563eb", textDecoration: "none", whiteSpace: "nowrap" }}>実績一覧を見る</Typography>
+    </Box>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "#dbeafe", color: "#1d4ed8", display: "grid", placeItems: "center", flexShrink: 0 }}>
+        <EmojiEventsIcon sx={{ fontSize: 24 }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontWeight: 900, fontSize: 18, lineHeight: 1.4 }}>{title}</Typography>
+        <Typography sx={{ fontSize: 14, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>
+      </Box>
+    </Box>
+    <Typography sx={{ fontSize: 14, mt: 1 }}>{description}</Typography>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1.5 }}>
+      {goal <= 21 ? (
+        <Box sx={{ display: "flex", gap: 0.75, flex: 1 }} aria-hidden>
+          {Array.from({ length: goal }, (_, i) => (
+            <Box key={i} sx={{ flex: 1, height: 10, borderRadius: 5, bgcolor: i < progress ? "#16a34a" : "#e7edf5", border: i === progress ? "2px solid #16a34a" : "2px solid transparent", boxSizing: "border-box" }} />
+          ))}
+        </Box>
+      ) : (
+        <Box sx={{ flex: 1, height: 10, borderRadius: 5, bgcolor: "#e7edf5", overflow: "hidden" }} aria-hidden>
+          <Box sx={{ width: `${Math.min(100, (progress / goal) * 100)}%`, height: "100%", bgcolor: "#16a34a" }} />
+        </Box>
+      )}
+      <Typography sx={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap" }}>{progress} / {goal}</Typography>
+    </Box>
+  </Box>;
+}

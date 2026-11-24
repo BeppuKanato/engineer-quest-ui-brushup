@@ -20,7 +20,7 @@ import { GreedyCoinsUnitPreview } from "../greedy-coins/unit/GreedyCoinsUnitPrev
 import { LearningRewardBoundary } from "../rewards/LearningRewardBoundary";
 import { FinalLearningRewards } from "../rewards/FinalLearningRewards";
 import { UnitCardKeywords } from "../rewards/UnitCardKeywords";
-import { AchievementBand, NewAchievementZone } from "../../../components/rewards/AchievementPresentation";
+import { AchievementBand, NewAchievementZone, NextAchievementRow } from "../../../components/rewards/AchievementPresentation";
 import { phaseResultAchievements } from "../rewards/presentation";
 import { useRewardBoundary } from "../rewards/useRewardBoundary";
 import { codeDraftKey, readCodeDraft, writeCodeDraft } from "./codeDraft";
@@ -70,6 +70,10 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   // 実績の提示先（#333）。フェーズ結果画面用はフェーズキー別、最終リザルトの新着用は一括で持つ。
   const [phaseUnlocks, setPhaseUnlocks] = useState<Readonly<Record<string, readonly UnlockedAchievement[]>>>({});
   const [finalUnlocks, setFinalUnlocks] = useState<readonly UnlockedAchievement[]>([]);
+  // 最終リザルトの「次の実績」：単元保存が済んで解除分が確定してから、実績一覧で
+  // 最も達成に近い未獲得（進捗率最大）を1件選ぶ（2026-11-24）。
+  const [nextAchievement, setNextAchievement] = useState<{ id: string; title: string; description: string; rarity: string; progress: number; goal: number } | null>(null);
+  const nextAchievementRequested = useRef(false);
   const { boundary, present, finish } = useRewardBoundary();
   const [finalShown, setFinalShown] = useState(false), [unitSaved, setUnitSaved] = useState(progress.unit?.status === "COMPLETED");
   const [unitError, setUnitError] = useState(false), [unitRevision, setUnitRevision] = useState(0);
@@ -168,6 +172,21 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     }, () => { if (current) { completedUnitRequest.current = false; setUnitError(true); } });
     return () => { current = false; };
   }, [finalShown, unitSaved, courseId, getToken, log, unitRevision, startFeedback]);
+  useEffect(() => {
+    if (!unitSaved || !finalUnlocks.length || nextAchievementRequested.current) return;
+    nextAchievementRequested.current = true;
+    let current = true;
+    type AchievementListItem = { id: string; title: string; description: string; rarity: string; status: string; progress: number; goal: number };
+    void getToken().then(token => fetcher<{ groups: { achievements: AchievementListItem[] }[] }>("/achievements", { token })).then(data => {
+      if (!current) return;
+      const unlockedIds = new Set(finalUnlocks.map(item => item.id));
+      const candidates = data.groups.flatMap(group => group.achievements)
+        .filter(item => item.status === "visible_locked" && !unlockedIds.has(item.id) && item.goal > 0);
+      const best = candidates.reduce<AchievementListItem | null>((acc, item) => (!acc || item.progress / item.goal > acc.progress / acc.goal ? item : acc), null);
+      if (best) setNextAchievement({ id: best.id, title: best.title, description: best.description, rarity: best.rarity, progress: best.progress, goal: best.goal });
+    }, () => { /* 実績一覧が取れなくても学習は止めない */ });
+    return () => { current = false; };
+  }, [unitSaved, finalUnlocks, getToken]);
   const saveCode = useCallback((code: string) => setDraftError(!writeCodeDraft(courseId, uid, code)), [courseId, uid]);
   const dismissAwardedCard = useCallback((cardId: string) => setRewards(current => ({ ...current, awardedCards: current.awardedCards.filter(item => item.card.id !== cardId) })), []);
   if (!draft) return <Typography role="status">学習を開いています。</Typography>;
@@ -194,7 +213,12 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
       const items = phaseUnlocks[phaseKey];
       return items?.length ? <AchievementBand items={items} phaseKey={phaseKey} onEvent={log} /> : null;
     },
-    renderNewAchievements: () => finalUnlocks.length ? <NewAchievementZone items={finalUnlocks} onEvent={log} /> : null,
+    renderNewAchievements: () => finalUnlocks.length ? (
+      <Box sx={{ width: "100%", maxWidth: 640, display: "grid", gap: 1.5 }}>
+        <NewAchievementZone items={finalUnlocks} onEvent={log} />
+        {nextAchievement && <NextAchievementRow title={nextAchievement.title} description={nextAchievement.description} rarity={nextAchievement.rarity} progress={nextAchievement.progress} goal={nextAchievement.goal} />}
+      </Box>
+    ) : null,
     onCheckPhaseCompleted,
     feedbackEnabled: feedbackAvailability !== "unavailable",
     renderPhaseFeedbackScreen,

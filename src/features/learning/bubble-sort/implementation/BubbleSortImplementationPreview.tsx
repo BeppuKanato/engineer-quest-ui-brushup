@@ -322,7 +322,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           </Box>
         </Box>;
       })()}
-      {complete && confettiReady && <ResultConfetti />}
+      {complete && confettiReady && <ResultConfetti preset="final" />}
       {!started && !complete ? (
         <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: 2, py: 3, pt: { md: 5 } }}>
           <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, textAlign: "center" }}>自分のコードで、本を番号順に並べ替えよう</Typography>
