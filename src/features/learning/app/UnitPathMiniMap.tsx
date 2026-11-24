@@ -57,9 +57,10 @@ export function UnitPathMiniMap({ count }: { count: number }) {
           initial={reduced ? false : { opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: reduced ? 0 : 0.35, delay: reduced ? 0 : reachDelay(index), ease: "easeOut", repeat: 0 }}
           style={{ transformBox: "fill-box", transformOrigin: "center" }}>
-          <circle cx={point.x} cy={point.y} r={44} fill={playerTokens.focus} stroke={playerTokens.surface} strokeWidth={5} />
+          <circle cx={point.x} cy={point.y} r={44} fill={index === points.length - 1 && points.length > 1 ? "#d97706" : playerTokens.focus} stroke={playerTokens.surface} strokeWidth={5} />
           {index === points.length - 1 && points.length > 1 ? (
-            // ゴールのノードだけ数字ではなく星にし、到達点として区別する（2026-11-24）。
+            // ゴールのノードだけ数字ではなく星にし、金色で到達点として区別する
+            // （2026-11-24）。金は修了の象徴としてこのノードとリザルトのトロフィーに限る。
             <polygon points={starPoints(point.x, point.y, 21)} fill={playerTokens.surface} />
           ) : (
             <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>

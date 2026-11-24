@@ -1,6 +1,7 @@
 "use client";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
@@ -8,8 +9,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MascotFigure } from "@/app/component/mascotFigure";
 
-import { DrawnCheck } from "../../app/DrawnCheck";
 import { PhaseNextButton } from "../../app/PhaseNextButton";
+import { ResultConfetti } from "../../app/ResultConfetti";
 import { ResultScoreDots } from "../../app/ResultScoreDots";
 import { UnitPathMiniMap } from "../../app/UnitPathMiniMap";
 import type { LearningRewards } from "../../app/rewards";
@@ -240,15 +241,15 @@ function summaryLine(index: number, summary?: BubbleSortUnitPhaseSummary): strin
 /** 最終リザルトの要約タイル。値は記録（サマリ）からの事実だけを出す。 */
 function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return <Box sx={{ flex: "1 1 150px", maxWidth: 204, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, px: 1.5, py: 1.25, textAlign: "center" }}>
-    <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
+    <Typography component="p" sx={{ fontSize: 30, fontWeight: 900, lineHeight: 1.2, color: playerTokens.focus }}>{value}</Typography>
     <Typography component="p" sx={{ fontSize: 14 }}>{label}</Typography>
     {sub && <Typography component="p" sx={{ fontSize: 14 }}>{sub}</Typography>}
   </Box>;
 }
 
-/** 単元完了時の最終リザルト。役割は「成果を認識する（記録）」：祝うのは達成モーダル、
- * 次の一歩はフィードバックが担うため、この画面は紙吹雪・音なしの静かな記録にする
- * （役割分担 2026-11-24）。見出しは称号ではなく、単元を完了した事実を述べる。 */
+/** 単元完了時の最終リザルト。Kanato は賞賛あり派（2026-11-24）：この画面も
+ * 紙吹雪・トロフィー・大きめのマスコットで修了を祝い、同時に成果の記録も担う。
+ * 次の一歩はフィードバックが担う。 */
 export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewards, onShowFeedback, newAchievements, goalAchievement }: {
   rewards?: LearningRewards;
   renderRewards?: (rewards: LearningRewards) => ReactNode;
@@ -288,18 +289,21 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   if (implementation?.hintUsage !== undefined) tiles.push({ label: "ヒント使用", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", sub: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" aria-label="単元完了のリザルト"
-    sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2 }}>
+    sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, p: 2 }}>
+    <ResultConfetti preset="final" />
+    {/* 修了の象徴はチェックではなくトロフィー（2026-11-24、Kanato の指定）。
+        金はこの画面とゴールの星ノードに限る特別色として使う。 */}
     <Box component={motion.div} aria-hidden="true" data-final-result-mark
       initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: reduced ? 0 : 0.6, repeat: 0, ease: "easeOut" }}
-      sx={{ width: 96, height: 96, borderRadius: "50%", bgcolor: playerTokens.layers.layer0, display: "grid", placeItems: "center", mt: 2 }}>
-      <DrawnCheck />
+      sx={{ width: 96, height: 96, borderRadius: "50%", bgcolor: "#fef3c7", border: "2px solid #d97706", display: "grid", placeItems: "center", mt: 1 }}>
+      <EmojiEventsIcon sx={{ fontSize: 52, color: "#d97706" }} />
     </Box>
     <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
     {/* 称賛の担い手はマスコット（2026-11-24、Kanato は賞賛あり派）。紙吹雪・音は
         モーダルに譲り、ここでは表情・大きさ・一言で称賛を出す。 */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 880 }}>
-      <MascotFigure mascotId="red-panda" alt="相棒" size="L" state="celebrate" motion="float" grounding="shadow" />
+      <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
       <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
       </Box>
