@@ -9,6 +9,14 @@ import { WAVE, wavePath, wavePoint } from "./unitPathGeometry";
 /** 軌跡を描き切るまでの秒数。ノードは線が届いた順に灯る。 */
 const DRAW_SECONDS = 1.4;
 
+/** 中心 (cx, cy)・外径 r の五芒星の頂点列。 */
+const starPoints = (cx: number, cy: number, r: number) =>
+  Array.from({ length: 10 }, (_, i) => {
+    const radius = i % 2 === 0 ? r : r * 0.45;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    return `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`;
+  }).join(" ");
+
 /**
  * 単元完了時の全灯マップ。単元画面の UnitPathMap と同じ波形（unitPathGeometry）を使う。
  * 出現時は軌跡が 1 から順に描かれ、ノードは線が届くたびに達成の青で灯る。
@@ -50,7 +58,12 @@ export function UnitPathMiniMap({ count }: { count: number }) {
           transition={{ duration: reduced ? 0 : 0.35, delay: reduced ? 0 : reachDelay(index), ease: "easeOut", repeat: 0 }}
           style={{ transformBox: "fill-box", transformOrigin: "center" }}>
           <circle cx={point.x} cy={point.y} r={44} fill={playerTokens.focus} stroke={playerTokens.surface} strokeWidth={5} />
-          <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>
+          {index === points.length - 1 && points.length > 1 ? (
+            // ゴールのノードだけ数字ではなく星にし、到達点として区別する（2026-11-24）。
+            <polygon points={starPoints(point.x, point.y, 21)} fill={playerTokens.surface} />
+          ) : (
+            <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>
+          )}
         </motion.g>
       </g>)}
     </svg>

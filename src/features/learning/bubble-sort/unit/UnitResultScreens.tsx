@@ -294,18 +294,20 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       <DrawnCheck />
     </Box>
     <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
-    {/* 記録の画面なので、マスコットは跳ねずに静かな一言だけを添える。 */}
+    {/* 称賛の担い手はマスコット（2026-11-24、Kanato は賞賛あり派）。紙吹雪・音は
+        モーダルに譲り、ここでは表情・大きさ・一言で称賛を出す。 */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 640 }}>
-      <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="happy" grounding="shadow" />
+      <MascotFigure mascotId="red-panda" alt="相棒" size="L" state="celebrate" motion="float" grounding="shadow" />
       <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
       </Box>
     </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} />
-    {rewardsReady && newAchievements}
+    {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 640 }}>
       {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
+    {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
     <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 560 }}>
       {bubbleSortUnitPhases.map((phase, index) => {

@@ -25,17 +25,20 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey 
   const reduced = useReducedMotion(), spec = presentationFor(item.rarity), tone = spec.tone;
   useLearningVisit(onEvent, true, "achievement_present_view", item.id, { placement, phaseKey, rarity: item.rarity });
   const delay = reduced ? 0 : index * stagger;
+  // 獲得感はレアリティで差をつける（2026-11-24）：高いレアリティほどトロフィーを
+  // 大きくし、登場の縮小率（spec.scale）も大きくする。発光・放射は従来どおり spec 依存。
+  const badgeSize = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
   return <Box component={motion.div} data-achievement-id={item.id}
-    initial={reduced ? false : { opacity: 0, scale: 0.85, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+    initial={reduced ? false : { opacity: 0, scale: spec.scale, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
     transition={{ duration: reduced ? 0 : 0.45, delay, ease: "easeOut" }}
     sx={{ position: "relative", display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "left",
       boxShadow: !reduced && spec.glow ? `0 0 ${spec.glow}px ${tone.border}` : "none" }}>
-    <Box sx={{ position: "relative", flexShrink: 0, width: 56, height: 56 }}>
+    <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize }}>
       {!reduced && Array.from({ length: spec.rays }, (_, i) => <Box key={i} component={motion.span} aria-hidden
         initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.7, 0], scale: [0.6, 1.4, 1.8] }} transition={{ duration: 0.7, delay: delay + 0.1 + i * 0.035 }}
         sx={{ position: "absolute", left: `${50 + 62 * Math.cos(i * 2 * Math.PI / spec.rays)}%`, top: `${50 + 62 * Math.sin(i * 2 * Math.PI / spec.rays)}%`, color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Box>)}
-      <Box sx={{ width: 56, height: 56, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
-        <EmojiEventsIcon aria-hidden sx={{ color: tone.color, fontSize: 32 }} />
+      <Box sx={{ width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
+        <EmojiEventsIcon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
       </Box>
     </Box>
     <Box sx={{ minWidth: 0 }}>
