@@ -9,14 +9,24 @@ import { arrayDifferences, isDrawableArrayValue, resultKinds, type TestOutcome }
 const labels = content.display;
 
 /**
- * テストタブ：公開テストは本棚のカード、非公開テストと実行できなかった
- * テストは情報量に合わせたコンパクトな行で見せる。
- * 状態は「通過／不一致／実行不可・実行エラー／未実行」を区別する：
- * コードが間違っていることと、そもそも実行できていないことは別だ。
- * 未通過の公開テストは期待する並びを点線のゴーストで重ね、ズレた本に
- * 枠を付ける。通過は緑のスタンプ。
+ * テストタブの表示方針：
+ * - 詳細に開くのは「不一致の公開テスト」だけ（直す作業がある場所に場所を使う）。
+ *   期待する並びを点線ゴーストで重ね、ズレた本に枠を付け、基本テストからは
+ *   自分のコードの動きを見る導線を出す。
+ * - 通過・未実行の公開テストと、非公開テストはコンパクトな行（ミニ棚＋一文）。
+ * - 全テストが同じエラーで実行できなかった回は、繰り返しをやめて
+ *   1枚のエラーパネルに集約する（該当行のコードと、箇所へ飛ぶボタンを出す）。
+ * - コード編集後は前回の結果を「前回」と明示して残す（stale）。判定には使わない。
+ * 状態は「通過／不一致／実行不可・実行エラー／未実行」を区別する。
  */
-export function ImplementationResults({ outcomes, diagnostics = outcomes, onShowTrace }: { outcomes: readonly TestOutcome[]; diagnostics?: readonly TestOutcome[]; onShowTrace?: () => void }) {
+export function ImplementationResults({ outcomes, diagnostics = outcomes, stale = false, code, onFocusLine, onShowTrace }: {
+  outcomes: readonly TestOutcome[];
+  diagnostics?: readonly TestOutcome[];
+  stale?: boolean;
+  code?: string;
+  onFocusLine?: (line: number) => void;
+  onShowTrace?: () => void;
+}) {
   const kinds = resultKinds(diagnostics);
   const passed = outcomes.filter(outcome => outcome.passed).length;
   const reducedMotion = useReducedMotion();
@@ -26,7 +36,31 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, onShow
     : outcome.error === "runtime" ? labels.statuses.errorRuntime
     : outcome.error === "timeout" ? labels.statuses.errorTimeout
     : labels.statuses.failed;
+  // 全件が同一種のエラー＝コード自体が実行できていないので、テスト別の行は作らない。
+  const aggregatedKind = !stale && outcomes.length === content.tests.length && outcomes.every(outcome => outcome.error)
+    ? (new Set(outcomes.map(outcome => outcome.error)).size === 1 ? outcomes[0].error : undefined)
+    : undefined;
+  if (aggregatedKind) {
+    const line = outcomes.find(outcome => outcome.errorLine !== undefined)?.errorLine;
+    const lineText = line !== undefined && code ? code.split("\n")[line - 1]?.trim() : undefined;
+    const guidance = labels.guidance[aggregatedKind];
+    return <Box>
+      <Box role="alert" sx={{ border: "2px solid #111827", borderRadius: 2, bgcolor: "#fff", p: 2 }}>
+        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>
+          {aggregatedKind === "syntax" ? "文法エラー" : aggregatedKind === "runtime" ? "実行時エラー" : "タイムアウト"}
+          {line ? `（${line}行目付近）` : ""}
+        </Typography>
+        <Typography component="p" sx={{ fontSize: 16, mt: 1 }}>{labels.messages[aggregatedKind]}</Typography>
+        {lineText && <Box component="pre" sx={{ m: 0, mt: 1.5, p: 1.5, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 15, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{line}行目：{lineText}</Box>}
+        {guidance && <Typography component="p" sx={{ fontSize: 14, mt: 1.5 }}>{guidance}</Typography>}
+        {line !== undefined && onFocusLine && <Button variant="outlined" onClick={() => onFocusLine(line)}
+          sx={{ mt: 1.5, minHeight: 44, fontWeight: 700, color: "#111827", borderColor: "#111827" }}>エラー箇所を確認</Button>}
+      </Box>
+      <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, mt: 2 }}>テストはまだ実行されていません</Typography>
+    </Box>;
+  }
   return <Box>
+    {stale && <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mb: 1.5 }}>前回のテスト結果です。コードが変更されています。再実行すると更新されます。</Typography>}
     {kinds.length > 0 && <Box role="status" aria-label={labels.errorLabel} sx={{ mb: 2 }}>
       {kinds.map(kind => {
         const line = diagnostics.find(outcome => outcome.error === kind)?.errorLine;
@@ -38,7 +72,7 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, onShow
       })}
     </Box>}
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, mb: 1 }}>
-      <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>{passed} / {content.tests.length} 本通過</Typography>
+      <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>{stale ? "前回 " : ""}{passed} / {content.tests.length} 本通過</Typography>
     </Box>
     {content.tests.map(test => {
       const outcome = outcomes.find(item => item.id === test.id);
@@ -62,31 +96,28 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, onShow
         <Typography component="p" sx={{ fontSize: 16, fontWeight: 800, flex: 1, minWidth: 0 }}>{test.label}</Typography>
         {stamp}
       </Box>;
-      // 実行できなかったテストは、原因が共通なので図は持たず1行に集約する。
-      if (outcome?.error) {
-        return <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
-          {header}
-          <Typography component="p" sx={{ fontSize: 14 }}>実行できませんでした。上のメッセージを確認してください。</Typography>
-        </Box>;
-      }
-      // 非公開テストは中身を見せられない分、場所を取らない行にする。
+      const compactRow = (values: readonly number[] | null, caption: string, hidden = false) => <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
+        {header}
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {values && <Box aria-hidden sx={{ width: 150, height: 64, flexShrink: 0, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
+            <BookShelfFigure values={hidden ? values.map(() => 3) : [...values]} label={test.label} hiddenValues={hidden} />
+          </Box>}
+          <Typography component="p" sx={{ fontSize: 14 }}>{caption}</Typography>
+        </Box>
+      </Box>;
+      // 実行できなかったテスト（集約されなかった分）は1行に留める。
+      if (outcome?.error) return compactRow(null, "実行できませんでした。上のメッセージを確認してください。");
       if (test.visibility === "judgement") {
-        return <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
-          {header}
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-            <Box aria-hidden sx={{ width: 150, height: 64, flexShrink: 0, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
-              <BookShelfFigure values={Array.from({ length: input?.length ?? 4 }, () => 3)} label="内容は非公開のテスト" hiddenValues />
-            </Box>
-            <Typography component="p" sx={{ fontSize: 14 }}>
-              {!outcome
-                ? "内容は非公開のテストです。実行すると、通過したかどうかが分かります。"
-                : outcome.passed
-                  ? "期待どおりの並びになりました。"
-                  : "期待する並びと違う結果になりました。"}
-            </Typography>
-          </Box>
-        </Box>;
+        return compactRow(input, !outcome
+          ? "内容は非公開のテストです。実行すると、通過したかどうかが分かります。"
+          : outcome.passed
+            ? "期待どおりの並びになりました。"
+            : "期待する並びと違う結果になりました。", true);
       }
+      // 公開テスト：通過・未実行はコンパクトに。
+      if (!outcome) return compactRow(input, input ? `${labels.inputLabel}：[${input.join(", ")}]。テストを実行すると、結果の棚がここに出ます。` : "");
+      if (outcome.passed) return compactRow(actual, "期待する並びと一致しました。");
+      // 不一致だけ詳細に開く。
       return <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
         {header}
         {actual && expected
@@ -100,29 +131,20 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, onShow
                 </Box>
               </Box>}
               <Box sx={{ height: 168, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
-                <BookShelfFigure values={actual} differences={differences ?? []} ghost={outcome?.passed ? undefined : expected} label={labels.actualLabel} />
+                <BookShelfFigure values={actual} differences={differences ?? []} ghost={expected} label={labels.actualLabel} />
               </Box>
               <Typography component="p" sx={{ fontSize: 14, mt: 0.75 }}>
-                {outcome?.passed
-                  ? "期待する並びと一致しました。"
-                  : differences === null
-                    ? labels.lengthMismatch
-                    : differences.length > 0
-                      ? `点線が期待する並びです。${labels.different.replace("{count}", String(differences.length))}`
-                      : labels.invalid}
+                {differences === null
+                  ? labels.lengthMismatch
+                  : differences.length > 0
+                    ? `点線が期待する並びです。${labels.different.replace("{count}", String(differences.length))}`
+                    : labels.invalid}
               </Typography>
               {/* 基本テストは「動きを見る」と同じ入力なので、失敗したらその場から再生へ行ける。 */}
-              {test.id === "D1" && outcome && !outcome.passed && onShowTrace && <Button size="small" startIcon={<VisibilityIcon />} onClick={onShowTrace}
+              {test.id === "D1" && onShowTrace && <Button size="small" startIcon={<VisibilityIcon />} onClick={onShowTrace}
                 sx={{ mt: 0.5, minHeight: 36, fontWeight: 700, color: "#2563eb" }}>自分のコードの動きを見る</Button>}
             </>
-          : input
-            ? <>
-                <Box sx={{ height: 168, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
-                  <BookShelfFigure values={input} label={labels.inputLabel} />
-                </Box>
-                <Typography component="p" sx={{ fontSize: 14, mt: 0.75 }}>{labels.inputLabel}：[{input.join(", ")}]。テストを実行すると、結果の棚がここに出ます。</Typography>
-              </>
-            : null}
+          : <Typography component="p" sx={{ fontSize: 14 }}>{labels.invalid}</Typography>}
       </Box>;
     })}
   </Box>;

@@ -83,6 +83,7 @@ export const bubbleSortImplementationContent = {
   ] satisfies ImplementationTest[],
   hints: {
     labels: ["ヒント1：使う部品を見る", "ヒント2：処理の流れを見る", "ヒント3：条件とループの骨格を見る", "ヒント4：並び替えで確認する"],
+    descriptions: ["使える変数やコードの部品を確認する", "どのような順序で処理するかを確認する", "コードの構造を確認する", "コードを並べ替えながら復習する"],
     compactLabels: ["ヒント1", "ヒント2", "ヒント3", "ヒント4"],
     variables: [
       { name: "result", description: "並び替えるための、入力をコピーしたリスト" },
@@ -138,6 +139,8 @@ export const bubbleSortImplementationContent = {
   result: {
     runsLabel: "テスト実行回数：{count}回", hintLabel: "ヒントレベル{level}：{count}回",
     title: "バブルソートマスター！",
+    celebrationHeading: "ミッション達成！",
+    celebrationText: "どんな並びでも番号順に並べ替えるコードが完成しました",
     finalButton: "単元の結果を見る",
     closing: "バブルソートのコードを完成させ、基本ケースと境界ケースのすべてのテストを通過しました。この単元の学習は完了です。",
   },

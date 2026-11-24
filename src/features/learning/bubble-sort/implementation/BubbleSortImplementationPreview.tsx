@@ -131,6 +131,19 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   const prevPassedRef = useRef(0);
   const passed = outcomes.filter(outcome => outcome.passed).length;
   const complete = !running && allTestsPassed(content.tests, outcomes);
+  // コードを編集しても、前回の結果は「前回」と明示して残す（進歩の実感を消さない）。
+  // 判定・完了は常に現在の outcomes だけで決める。書き方を変えたら前回も消える。
+  const displayOutcomes = running || outcomes.length > 0 ? outcomes : lastOutcomes;
+  const staleResults = !running && outcomes.length === 0 && lastOutcomes.length > 0;
+  const displayPassed = displayOutcomes.filter(outcome => outcome.passed).length;
+  const focusErrorLine = (line: number) => {
+    const instance = editor.current;
+    if (!instance) return;
+    setErrorLine(line);
+    instance.revealLineInCenter(line);
+    instance.setPosition({ lineNumber: line, column: 1 });
+    instance.focus();
+  };
   const prepare = useCallback(async () => {
     const current = ++generation.current;
     setRuntime("loading");
@@ -279,16 +292,18 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 2 }}>
               <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>{complete ? "ミッション達成" : "ミッション達成まで"}</Typography>
               <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>
-                <Box component="span" sx={{ color: passed > 0 ? "#16a34a" : "inherit" }}>{passed}</Box> / {content.tests.length}
+                <Box component="span" sx={{ color: displayPassed > 0 && !staleResults ? "#16a34a" : "inherit" }}>{staleResults ? "前回 " : ""}{displayPassed}</Box> / {content.tests.length}
               </Typography>
             </Box>
+            {staleResults && <Typography component="p" sx={{ fontSize: 14, mt: 0.25 }}>前回のテスト結果です。コードが変更されています。再実行すると更新されます。</Typography>}
             <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${content.tests.length}, minmax(0, 1fr))`, gap: 1, mt: 0.5 }}>
               {content.tests.map(test => {
-                const outcome = outcomes.find(item => item.id === test.id);
+                const outcome = displayOutcomes.find(item => item.id === test.id);
                 const state = !outcome ? "todo" : outcome.passed ? "passed" : outcome.error ? "error" : "failed";
                 return <Box key={test.id} sx={{ minWidth: 0 }}>
                   <Box aria-hidden sx={{ height: 8, borderRadius: 999,
-                    ...(state === "passed" ? { bgcolor: "#16a34a" }
+                    ...(state === "passed" && staleResults ? { bgcolor: "#fff", border: "2px solid #16a34a" }
+                      : state === "passed" ? { bgcolor: "#16a34a" }
                       : state === "todo" ? { bgcolor: "#e5e7eb" }
                       : { bgcolor: "#fff", border: "2px solid #111827" }) }} />
                   <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mt: 0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -317,6 +332,9 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                   {content.templates[candidate].split("\n").slice(0, 7).join("\n")}
                   {content.templates[candidate].split("\n").length > 7 ? "\n…" : ""}
                 </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
+                  <Typography component="span" sx={{ fontSize: 15, fontWeight: 800, color: "#2563eb" }}>この書き方で始める →</Typography>
+                </Box>
               </Button>
             ))}
           </Box>
@@ -337,7 +355,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
       </Box>}
       <>
         <Box data-editor-workspace sx={{ flex: 1, minHeight: 0, overflowY: { xs: "auto", md: "hidden" }, display: { xs: "block", md: "grid" }, gridTemplateColumns: "minmax(0, 1.5fr) minmax(340px, 1fr)", gap: 2 }}>
-          <Box aria-label={text.code} sx={{ minWidth: 0, minHeight: { xs: 360, md: 0 }, height: { xs: "70dvh", md: "100%" }, display: "flex", flexDirection: "column", border: `2px solid ${colors.focus}`, borderRadius: 1.5, overflow: "hidden", bgcolor: colors.panel,
+          <Box aria-label={text.code} sx={{ minWidth: 0, minHeight: { xs: 360, md: 0 }, height: { xs: "70dvh", md: "100%" }, display: "flex", flexDirection: "column", border: "2px solid #dbe3ef", "&:focus-within": { borderColor: "#2563eb" }, borderRadius: 1.5, overflow: "hidden", bgcolor: colors.panel,
             "& .monaco-editor .monaco-scrollable-element, & .monaco-editor .view-lines, & .monaco-editor .inputarea": { cursor: learningEditorTextCursor } }}>
             <Box role="group" aria-label={text.panel} sx={{ flexShrink: 0, p: 1, bgcolor: colors.panelAlt, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
               <Typography component="p" sx={{ fontWeight: 800, fontSize: 16, mr: 0.5, pt: 1.25 }}>{text.code}</Typography>
@@ -367,7 +385,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
 
               <Editor height="100%" language="python" theme={LEARNING_EDITOR_THEME} beforeMount={setupLearningEditor} value={code} loading={content.status.editorLoading}
                 onMount={instance => { editor.current = instance; setEditorReady(true); }}
-                onChange={next => { setCode(next ?? ""); setOutcomes([]); setLastOutcomes([]); setTraceError(null); setFreeResult(null); setErrorLine(undefined); }}
+                onChange={next => { setCode(next ?? ""); setOutcomes([]); setTraceError(null); setFreeResult(null); setErrorLine(undefined); }}
                 options={{ fontSize: 16, lineHeight: 29, fontFamily: "monospace", minimap: { enabled: false }, tabSize: 4, insertSpaces: true,
                   readOnly: busy, automaticLayout: true, scrollBeyondLastLine: false, lineNumbersMinChars: 2, wordWrap: "on", padding: { top: 8, bottom: 8 } }} />
             </Box>
@@ -381,7 +399,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Tabs>
             <Box role="tabpanel" hidden={panel !== "tests"} id={`${panelId}-tests-panel`} aria-labelledby={`${panelId}-tests`}
               sx={{ display: panel === "tests" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
-              <ImplementationResults outcomes={outcomes} diagnostics={running ? outcomes : lastOutcomes} onShowTrace={() => void runTrace()} />
+              <ImplementationResults outcomes={displayOutcomes} diagnostics={staleResults ? [] : running ? outcomes : lastOutcomes} stale={staleResults} code={code} onFocusLine={focusErrorLine} onShowTrace={() => void runTrace()} />
             </Box>
             <Box role="tabpanel" hidden={panel !== "console"} id={`${panelId}-console-panel`} aria-labelledby={`${panelId}-console`}
               sx={{ display: panel === "console" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto" }}>
@@ -411,6 +429,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                         sx={{ minHeight: 36, px: 0.5, color: colors.text, fontWeight: 800, fontSize: 16, textTransform: "none", justifyContent: "flex-start", "&.Mui-disabled": { color: colors.text, opacity: 0.55 } }}>
                         {label.replace(/^ヒント\d+：/, "")}
                       </Button>
+                      <Typography component="p" sx={{ fontSize: 14 }}>{content.hints.descriptions[index]}</Typography>
                       {locked && <Typography component="p" sx={{ fontSize: 14 }}>前のヒントを使うと開きます</Typography>}
                       {open && <Box sx={{ mt: 1 }}>
                         <ImplementationHintContent level={(index + 1) as HintLevel} onInsert={token => insert(token)} />
@@ -434,11 +453,11 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
       {complete && !celebrationDismissed && <Box data-completion-celebration sx={{ position: "absolute", inset: 0, zIndex: 8, display: "grid", placeItems: "center", bgcolor: "rgba(238, 244, 252, 0.55)", p: 2 }}>
         <Box sx={{ bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 4, px: 4, py: 3.5, maxWidth: 760, width: "100%", textAlign: "center", boxShadow: 6 }}>
           <Box component="img" src="/images/mascots/red-panda/celebrate.png" alt="" sx={{ width: 120, height: 120, objectFit: "contain", mx: "auto", display: "block" }} />
-          <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, mt: 0.5 }}>{content.result.title}</Typography>
+          <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, mt: 0.5 }}>{content.result.celebrationHeading}</Typography>
           <Box sx={{ maxWidth: 520, mx: "auto", mt: 1.5, borderRadius: 2, overflow: "hidden" }}>
             <SortingShelfCelebration />
           </Box>
-          <Typography component="p" sx={{ fontSize: 16, mt: 1.5 }}>自分のコードで、本を番号順に並べ替えられました</Typography>
+          <Typography component="p" sx={{ fontSize: 16, mt: 1.5 }}>{content.result.celebrationText}</Typography>
           <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, mt: 1 }}>{passed} / {content.tests.length}　<Box component="span" sx={{ fontSize: 16, fontWeight: 800 }}>すべてのテストを通過</Box></Typography>
           <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", mt: 2.5, flexWrap: "wrap" }}>
             {onShowFinalResult && <Button variant="contained" onClick={onShowFinalResult}
