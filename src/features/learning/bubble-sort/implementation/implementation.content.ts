@@ -76,7 +76,7 @@ export const bubbleSortImplementationContent = {
   templates: levelTemplates,
   tests: [
     testCase("D1", "基本（動きの説明の並び）", "display", bubbleSortMainValues),
-    testCase("D2", "転移（応用問題の並び）", "display", bubbleSortTransferValues),
+    testCase("D2", "応用（別の並び）", "display", bubbleSortTransferValues),
     testCase("J1", "重複あり", "judgement", [3, 1, 3, 2]),
     testCase("J2", "逆順", "judgement", [5, 4, 3, 2, 1]),
     testCase("J3", "並び済み", "judgement", [1, 2, 3, 4]),
@@ -113,12 +113,18 @@ export const bubbleSortImplementationContent = {
     expectedLabel: "期待する並び", actualLabel: "実際の並び", noOutput: "—",
     invalid: "数値のリストではありません", lengthMismatch: "リストの長さが期待と違います",
     different: "期待と違う場所：{count}個",
-    statuses: { passed: { icon: "✓", label: "通過" }, failed: { icon: "×", label: "未通過" }, unexecuted: { icon: "○", label: "未実行" } },
+    statuses: { passed: { icon: "✓", label: "通過" }, failed: { icon: "×", label: "不一致" }, unexecuted: { icon: "○", label: "未実行" },
+      errorSyntax: { icon: "!", label: "実行不可" }, errorRuntime: { icon: "!", label: "実行エラー" }, errorTimeout: { icon: "!", label: "タイムアウト" } },
     messages: {
       syntax: "文法エラーのため実行できていないテストがあります。",
       runtime: "実行時エラーが起きているテストがあります。",
       timeout: "実行が終わらないテストがあります（無限ループの可能性があります）。",
       mismatch: "実行はできていますが、結果が期待と違うテストがあります。",
+    },
+    guidance: {
+      syntax: "括弧の対応や、式が途中で終わっていないか確認してみましょう。",
+      runtime: "エラーの起きた行で、変数の値がどうなっているか確認してみましょう。",
+      timeout: "繰り返しが終わる条件を確認してみましょう。",
     },
     lineNote: "（{line}行目付近）",
   },

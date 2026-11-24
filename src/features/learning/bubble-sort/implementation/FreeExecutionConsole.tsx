@@ -12,13 +12,13 @@ export function FreeExecutionConsole({ result, busy }: { result: FreeExecutionRe
     {!result ? <Typography component="p">{busy ? text.running : text.empty}</Typography> : <>
       <Typography component="p" role="status" data-free-error-kind={result.error ?? undefined} data-free-error-line={errorLine} sx={{ fontWeight: 700, mb: 2 }}>{result.error ? text.errors[result.error] + (errorLine ? text.errorLineSuffix.replace("{line}", String(errorLine)) : "") : text.success}</Typography>
       {result.error === "syntax" && <Typography component="p" sx={{ mb: 2 }}>{text.syntaxNote}</Typography>}
+      {result.returned && <>
+        <Typography component="h3" sx={{ fontSize: 16, fontWeight: 700 }}>{text.returned}</Typography>
+        <Box data-free-return sx={{ mt: 1, mb: 2 }}><ArrayOutput expected={freeDisplayCase?.expected} actual={result.actual} height={260} /></Box>
+      </>}
       <Typography component="h3" sx={{ fontSize: 16, fontWeight: 700 }}>{text.stdout}</Typography>
       <Box component="pre" data-free-stdout sx={{ fontFamily: "monospace", fontSize: 16, whiteSpace: "pre-wrap", overflowWrap: "anywhere", my: 1 }}>{result.stdout || text.noOutput}</Box>
       {result.outputTruncated && <Typography component="p">{text.truncated.replace("{limit}", String(freeOutputLimit))}</Typography>}
-      {result.returned && <>
-        <Typography component="h3" sx={{ mt: 2, fontSize: 16, fontWeight: 700 }}>{text.returned}</Typography>
-        <Box data-free-return sx={{ mt: 1 }}><ArrayOutput expected={freeDisplayCase?.expected} actual={result.actual} height={260} /></Box>
-      </>}
     </>}
   </Box>;
 }

@@ -20,6 +20,7 @@ import { DrawnCheck } from "../../app/DrawnCheck";
 import { ResultConfetti } from "../../app/ResultConfetti";
 import { useSoundEffect } from "../../../../app/component/soundFeedback";
 import { useErrorLineDecoration } from "../../../../hooks/useErrorLineDecoration";
+import { useTodoLineDecoration } from "../../../../hooks/useTodoLineDecoration";
 import { playerTokens } from "../../player/player.tokens";
 import { BubbleSortTraceDialog } from "../trace/BubbleSortTraceDialog";
 import { traceBubbleSortCode } from "../trace/acquireTrace";
@@ -117,6 +118,12 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   const editor = useRef<Parameters<OnMount>[0] | null>(null);
   const [errorLine, setErrorLine] = useState<number | undefined>(undefined);
   useErrorLineDecoration(editor, editorReady, errorLine);
+  // 骨格・穴埋めの「ここを書く」行は、書くべき場所として行ごと目印を付ける。
+  const todoLines = code.split("\n").flatMap((line, index) => line.includes("ここを書く") ? [index + 1] : []);
+  useTodoLineDecoration(editor, editorReady, todoLines);
+  // 紙吹雪と歓声は、モーダル内の棚が並び終わる瞬間に合わせる（達成演出の順序）。
+  const reduceMotion = useReducedMotion();
+  const [confettiReady, setConfettiReady] = useState(false);
   const lock = useRef(false);
   const generation = useRef(0);
   const completedRef = useRef(false);
@@ -135,6 +142,13 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
     void prepare();
     return () => { lifetime.current++; disposePyodideRunner(); };
   }, [prepare]);
+  useEffect(() => {
+    if (!complete) { setConfettiReady(false); return; }
+    if (reduceMotion) { setConfettiReady(true); return; }
+    // 棚の演出は開始0.7秒＋バネの移動で約1.85秒。整列しきった所で撃つ。
+    const timer = setTimeout(() => setConfettiReady(true), 1850);
+    return () => clearTimeout(timer);
+  }, [complete, reduceMotion]);
   // 全テスト通過した瞬間だけ単元フローへ通知する。
   useEffect(() => {
     if (complete && !completedRef.current) {
@@ -233,7 +247,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
     if (busy || next === level) return;
     onLearningEvent?.({ eventType: "implementation_level_select", payload: { level: next, previousLevel: level } });
     selectLevel(next);
-    setOutcomes([]); setTraceError(null); setFreeResult(null);
+    setOutcomes([]); setLastOutcomes([]); setTraceError(null); setFreeResult(null);
   };
   return <Box component={embedded ? "div" : "main"} sx={{ height: embedded ? "100%" : "100dvh", minHeight: 0, bgcolor: colors.background, color: colors.text, p: { xs: 1, sm: 2 } }}>
     <Box component="section" aria-label="バブルソートの自分で実装"
@@ -248,18 +262,45 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
         const mission = findUnitMission("course-algorithm-bubble-sort-v2");
         const thumbnail = missionThumbnailFor("course-algorithm-bubble-sort-v2");
         if (!mission || !thumbnail) return null;
-        return <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2, border: "2px solid #2563eb", borderRadius: 3, bgcolor: "#fff", px: 2, py: 1.25 }}>
-          <Box aria-hidden sx={{ width: 150, flexShrink: 0, borderRadius: 1.5, overflow: "hidden" }}>{thumbnail}</Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-              <Chip label="単元ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
-              <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>{mission.title}</Typography>
+        return <Box sx={{ flexShrink: 0, border: "2px solid #2563eb", borderRadius: 3, bgcolor: "#fff", px: 2, py: 1.25 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box aria-hidden sx={{ width: 150, flexShrink: 0, borderRadius: 1.5, overflow: "hidden" }}>{thumbnail}</Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Chip label="単元ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
+                <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>{mission.title}</Typography>
+              </Box>
+              <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>達成の条件：{mission.successCondition}。下のテストは、その確認です。</Typography>
             </Box>
-            <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>達成の条件：{mission.successCondition}。下のテストは、その確認です。</Typography>
+          </Box>
+          {/* 進捗はミッションの一部として見せる：テストの通過ではなく、
+              ミッション達成に近づいていることが大きな数字と帯で分かる。 */}
+          <Box role="status" aria-live="polite" sx={{ borderTop: "1px solid #dbe3ef", mt: 1.25, pt: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 2 }}>
+              <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>{complete ? "ミッション達成" : "ミッション達成まで"}</Typography>
+              <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>
+                <Box component="span" sx={{ color: passed > 0 ? "#16a34a" : "inherit" }}>{passed}</Box> / {content.tests.length}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${content.tests.length}, minmax(0, 1fr))`, gap: 1, mt: 0.5 }}>
+              {content.tests.map(test => {
+                const outcome = outcomes.find(item => item.id === test.id);
+                const state = !outcome ? "todo" : outcome.passed ? "passed" : outcome.error ? "error" : "failed";
+                return <Box key={test.id} sx={{ minWidth: 0 }}>
+                  <Box aria-hidden sx={{ height: 8, borderRadius: 999,
+                    ...(state === "passed" ? { bgcolor: "#16a34a" }
+                      : state === "todo" ? { bgcolor: "#e5e7eb" }
+                      : { bgcolor: "#fff", border: "2px solid #111827" }) }} />
+                  <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mt: 0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {state === "passed" ? "✓" : state === "error" ? "!" : state === "failed" ? "×" : "○"} {test.label.split("（")[0]}
+                  </Typography>
+                </Box>;
+              })}
+            </Box>
           </Box>
         </Box>;
       })()}
-      {complete && <ResultConfetti />}
+      {complete && confettiReady && <ResultConfetti />}
       {!started && !complete ? (
         <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: 2, py: 3, pt: { md: 5 } }}>
           <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, textAlign: "center" }}>自分のコードで、本を番号順に並べ替えよう</Typography>
@@ -290,25 +331,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           <Typography component="p" sx={{ fontSize: 14, textAlign: "center" }}>{implementationInputLevelText.note}</Typography>
         </Box>
       ) : <>
-      {/* 進捗はテスト別の状態チップで一本化する（パネル側の集計と二重にしない）。
-          どのタブを開いていても、残りが見える。 */}
-      <Box role="status" aria-live="polite" sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, flexWrap: "wrap" }}>
-        {content.tests.map(test => {
-          const outcome = outcomes.find(item => item.id === test.id);
-          const state = !outcome ? "todo" : outcome.passed ? "passed" : "failed";
-          const shortLabel = test.label.split("（")[0];
-          return <Box key={test.id} component="span" sx={{
-            display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.4, borderRadius: 999, fontSize: 14, fontWeight: 700,
-            ...(state === "passed" ? { bgcolor: "#16a34a", color: "#fff", border: "2px solid #16a34a" }
-              : state === "failed" ? { bgcolor: "#fff", color: colors.text, border: "2px solid #111827" }
-              : { bgcolor: "#fff", color: colors.text, border: "2px solid #c3cad4" }),
-          }}>{state === "passed" ? "✓" : state === "failed" ? "×" : "○"} {shortLabel}</Box>;
-        })}
-        <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, ml: 1 }}>
-          {passed === content.tests.length ? "すべてのテストを通過" : `あと${content.tests.length - passed}個のテストで達成`}
-        </Typography>
-      </Box>
-      {!complete && <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+      {!complete && <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1 }}>
         <Typography component="p" sx={{ fontSize: 15 }}>書き方：<Box component="span" sx={{ fontWeight: 800 }}>{implementationInputLevelText.levels[level].label}</Box></Typography>
         <Button size="small" onClick={() => setStarted(false)} sx={{ minHeight: 36, color: playerTokens.focus, fontWeight: 700 }}>書き方を変える</Button>
       </Box>}
@@ -316,18 +339,35 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
         <Box data-editor-workspace sx={{ flex: 1, minHeight: 0, overflowY: { xs: "auto", md: "hidden" }, display: { xs: "block", md: "grid" }, gridTemplateColumns: "minmax(0, 1.5fr) minmax(340px, 1fr)", gap: 2 }}>
           <Box aria-label={text.code} sx={{ minWidth: 0, minHeight: { xs: 360, md: 0 }, height: { xs: "70dvh", md: "100%" }, display: "flex", flexDirection: "column", border: `2px solid ${colors.focus}`, borderRadius: 1.5, overflow: "hidden", bgcolor: colors.panel,
             "& .monaco-editor .monaco-scrollable-element, & .monaco-editor .view-lines, & .monaco-editor .inputarea": { cursor: learningEditorTextCursor } }}>
-            <Box role="group" aria-label={text.panel} sx={{ flexShrink: 0, p: 1, bgcolor: colors.panelAlt, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-              <Typography component="p" sx={{ fontWeight: 800, fontSize: 16, mr: 0.5 }}>{text.code}</Typography>
-              <Button variant="outlined" startIcon={<PlayArrowIcon />} disabled={runtime !== "ready" || busy || !editorReady || !code.trim()} onClick={() => void runFree()} sx={outlinedButton}>{text.freeRun}</Button>
-              {traceButton}
-              <Button variant="contained" startIcon={<FactCheckIcon />} disabled={runtime !== "ready" || busy || !editorReady || !code.trim()} onClick={() => void run()}
-                sx={{ minHeight: 44, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke }, "&.Mui-disabled": { bgcolor: colors.button, color: colors.text, opacity: 0.45 } }}>{content.controls.run}</Button>
+            <Box role="group" aria-label={text.panel} sx={{ flexShrink: 0, p: 1, bgcolor: colors.panelAlt, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
+              <Typography component="p" sx={{ fontWeight: 800, fontSize: 16, mr: 0.5, pt: 1.25 }}>{text.code}</Typography>
+              {/* 3つの実行は役割が違う。ボタンの下に役割の一文を添えて、文言だけに頼らない。 */}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                <Button variant="outlined" startIcon={<PlayArrowIcon />} disabled={runtime !== "ready" || busy || !editorReady || !code.trim()} onClick={() => void runFree()} sx={outlinedButton}>{text.freeRun}</Button>
+                <Typography component="p" sx={{ fontSize: 13, textAlign: "center" }}>{text.buttonNotes.free}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                {traceButton}
+                <Typography component="p" sx={{ fontSize: 13, textAlign: "center" }}>{text.buttonNotes.trace}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                <Button variant="contained" startIcon={<FactCheckIcon />} disabled={runtime !== "ready" || busy || !editorReady || !code.trim()} onClick={() => void run()}
+                  sx={{ minHeight: 44, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke }, "&.Mui-disabled": { bgcolor: colors.button, color: colors.text, opacity: 0.45 } }}>{content.controls.run}</Button>
+                <Typography component="p" sx={{ fontSize: 13, textAlign: "center" }}>{text.buttonNotes.run}</Typography>
+              </Box>
+              {/* 実行環境の状態は画面下部ではなく、実行ボタンの隣で見せる（読み込み失敗を見落とさない）。 */}
+              <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1, pt: 0.75 }}>
+                <Typography component="p" role="status" sx={{ fontSize: 14, textAlign: "right" }}>
+                  {freeStatus === "preparing" ? text.preparing : freeStatus === "running" ? text.running : tracing ? bubbleSortTraceText.loading : running ? runningMessage(outcomes.length, content.tests.length) : runtime === "error" ? content.status.unavailable : content.status[runtime]}
+                </Typography>
+                {runtime === "error" && <Button onClick={() => void prepare()} sx={outlinedButton}>{content.controls.reload}</Button>}
+              </Box>
             </Box>
             <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
 
               <Editor height="100%" language="python" theme={LEARNING_EDITOR_THEME} beforeMount={setupLearningEditor} value={code} loading={content.status.editorLoading}
                 onMount={instance => { editor.current = instance; setEditorReady(true); }}
-                onChange={next => { setCode(next ?? ""); setOutcomes([]); setTraceError(null); setFreeResult(null); setErrorLine(undefined); }}
+                onChange={next => { setCode(next ?? ""); setOutcomes([]); setLastOutcomes([]); setTraceError(null); setFreeResult(null); setErrorLine(undefined); }}
                 options={{ fontSize: 16, lineHeight: 29, fontFamily: "monospace", minimap: { enabled: false }, tabSize: 4, insertSpaces: true,
                   readOnly: busy, automaticLayout: true, scrollBeyondLastLine: false, lineNumbersMinChars: 2, wordWrap: "on", padding: { top: 8, bottom: 8 } }} />
             </Box>
@@ -341,7 +381,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Tabs>
             <Box role="tabpanel" hidden={panel !== "tests"} id={`${panelId}-tests-panel`} aria-labelledby={`${panelId}-tests`}
               sx={{ display: panel === "tests" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
-              <ImplementationResults outcomes={outcomes} diagnostics={running ? outcomes : lastOutcomes} />
+              <ImplementationResults outcomes={outcomes} diagnostics={running ? outcomes : lastOutcomes} onShowTrace={() => void runTrace()} />
             </Box>
             <Box role="tabpanel" hidden={panel !== "console"} id={`${panelId}-console-panel`} aria-labelledby={`${panelId}-console`}
               sx={{ display: panel === "console" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto" }}>
@@ -351,9 +391,8 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                 段階的な支援であることが見えるよう、縦のステップ列で示す。 */}
             <Box role="tabpanel" hidden={panel !== "hints"} id={`${panelId}-hints-panel`} aria-labelledby={`${panelId}-hints`}
               sx={{ display: panel === "hints" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
-              <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>
-                実装サポート　{(() => { let unlocked = 1; for (let i = 0; i < usage.length; i += 1) { if (usage[i] > 0) unlocked = i + 2; else break; } return Math.min(unlocked, 4); })()} / 4 段階が開いています
-              </Typography>
+              <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>実装サポート</Typography>
+              <Typography component="p" sx={{ fontSize: 14, mt: 0.25, mb: 1.5 }}>困ったときは、必要な分だけヒントを使おう。</Typography>
               <Box role="group" aria-label={content.hints.groupLabel} sx={{ display: "flex", flexDirection: "column" }}>
                 {content.hints.labels.map((label, index) => {
                   const locked = index > 0 && usage[index - 1] === 0;
@@ -384,11 +423,9 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Box>
           </Box>
         </Box>
-        <Box sx={{ flexShrink: 0 }}>
-          <Typography component="p" role="status" sx={{ textAlign: "center", fontSize: 16 }}>{freeStatus === "preparing" ? text.preparing : freeStatus === "running" ? text.running : tracing ? bubbleSortTraceText.loading : running ? runningMessage(outcomes.length, content.tests.length) : runtime === "error" ? content.status.unavailable : content.status[runtime]}</Typography>
-          {running && <Typography component="p" sx={{ textAlign: "center", fontSize: 16 }}>{content.status.timeoutNotice}</Typography>}
-          {runtime === "error" && <Button onClick={() => void prepare()} sx={outlinedButton}>{content.controls.reload}</Button>}
-        </Box>
+        {running && <Box sx={{ flexShrink: 0 }}>
+          <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{content.status.timeoutNotice}</Typography>
+        </Box>}
       </>
       </>}
       {traceError && <Typography component="p" role="alert">{traceError}</Typography>}
@@ -403,7 +440,6 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           </Box>
           <Typography component="p" sx={{ fontSize: 16, mt: 1.5 }}>自分のコードで、本を番号順に並べ替えられました</Typography>
           <Typography component="p" sx={{ fontSize: 22, fontWeight: 900, mt: 1 }}>{passed} / {content.tests.length}　<Box component="span" sx={{ fontSize: 16, fontWeight: 800 }}>すべてのテストを通過</Box></Typography>
-          <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>{content.result.runsLabel.replace("{count}", String(runs))}</Typography>
           <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", mt: 2.5, flexWrap: "wrap" }}>
             {onShowFinalResult && <Button variant="contained" onClick={onShowFinalResult}
               sx={{ minHeight: 48, px: 3, bgcolor: playerTokens.focus, color: playerTokens.surface, "&:hover": { bgcolor: playerTokens.states.processing.stroke } }}>{content.result.finalButton}</Button>}

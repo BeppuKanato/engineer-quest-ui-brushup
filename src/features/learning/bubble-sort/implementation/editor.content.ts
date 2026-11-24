@@ -2,6 +2,7 @@ export const bubbleSortEditorText = {
   code: "Pythonコード", panel: "実行とテスト", testsTab: "テスト", consoleTab: "コンソール", hints: "ヒント",
   hintNames: ["使う部品", "処理の流れ", "条件とループ", "並び替え"],
   freeRun: "試しに実行", freeTitle: "主教材で試しに実行",
+  buttonNotes: { free: "結果を確認・採点なし", trace: "処理の過程を確認", run: "達成できたか確認" },
   input: "主教材の [4, 2, 5, 1, 3]（動きの説明と同じ）で実行します。", stdout: "printの出力", returned: "戻り値（並び替えたリスト）",
   empty: "試しに実行でprintの出力と並び替えたリストを確認できます。", noOutput: "出力はありません。",
   preparing: "試し実行の準備をしています。", running: "主教材で試し実行中です。",
