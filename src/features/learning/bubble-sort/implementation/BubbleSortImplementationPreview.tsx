@@ -11,6 +11,8 @@ import { ImplementationLevelSelector } from "../../implementation/Implementation
 import type { ImplementationInputLevel } from "../../implementation/inputLevel";
 import { useImplementationInputLevel } from "../../implementation/useImplementationInputLevel";
 
+import FlagIcon from "@mui/icons-material/Flag";
+import { findUnitMission } from "../../app/missionRegistry";
 import { DrawnCheck } from "../../app/DrawnCheck";
 import { ResultConfetti } from "../../app/ResultConfetti";
 import { useSoundEffect } from "../../../../app/component/soundFeedback";
@@ -181,6 +183,19 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
       <Typography component="p" sx={{ textAlign: "center", fontWeight: 700, fontSize: "clamp(18px, 1.5vw, 24px)", flexShrink: 0 }}>
         {content.caption}
       </Typography>
+      {/* 最終チャレンジは単元ミッションの達成そのもの（再設計 2026-11-22）。
+          画面の冒頭で、単元画面・提示と同じミッションと達成の条件を出す。 */}
+      {(() => {
+        const mission = findUnitMission("course-algorithm-bubble-sort-v2");
+        if (!mission) return null;
+        return <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 1.5, border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", px: 2, py: 1 }}>
+          <FlagIcon aria-hidden sx={{ color: "#2563eb", fontSize: 22, flexShrink: 0 }} />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>単元ミッション：{mission.title}</Typography>
+            <Typography component="p" sx={{ fontSize: 14 }}>達成の条件：{mission.successCondition}。下のテストは、その確認です。</Typography>
+          </Box>
+        </Box>;
+      })()}
       {complete && <ResultConfetti />}
       <Typography component="p" role="status" aria-live="polite" sx={{ textAlign: "center", fontSize: 16, flexShrink: 0 }}>{passed}/{content.tests.length} 本通過</Typography>
       <LinearProgress aria-label="テスト通過数" variant="determinate" value={passed / content.tests.length * 100}

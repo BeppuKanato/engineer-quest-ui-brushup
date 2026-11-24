@@ -71,7 +71,7 @@ const levelTemplates: Readonly<Record<ImplementationInputLevel, string>> = {
 
 export const bubbleSortImplementationContent = {
   version: 1, id: "bubble-sort-implementation", phase: 7,
-  caption: "数を小さい順に並び替えるコードを完成させ、実行して確かめましょう。",
+  caption: "どんな並びでも番号順に並び替えるコードを完成させて、ミッションを達成しましょう。",
   template: fullTemplate,
   templates: levelTemplates,
   tests: [
