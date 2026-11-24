@@ -128,12 +128,13 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
     startFeedback("phase", phaseFeedbackEventId(phaseKey, nextPhaseKey));
   }, [startFeedback, phaseFeedbackEventId]);
   // 大目標は再設計で廃止（2026-11-22 決定）。フィードバック画面へ目標サマリは渡さない。
-  const renderPhaseFeedbackScreen = useCallback((phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode }) => {
+  const renderPhaseFeedbackScreen = useCallback((phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode; scene?: ReactNode }) => {
     const phase = unit.phases.find(item => item.id === phaseKey);
     return <FeedbackScreen kind="phase" eventId={phaseFeedbackEventId(phaseKey, nextPhaseKey)}
       heading={phase ? `${phase.formalName}のフィードバック` : "フィードバック"}
       header={nav.header}
       summary={nav.summary}
+      scene={nav.scene}
       nextPhaseKey={nextPhaseKey}
       onAction={href => {
         if (!href) return false;

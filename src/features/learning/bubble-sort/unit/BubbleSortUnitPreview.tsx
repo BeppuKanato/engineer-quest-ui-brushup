@@ -14,6 +14,7 @@ import { AnswerFeedbackNotice } from "../../assessment/AnswerFeedback";
 import { PhaseBridgeScreen } from "../../bfs/unit/PhaseBridgeScreen";
 
 import { playerTokens } from "../../player/player.tokens";
+import { buildCorrectedScene } from "./CorrectedScene";
 import { BubbleSortCheckPreview } from "../check/BubbleSortCheckPreview";
 import { BubbleSortCodeCheckPreview } from "../code-check/BubbleSortCodeCheckPreview";
 import { BubbleSortCodeMappingPreview } from "../code-mapping/BubbleSortCodeMappingPreview";
@@ -66,7 +67,7 @@ export type BubbleSortUnitPreviewProps = {
   onCheckPhaseCompleted?: (phaseKey: string, nextPhaseKey: string | null) => void;
   /** フィードバックがこの学習者に適用される見込みがあるか。false の間は結果画面の前進が従来のブリッジへ向かう。 */
   feedbackEnabled?: boolean;
-  renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode }) => ReactNode;
+  renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode; scene?: ReactNode }) => ReactNode;
   renderUnitFeedbackScreen?: (nav: { goBack: () => void; figure: ReactNode }) => ReactNode;
 };
 export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0, initialFurthestIndex, initialUnitComplete = false, initialCompletedPhases = [], initialSummaries = {}, codeDraftBaseKey, onCodeDraftError, onPhaseComplete, onFinalResult, onLearningEvent, rewards, renderRewards, renderPhaseAchievements, renderNewAchievements, renderPhaseGoalAchievement, renderFinalGoalAchievement, onCheckPhaseCompleted, feedbackEnabled = false, renderPhaseFeedbackScreen, renderUnitFeedbackScreen }: BubbleSortUnitPreviewProps = {}) {
@@ -307,6 +308,8 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
           summary: isCheckPhase(bubbleSortUnitPhases[screen.index]) ? (
             <PhaseResultSummaryLine summary={summaries[screen.index]} />
           ) : undefined,
+          // ログと結び付けた場面は、形が作れるフェーズ3だけ（5はコード行の形になる）
+          scene: screen.index === 2 ? buildCorrectedScene(summaries[screen.index]) ?? undefined : undefined,
         })}
         {screen.kind === "bridge" && (
           <PhaseBridgeScreen phase={bubbleSortUnitPhases[screen.index]} onProceed={() => proceedFromBridge(screen.index)} />

@@ -50,7 +50,7 @@ const primaryButtonSx = {
  * フィードバックが適用されない学習者（割り当てなし等）では、
  * 称賛の段が終わるのを待ってから onUnavailable で本来の導線へ進める。
  */
-export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPhaseKey, onAction, onProceed, proceedLabel, onUnavailable, children }: {
+export function FeedbackScreen({ kind, eventId, heading, header, summary, scene, nextPhaseKey, onAction, onProceed, proceedLabel, onUnavailable, children }: {
   kind: Extract<FeedbackV1Kind, "phase" | "unit">;
   eventId: string;
   heading: string;
@@ -58,6 +58,8 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   header?: ReactNode;
   /** 第1段の結果の要約。第2段の頭に小さく引き継ぐ（連続性）。 */
   summary?: ReactNode;
+  /** ログと結び付けた学習場面（呼び出し側が記録から組み立てる）。称賛カードの根拠として中に入る。 */
+  scene?: ReactNode;
   /** 次のフェーズのキー。推薦先がこれと一致する場合は「選択」ではなく次そのものとして出す。 */
   nextPhaseKey?: string | null;
   // Called when the recommended action is clicked. Return true to handle the
@@ -147,7 +149,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
   useEffect(() => { if (spotlightActive) hadSpotlightRef.current = true; }, [spotlightActive]);
   useEffect(() => {
     if (!spotlightActive) return;
-    const t = setTimeout(() => setSpotlightDone(true), 1700);
+    const t = setTimeout(() => setSpotlightDone(true), 1500);
     return () => clearTimeout(t);
   }, [spotlightActive]);
   useEffect(() => {
@@ -157,7 +159,7 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
     if (spotlightActive) { setBeat("celebrate"); return; }
     const timers: ReturnType<typeof setTimeout>[] = [];
     const at = (rowIndex: number, s: "celebrate" | "thinking" | "point") =>
-      timers.push(setTimeout(() => setBeat(s), (0.3 + rowIndex * 0.95 + 0.2) * 1000));
+      timers.push(setTimeout(() => setBeat(s), (rowDelay(rowIndex) + 0.2) * 1000));
     if (praise && !hadSpotlightRef.current) at(0, "celebrate");
     const impIdx = sections.findIndex(s => s.label === "改善点");
     if (impIdx >= 0) at(impIdx + rowOffset, "thinking");
@@ -241,6 +243,8 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
                       : { initial: false, animate: { opacity: 1 } })}>
                       <Typography sx={{ fontSize: 18, fontWeight: f?.praiseHeadline ? 500 : 700, lineHeight: 1.8 }}>{praise}</Typography>
                     </motion.div>
+                    {/* 根拠の場面：記録から組み立てた学習場面を、称賛の根拠として同じ面の中に出す */}
+                    {scene}
                   </motion.div>
                 </RevealRow>}
                 {sections.map((section, i) => (
@@ -370,15 +374,20 @@ function FeedbackCard({ label, body, headline }: { label: string; body: string; 
  * 本文は常時DOMにあり、演出は出現の動きだけ（読めない状態は作らない）。
  * OSの「動きを減らす」設定では全て即時表示にする。
  */
+/** 段階表示の歩調（秒）。最初の行は受け渡しの直後、以降は短い間隔で続く。 */
+function rowDelay(index: number) {
+  return index === 0 ? 0.35 : 0.35 + index * 0.27;
+}
+
 function RevealRow({ children, index = 0, last = false, fast = false }: { children: ReactNode; index?: number; last?: boolean; fast?: boolean }) {
   const reduce = useReducedMotion();
-  // 読み進める順に1つずつ出す（2026-11-23 改訂）。以前は全行がほぼ同時に出て
-  // 「いっぺんに出すだけ」だった。タップは不要で、全コンテンツは最初から
-  // DOM にある。受け渡し（0〜0.35s）のあと praise から 0.95s 間隔で続く
-  // （0.55s では出現の速さが読む速さを追い越す、という GPT レビューの指摘で
-  // 延長）。左の線も同じ歩調で上から満ちていく。全行が出そろうまで約5秒。
+  // 読み進める順に1つずつ出す（2026-11-23 改訂）。歩調は 2026-11-24 に再改訂：
+  // 当初 0.95s 間隔（全行で約5秒）は「出現ペースが読書を待たせる」という
+  // GPT レビュー #6 の指摘で圧縮。要約層（見出しだけ）になった今、読む量は
+  // 減っているので、最初の行を 0.35s、以降を 0.27s 間隔にし、全行が
+  // 約1.5秒で出そろうようにした。左の線も同じ歩調で上から満ちていく。
   // fast（画面タップ）では残りを即時に出す——繰り返し見る学習者の待ち時間をなくす。
-  const delay = reduce || fast ? 0 : 0.3 + index * 0.95;
+  const delay = reduce || fast ? 0 : rowDelay(index);
   // fast のときは呼び出し側が key を変えて再マウントするので、初期値を最終状態にして即時表示にする
   // （進行中の遅延アニメーションは transition の差し替えだけでは止まらないため）。
   const instant = reduce || fast;
