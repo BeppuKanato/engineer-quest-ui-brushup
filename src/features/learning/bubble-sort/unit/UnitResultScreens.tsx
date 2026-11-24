@@ -308,7 +308,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
       </Box>
     </Box>
-    <UnitPathMiniMap count={bubbleSortUnitPhases.length} />
+    <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 880 }}>
       {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} sub={tile.sub} />)}

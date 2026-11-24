@@ -24,7 +24,7 @@ const starPoints = (cx: number, cy: number, r: number) =>
  * 操作は持たず、内訳は下のフェーズ別行が担うため装飾として扱う。
  * 動きを減らす設定では最初から灯し切った状態を出す。
  */
-export function UnitPathMiniMap({ count }: { count: number }) {
+export function UnitPathMiniMap({ count, labels }: { count: number; labels?: readonly string[] }) {
   const reduced = useReducedMotion();
   if (count < 1) return null;
   const points = Array.from({ length: count }, (_, index) => wavePoint(count === 1 ? 0 : index / (count - 1)));
@@ -66,6 +66,16 @@ export function UnitPathMiniMap({ count }: { count: number }) {
             <text x={point.x} y={point.y} textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={800} fill={playerTokens.surface}>{index + 1}</text>
           )}
         </motion.g>
+        {labels?.[index] && (
+          // 番号が何の段階かを示すフェーズ名（2026-11-24）。ノードの下に置き、
+          // 軌跡と重なる箇所は白の縁取りで文字を浮かせる。点灯に合わせて出す。
+          <motion.text x={point.x} y={point.y + 76} textAnchor="middle" fontSize={25} fontWeight={700}
+            fill={playerTokens.text} stroke="#ffffff" strokeWidth={6} strokeLinejoin="round" style={{ paintOrder: "stroke" }}
+            initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: reduced ? 0 : 0.3, delay: reduced ? 0 : reachDelay(index) }}>
+            {labels[index]}
+          </motion.text>
+        )}
       </g>)}
     </svg>
   </Box>;
