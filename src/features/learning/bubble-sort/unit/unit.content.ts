@@ -79,7 +79,7 @@ export const nextPhaseLabel = (phase: BubbleSortUnitPhase): string => {
 export const bubbleSortUnitText = {
   navLabel: "この単元の流れ",
   finalChip: "単元リザルト",
-  finalHeading: "バブルソートの学習を完了しました",
+  finalHeading: "バブルソート修了！",
   summaryHeading: "この単元の到達状況",
   reviewNote: "気になる段階は、上のナビゲーションからいつでも戻って復習できます。",
   backToCourses: "コース一覧に戻る",

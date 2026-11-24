@@ -34,7 +34,7 @@ export function UnitPathMiniMap({ count }: { count: number }) {
     initial={{ scale: 1 }}
     animate={reduced ? { scale: 1 } : { scale: [1, 1.05, 1.03] }}
     transition={reduced ? { duration: 0 } : { duration: 0.6, delay: 0.15 + DRAW_SECONDS + 0.1, times: [0, 0.55, 1], ease: "easeOut", repeat: 0 }}
-    sx={{ width: "100%", maxWidth: 640 }}>
+    sx={{ width: "100%", maxWidth: 880 }}>
     <svg viewBox={`0 0 ${WAVE.width} ${WAVE.height}`} width="100%" style={{ display: "block" }}>
       <path d={wavePath(1)} fill="none" stroke="#c3d4ec" strokeWidth={9} strokeLinecap="round" />
       <motion.path d={wavePath(1)} fill="none" stroke={playerTokens.focus} strokeWidth={9} strokeLinecap="round"

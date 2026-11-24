@@ -1,6 +1,11 @@
 "use client";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import BuildIcon from "@mui/icons-material/Build";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import FlagIcon from "@mui/icons-material/Flag";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import SchoolIcon from "@mui/icons-material/School";
+import StarsIcon from "@mui/icons-material/Stars";
 import { Box, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
@@ -11,7 +16,12 @@ import { useLearningVisit } from "../../hooks/useLearningVisit";
 import { presentationFor, achievementText as text } from "./presentation";
 
 /** 表示に必要な項目だけを持つ。API 固有の追加メタデータは要求しない。 */
-export type AchievementPresentationItem = { id: string; title: string; description: string; rarity: string };
+export type AchievementPresentationItem = { id: string; title: string; description: string; rarity: string; iconKey?: string };
+
+/** 実績マスタの iconKey → アイコン（掲示板の著者表示と同じ対応）。無いキーはトロフィー。 */
+const achievementIcons: Record<string, typeof EmojiEventsIcon> = {
+  build: BuildIcon, course: SchoolIcon, challenge: FlagIcon, perfect: StarsIcon, knowledge: MenuBookIcon,
+};
 
 /**
  * 解除された瞬間の実績1件（#333）。カード出現と同じ語彙（レアリティ色・放射・グロー）で、
@@ -28,12 +38,13 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey,
   // 獲得感はレアリティで差をつける（2026-11-24）：高いレアリティほどトロフィーを
   // 大きくし、登場の縮小率（spec.scale）も大きくする。発光・放射は従来どおり spec 依存。
   const badgeSize = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
+  const Icon = (item.iconKey && achievementIcons[item.iconKey]) || EmojiEventsIcon;
   const badge = <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize }}>
     {!reduced && Array.from({ length: spec.rays }, (_, i) => <Box key={i} component={motion.span} aria-hidden
       initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.7, 0], scale: [0.6, 1.4, 1.8] }} transition={{ duration: 0.7, delay: delay + 0.1 + i * 0.035 }}
       sx={{ position: "absolute", left: `${50 + 62 * Math.cos(i * 2 * Math.PI / spec.rays)}%`, top: `${50 + 62 * Math.sin(i * 2 * Math.PI / spec.rays)}%`, color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Box>)}
     <Box sx={{ width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
-      <EmojiEventsIcon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
+      <Icon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
     </Box>
   </Box>;
   const texts = <Box sx={{ minWidth: 0 }}>
@@ -93,7 +104,7 @@ export function AchievementBand({ items, phaseKey, onEvent, placement = "phase-r
 /** 最終リザルトの「新しい実績」ゾーン（#333）。フェーズ7と単元完了で解除された分を1件ずつ出す。 */
 export function NewAchievementZone({ items, onEvent }: { items: readonly AchievementPresentationItem[]; onEvent?: LearningObserver }) {
   if (!items.length) return null;
-  return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 640, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
+  return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 880, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
     <Typography component="h2" sx={{ fontWeight: 800, fontSize: 22, mb: 2 }}>{text.newAchievements}</Typography>
     <UnlockList items={items} stagger={0.35} onEvent={onEvent} placement="unit-result-new" layout="card" />
   </Box>;
@@ -109,7 +120,7 @@ export function NextAchievementRow({ title, description, rarity, progress, goal 
   title: string; description: string; rarity: string; progress: number; goal: number;
 }) {
   const tone = presentationFor(rarity).tone;
-  return <Box component="section" aria-label="次の実績" data-next-achievement sx={{ width: "100%", maxWidth: 640, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
+  return <Box component="section" aria-label="次の実績" data-next-achievement sx={{ width: "100%", maxWidth: 880, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
     <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 1.5 }}>
       <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>次の実績</Typography>
       <Typography component="a" href="/achievements" sx={{ fontSize: 14, fontWeight: 700, color: "#2563eb", textDecoration: "none", whiteSpace: "nowrap" }}>実績一覧を見る</Typography>

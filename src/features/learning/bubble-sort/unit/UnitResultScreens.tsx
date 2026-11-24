@@ -281,9 +281,10 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const implementation = summaries[bubbleSortUnitPhases.length - 1];
   const hintTotal = (implementation?.hintUsage ?? []).reduce((sum, count) => sum + count, 0);
   const tiles: { label: string; value: string; sub?: string }[] = [];
-  if (questionTotal > 0) tiles.push({ label: "正解（確認問題・応用問題）", value: `${eventuallyTotal} / ${questionTotal} 問`, sub: `初回で正解 ${firstCorrectTotal} 問` });
-  if (implementation?.testRuns !== undefined) tiles.push({ label: "自分で実装のテスト実行", value: `${implementation.testRuns} 回` });
-  if (implementation?.hintUsage !== undefined) tiles.push({ label: "ヒント使用", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用" });
+  // 数値には達成としての意味を添える（2026-11-24）。どの値でも肯定として読める文にする。
+  if (questionTotal > 0) tiles.push({ label: "正解（確認問題・応用問題）", value: `${eventuallyTotal} / ${questionTotal} 問`, sub: eventuallyTotal === questionTotal ? `全問正解・初回で正解 ${firstCorrectTotal} 問` : `初回で正解 ${firstCorrectTotal} 問` });
+  if (implementation?.testRuns !== undefined) tiles.push({ label: "自分で実装のテスト実行", value: `${implementation.testRuns} 回`, sub: implementation.testRuns === 1 ? "一発でクリア" : implementation.testRuns > 1 ? "試行錯誤してクリア" : undefined });
+  if (implementation?.hintUsage !== undefined) tiles.push({ label: "ヒント使用", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", sub: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 2 }}>
@@ -296,7 +297,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
     {/* 称賛の担い手はマスコット（2026-11-24、Kanato は賞賛あり派）。紙吹雪・音は
         モーダルに譲り、ここでは表情・大きさ・一言で称賛を出す。 */}
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 640 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 880 }}>
       <MascotFigure mascotId="red-panda" alt="相棒" size="L" state="celebrate" motion="float" grounding="shadow" />
       <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
         <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
@@ -304,12 +305,12 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} />
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
-    {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 640 }}>
+    {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 880 }}>
       {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
     {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
-    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 560 }}>
+    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 880 }}>
       {bubbleSortUnitPhases.map((phase, index) => {
         const line = summaryLine(index, summaries[index]);
         return <Box component="li" key={phase.id} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.75, borderBottom: `1px solid ${playerTokens.layers.layer1}` }}>
