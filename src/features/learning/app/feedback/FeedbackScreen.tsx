@@ -202,7 +202,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
               <FeedbackDelivery state={beat} />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               {spotlightActive ? (
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300, px: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, px: 2, gap: 1.5 }}>
+                  {/* 何の話か分かるよう、カードと同じ節ラベルを上に置いて枠付けする */}
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>あなたの学び</Typography>
                   <motion.div layoutId="praise-headline" transition={{ layout: { type: "spring", stiffness: 240, damping: 30 } }}>
                     <Typography sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.6, textAlign: "center" }}>{f.praiseHeadline}</Typography>
                   </motion.div>
