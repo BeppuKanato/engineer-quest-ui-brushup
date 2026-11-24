@@ -418,7 +418,7 @@ export const resolveFixture = (path: string): unknown => {
     };
   }
   // フィードバック画面の仮データ（2026-11-23）: 文面ありの状態をデザイン確認できるようにする。
-  if (key.startsWith("/feedback-v1/phase/") || key.startsWith("/feedback-v1/unit/")) return designFeedbackResult();
+  if (key.startsWith("/feedback-v1/phase/") || key.startsWith("/feedback-v1/unit/")) return designFeedbackResult(key);
   return fixtures[key];
 };
 
@@ -427,7 +427,29 @@ export const resolveFixture = (path: string): unknown => {
  * 概念スナップショットの根拠は実際に歩いた記録（1問目だけ初回誤答→見直して正解、
  * 他は初回正解）に合わせている。大目標は再設計で廃止済みのため goalSnapshot は null。
  */
-function designFeedbackResult() {
+function designFeedbackResult(key: string) {
+  // フェーズ5（コードの確認）用の文面。想定する記録は、実際に歩ける
+  // ケース（1問目コピーの行を初回誤答→見直して正解、他は初回正解）。
+  if (key.includes("code-check")) {
+    const actionHref = "/courses/roadmap/course-algorithm-bubble-sort-v2/learn?phase=bubble-sort-consolidation";
+    const nextStep = "応用問題で、コード全体の動きを自分で組み立てる";
+    const reason = "行ごとの意味は確認できたので、次は断片ではなく全体の動きとしてコードを扱うと、実装の土台になります。";
+    return {
+      id: "design-feedback-5", status: "COMPLETED", goalSnapshot: null,
+      conceptSnapshot: null,
+      feedback: {
+        praise: "最初の問題で、元のリストをそのまま使う案を一度選んだあと、その行の目的（元のリストを変えずに並び替えること）に立ち返って、コピーを作る書き方に直せました。形ではなく意味から考え直せたのが、今回いちばんの収穫です。",
+        praiseHeadline: "コピーの行を取り違えても、意味から考え直して直せた！",
+        strength: "周の回数と比べる範囲の決め方、比べる相手の指定、入れ替えの代入、返す値は、すべて初回で正しく選べています。図で見た動きが、コードの形に結びついています。",
+        strengthHeadline: "ループの範囲と入れ替えの書き方は初回で押さえている",
+        improvement: "コピーを作る行では、初回は元の変数をそのまま選んでいました。行の目的を先に言葉にすると、候補を絞れます。次の応用問題でも、行の目的から考える順番を意識してみましょう。",
+        improvementHeadline: "式を選ぶときは、その行の目的から逆算する",
+        nextGoal: "コードの断片ではなく、動き全体を自分で組み立てる",
+        nextStep, reason, actionLabel: "応用問題へ進む", actionHref,
+        recommendations: [{ candidateId: "candidate-1", nextStep, reason, actionLabel: "応用問題へ進む", actionHref }],
+      },
+    };
+  }
   const ev = (questionId: string, questionLabel: string, firstCorrect: boolean, retried: boolean) => ({
     phaseKey: "bubble-sort-check", assessmentId: "bubble-sort-check", questionId,
     tags: [] as string[], stageLabel: "動きの確認問題", questionLabel,

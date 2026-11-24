@@ -15,6 +15,7 @@ import { PhaseBridgeScreen } from "../../bfs/unit/PhaseBridgeScreen";
 
 import { playerTokens } from "../../player/player.tokens";
 import { buildCorrectedScene } from "./CorrectedScene";
+import { buildCodeBlankScene } from "./CodeBlankScene";
 import { BubbleSortCheckPreview } from "../check/BubbleSortCheckPreview";
 import { BubbleSortCodeCheckPreview } from "../code-check/BubbleSortCodeCheckPreview";
 import { BubbleSortCodeMappingPreview } from "../code-mapping/BubbleSortCodeMappingPreview";
@@ -309,7 +310,9 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
             <PhaseResultSummaryLine summary={summaries[screen.index]} />
           ) : undefined,
           // ログと結び付けた場面は、形が作れるフェーズ3だけ（5はコード行の形になる）
-          scene: screen.index === 2 ? buildCorrectedScene(summaries[screen.index]) ?? undefined : undefined,
+          scene: screen.index === 2 ? buildCorrectedScene(summaries[screen.index]) ?? undefined
+            : screen.index === 4 ? buildCodeBlankScene(summaries[screen.index]) ?? undefined
+            : undefined,
         })}
         {screen.kind === "bridge" && (
           <PhaseBridgeScreen phase={bubbleSortUnitPhases[screen.index]} onProceed={() => proceedFromBridge(screen.index)} />
