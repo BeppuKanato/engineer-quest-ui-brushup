@@ -112,7 +112,9 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
     if (stage === "feedback") {
       // 祝福の紙吹雪は段の切り替わりで収束させる（第2段は振り返りの場で、
       // 紙吹雪を持ち越すと演出の切り替わりが曖昧になる。GPT レビュー §4）。
-      if (header) confetti.reset();
+      // header 無し（単元フィードバック）でも同じ：最終結果画面の紙吹雪が
+      // 振り返りの画面に残るため、入った時点で収束させる。
+      confetti.reset();
       scrollRef.current?.scrollTo({ top: 0 });
       headingRef.current?.focus();
     }
