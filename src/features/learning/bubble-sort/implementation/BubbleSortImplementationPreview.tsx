@@ -265,9 +265,11 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   return <Box component={embedded ? "div" : "main"} sx={{ height: embedded ? "100%" : "100dvh", minHeight: 0, bgcolor: colors.background, color: colors.text, p: { xs: 1, sm: 2 } }}>
     <Box component="section" aria-label="バブルソートの自分で実装"
       sx={{ width: "100%", height: "100%", minHeight: 0, display: "flex", flexDirection: "column", gap: 1, position: "relative" }}>
-      <Typography component="p" sx={{ textAlign: "center", fontWeight: 700, fontSize: "clamp(18px, 1.5vw, 24px)", flexShrink: 0 }}>
+      {/* 作業開始後は見出し文を畳み、縦をコードに譲る（1093×614で実測：開始前は
+          エディタ表示が約3行しか残らなかった）。ミッション自体はバンドが担う。 */}
+      {!started && <Typography component="p" sx={{ textAlign: "center", fontWeight: 700, fontSize: "clamp(18px, 1.5vw, 24px)", flexShrink: 0 }}>
         {content.caption}
-      </Typography>
+      </Typography>}
       {/* 最終チャレンジは単元ミッションの達成そのもの（再設計 2026-11-22）。
           「同じ課題だ」と分かるよう、単元画面のミッションバンドと同一の
           サムネイル・チップ・題を使う（絵と色が同一性の担い手）。 */}
@@ -277,7 +279,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
         if (!mission || !thumbnail) return null;
         return <Box sx={{ flexShrink: 0, border: "2px solid #2563eb", borderRadius: 3, bgcolor: "#fff", px: 2, py: 1.25 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box aria-hidden sx={{ width: 150, flexShrink: 0, borderRadius: 1.5, overflow: "hidden" }}>{thumbnail}</Box>
+            <Box aria-hidden sx={{ width: started ? 96 : 150, flexShrink: 0, borderRadius: 1.5, overflow: "hidden" }}>{thumbnail}</Box>
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Chip label="単元ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
@@ -312,6 +314,11 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                 </Box>;
               })}
             </Box>
+            {/* 達成後はモーダルを閉じても、結果へ進む主ボタンを作業画面に残す。 */}
+            {complete && onShowFinalResult && <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
+              <Button variant="contained" onClick={onShowFinalResult}
+                sx={{ minHeight: 48, px: 3, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>単元の結果を見る</Button>
+            </Box>}
           </Box>
         </Box>;
       })()}
@@ -326,7 +333,8 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
                 sx={{ display: "block", textAlign: "left", p: 2.5, borderRadius: 3, border: "2px solid #dbe3ef", bgcolor: "#fff", color: colors.text, textTransform: "none", "&:hover": { borderColor: "#2563eb", bgcolor: "#fff" } }}>
                 <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 1 }}>{implementationInputLevelText.levels[candidate].label}</Typography>
                 <Box sx={{ mb: 1.5 }}><LevelFillIllustration level={candidate} /></Box>
-                <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7, mb: 1.5 }}>{implementationInputLevelText.levels[candidate].description}</Typography>
+                <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>{implementationInputLevelText.levels[candidate].description}</Typography>
+                <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mb: 1.5 }}>{implementationInputLevelText.levels[candidate].guide}</Typography>
                 {/* 実際のテンプレートの冒頭。読む前に「どこまで自分で書くか」が見える。 */}
                 <Box component="pre" aria-hidden sx={{ m: 0, p: 1.5, height: 176, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.65, whiteSpace: "pre", overflow: "hidden", color: colors.text, WebkitMaskImage: "linear-gradient(to right, black 88%, transparent)", maskImage: "linear-gradient(to right, black 88%, transparent)" }}>
                   {content.templates[candidate].split("\n").slice(0, 7).join("\n")}
@@ -399,7 +407,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Tabs>
             <Box role="tabpanel" hidden={panel !== "tests"} id={`${panelId}-tests-panel`} aria-labelledby={`${panelId}-tests`}
               sx={{ display: panel === "tests" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto", p: 1.5 }}>
-              <ImplementationResults outcomes={displayOutcomes} diagnostics={staleResults ? [] : running ? outcomes : lastOutcomes} stale={staleResults} code={code} onFocusLine={focusErrorLine} onShowTrace={() => void runTrace()} />
+              <ImplementationResults outcomes={displayOutcomes} diagnostics={staleResults ? [] : running ? outcomes : lastOutcomes} stale={staleResults} code={code} onFocusLine={focusErrorLine} onShowTrace={() => void runTrace()} onShowHints={() => setPanel("hints")} />
             </Box>
             <Box role="tabpanel" hidden={panel !== "console"} id={`${panelId}-console-panel`} aria-labelledby={`${panelId}-console`}
               sx={{ display: panel === "console" ? "block" : "none", flex: 1, minHeight: 0, overflowY: "auto" }}>

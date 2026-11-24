@@ -6,7 +6,7 @@ import { bubbleSortImplementationContent as content, type ImplementationTest } f
 
 export type HintLevel = 1 | 2 | 3 | 4;
 export type HintUsage = readonly [number, number, number, number];
-export type TestOutcome = { readonly id: string; readonly passed: boolean; readonly actual?: unknown; readonly error?: "syntax" | "runtime" | "timeout"; readonly errorLine?: number };
+export type TestOutcome = { readonly id: string; readonly passed: boolean; readonly actual?: unknown; readonly error?: "syntax" | "runtime" | "timeout"; readonly errorLine?: number; readonly errorException?: string; readonly errorName?: string };
 
 /** 単元フロー接続時（後続Issue）に渡す要約。集計はテスト実行とヒント利用から導く。 */
 export type BubbleSortImplementationSummary = {
@@ -74,7 +74,7 @@ export async function runImplementationTests(code: string, tests: readonly Imple
       outcomes.push({ id: test.id, passed: result.passed, ...(test.visibility === "display" ? { actual: result.actual } : {}) });
     } catch (error) {
       const analysis = analyzeExecutionError(error);
-      outcomes.push({ id: test.id, passed: false, error: analysis.kind, ...(analysis.line !== undefined ? { errorLine: analysis.line } : {}) });
+      outcomes.push({ id: test.id, passed: false, error: analysis.kind, ...(analysis.line !== undefined ? { errorLine: analysis.line } : {}), ...(analysis.exception !== undefined ? { errorException: analysis.exception } : {}), ...(analysis.name !== undefined ? { errorName: analysis.name } : {}) });
     }
     progress([...outcomes]);
   }

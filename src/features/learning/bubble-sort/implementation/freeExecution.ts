@@ -5,7 +5,7 @@ import { analyzeExecutionError } from "../../../../lib/executionError";
 export const freeOutputLimit = 16_000;
 export type FreeExecutionResult = {
   stdout: string; outputTruncated: boolean;
-} & ({ returned: true; actual: unknown; error: "mismatch" | null } | { returned: false; error: "syntax" | "runtime" | "timeout" | "unavailable"; errorLine?: number });
+} & ({ returned: true; actual: unknown; error: "mismatch" | null } | { returned: false; error: "syntax" | "runtime" | "timeout" | "unavailable"; errorLine?: number; errorException?: string; errorName?: string });
 export const freeDisplayCase = content.tests.find(test => test.id === "D1" && test.visibility === "display");
 
 /** 判定用の引数・stdoutが残ったWorkerを再利用せず、D1だけで実行する。 */
@@ -32,6 +32,6 @@ export async function runBubbleSortFreeCode(code: string, onPrepared: () => void
   } catch (error) {
     if (isCurrent()) disposePyodideRunner();
     const analysis = analyzeExecutionError(error);
-    return { stdout, outputTruncated, returned: false, error: analysis.kind, ...(analysis.line !== undefined ? { errorLine: analysis.line } : {}) };
+    return { stdout, outputTruncated, returned: false, error: analysis.kind, ...(analysis.line !== undefined ? { errorLine: analysis.line } : {}), ...(analysis.exception !== undefined ? { errorException: analysis.exception } : {}), ...(analysis.name !== undefined ? { errorName: analysis.name } : {}) };
   }
 }

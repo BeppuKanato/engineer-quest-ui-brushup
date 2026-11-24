@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { ArrayOutput } from "./ArrayOutput";
 import { bubbleSortEditorText as text } from "./editor.content";
+import { exceptionText } from "./ImplementationResults";
 import { editorTokens as colors } from "./editor.tokens";
 import { freeDisplayCase, freeOutputLimit, type FreeExecutionResult } from "./freeExecution";
 
@@ -10,7 +11,8 @@ export function FreeExecutionConsole({ result, busy }: { result: FreeExecutionRe
     <Typography component="p" sx={{ mb: 1 }}>{text.input}</Typography>
     <Typography component="p" sx={{ mb: 2 }}>{text.nonGrading}</Typography>
     {!result ? <Typography component="p">{busy ? text.running : text.empty}</Typography> : <>
-      <Typography component="p" role="status" data-free-error-kind={result.error ?? undefined} data-free-error-line={errorLine} sx={{ fontWeight: 700, mb: 2 }}>{result.error ? text.errors[result.error] + (errorLine ? text.errorLineSuffix.replace("{line}", String(errorLine)) : "") : text.success}</Typography>
+      <Typography component="p" role="status" data-free-error-kind={result.error ?? undefined} data-free-error-line={errorLine} sx={{ fontWeight: 700, mb: 2 }}>{result.error ? ((result.error === "runtime" ? exceptionText(result)?.title : undefined) ?? text.errors[result.error]) + (errorLine ? text.errorLineSuffix.replace("{line}", String(errorLine)) : "") : text.success}</Typography>
+      {result.error === "runtime" && exceptionText(result) && <Typography component="p" sx={{ mb: 2 }}>{exceptionText(result)!.guidance}</Typography>}
       {result.error === "syntax" && <Typography component="p" sx={{ mb: 2 }}>{text.syntaxNote}</Typography>}
       {result.returned && <>
         <Typography component="h3" sx={{ fontSize: 16, fontWeight: 700 }}>{text.returned}</Typography>

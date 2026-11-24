@@ -127,6 +127,16 @@ export const bubbleSortImplementationContent = {
       runtime: "エラーの起きた行で、変数の値がどうなっているか確認してみましょう。",
       timeout: "繰り返しが終わる条件を確認してみましょう。",
     },
+    // 例外クラスごとの定型文（LLMなし）。分類名ではなく「何が起きたか」を出す。
+    exceptionMessages: {
+      NameError: { title: "変数『{name}』が定義されていません", titleNoName: "変数が定義されていません", guidance: "使う前に、その変数へ値を代入しているか確認してみましょう。" },
+      IndexError: { title: "リストの範囲外の場所を参照しています", guidance: "リストの長さと、参照している位置（番号）を確認してみましょう。" },
+      TypeError: { title: "値の種類が合わず、処理できませんでした", guidance: "その行で使っている値が、期待される種類（数やリストなど）になっているか確認してみましょう。" },
+      ZeroDivisionError: { title: "0で割り算をしています", guidance: "割る数が0になっていないか確認してみましょう。" },
+      ValueError: { title: "値が処理できる形になっていません", guidance: "その行で渡している値を確認してみましょう。" },
+    } as Readonly<Record<string, { title: string; titleNoName?: string; guidance: string }>>,
+    notExecuted: "テストはまだ実行されていません",
+    notJudged: "テスト結果を判定できませんでした",
     lineNote: "（{line}行目付近）",
   },
   status: {

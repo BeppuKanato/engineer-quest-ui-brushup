@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -7,6 +8,15 @@ import { bubbleSortImplementationContent as content } from "./implementation.con
 import { arrayDifferences, isDrawableArrayValue, resultKinds, type TestOutcome } from "./implementation";
 
 const labels = content.display;
+
+/** 例外が取れたら、分類名ではなく「何が起きたか」の定型文を返す。 */
+export function exceptionText(outcome: { errorException?: string; errorName?: string }): { title: string; guidance: string } | undefined {
+  if (!outcome.errorException) return undefined;
+  const template = labels.exceptionMessages[outcome.errorException];
+  if (!template) return undefined;
+  const title = outcome.errorName ? template.title.replace("{name}", outcome.errorName) : (template.titleNoName ?? template.title);
+  return { title, guidance: template.guidance };
+}
 
 /**
  * テストタブの表示方針：
@@ -19,14 +29,16 @@ const labels = content.display;
  * - コード編集後は前回の結果を「前回」と明示して残す（stale）。判定には使わない。
  * 状態は「通過／不一致／実行不可・実行エラー／未実行」を区別する。
  */
-export function ImplementationResults({ outcomes, diagnostics = outcomes, stale = false, code, onFocusLine, onShowTrace }: {
+export function ImplementationResults({ outcomes, diagnostics = outcomes, stale = false, code, onFocusLine, onShowTrace, onShowHints }: {
   outcomes: readonly TestOutcome[];
   diagnostics?: readonly TestOutcome[];
   stale?: boolean;
   code?: string;
   onFocusLine?: (line: number) => void;
   onShowTrace?: () => void;
+  onShowHints?: () => void;
 }) {
+  const [expandedPassed, setExpandedPassed] = useState<ReadonlySet<string>>(new Set());
   const kinds = resultKinds(diagnostics);
   const passed = outcomes.filter(outcome => outcome.passed).length;
   const reducedMotion = useReducedMotion();
@@ -44,19 +56,28 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
     const line = outcomes.find(outcome => outcome.errorLine !== undefined)?.errorLine;
     const lineText = line !== undefined && code ? code.split("\n")[line - 1]?.trim() : undefined;
     const guidance = labels.guidance[aggregatedKind];
+    const exception = aggregatedKind === "runtime" ? exceptionText(outcomes[0]) : undefined;
     return <Box>
       <Box role="alert" sx={{ border: "2px solid #111827", borderRadius: 2, bgcolor: "#fff", p: 2 }}>
         <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>
-          {aggregatedKind === "syntax" ? "文法エラー" : aggregatedKind === "runtime" ? "実行時エラー" : "タイムアウト"}
+          {exception ? exception.title : aggregatedKind === "syntax" ? "文法エラー" : aggregatedKind === "runtime" ? "実行時エラー" : "タイムアウト"}
           {line ? `（${line}行目付近）` : ""}
         </Typography>
-        <Typography component="p" sx={{ fontSize: 16, mt: 1 }}>{labels.messages[aggregatedKind]}</Typography>
+        {exception
+          ? <Typography component="p" sx={{ fontSize: 16, mt: 1 }}>{exception.guidance}</Typography>
+          : <>
+              <Typography component="p" sx={{ fontSize: 16, mt: 1 }}>{labels.messages[aggregatedKind]}</Typography>
+              {guidance && <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>{guidance}</Typography>}
+            </>}
         {lineText && <Box component="pre" sx={{ m: 0, mt: 1.5, p: 1.5, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 15, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{line}行目：{lineText}</Box>}
-        {guidance && <Typography component="p" sx={{ fontSize: 14, mt: 1.5 }}>{guidance}</Typography>}
-        {line !== undefined && onFocusLine && <Button variant="outlined" onClick={() => onFocusLine(line)}
-          sx={{ mt: 1.5, minHeight: 44, fontWeight: 700, color: "#111827", borderColor: "#111827" }}>エラー箇所を確認</Button>}
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
+          {line !== undefined && onFocusLine && <Button variant="outlined" onClick={() => onFocusLine(line)}
+            sx={{ minHeight: 44, fontWeight: 700, color: "#111827", borderColor: "#111827" }}>エラー箇所を確認</Button>}
+          {onShowHints && <Button onClick={onShowHints}
+            sx={{ minHeight: 44, fontWeight: 700, color: "#2563eb" }}>ヒントを見る</Button>}
+        </Box>
       </Box>
-      <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, mt: 2 }}>テストはまだ実行されていません</Typography>
+      <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, mt: 2 }}>{aggregatedKind === "syntax" ? labels.notExecuted : labels.notJudged}</Typography>
     </Box>;
   }
   return <Box>
@@ -114,9 +135,25 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
             ? "期待どおりの並びになりました。"
             : "期待する並びと違う結果になりました。", true);
       }
-      // 公開テスト：通過・未実行はコンパクトに。
+      // 公開テスト：通過・未実行はコンパクトに。通過したものは任意で大きく開ける。
       if (!outcome) return compactRow(input, input ? `${labels.inputLabel}：[${input.join(", ")}]。テストを実行すると、結果の棚がここに出ます。` : "");
-      if (outcome.passed) return compactRow(actual, "期待する並びと一致しました。");
+      if (outcome.passed) {
+        const expanded = expandedPassed.has(test.id);
+        return <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
+          {header}
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+            {actual && <Box aria-hidden sx={{ width: 150, height: 64, flexShrink: 0, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
+              <BookShelfFigure values={[...actual]} label={test.label} />
+            </Box>}
+            <Typography component="p" sx={{ fontSize: 14 }}>期待する並びと一致しました。</Typography>
+          </Box>
+          {actual && <Button size="small" onClick={() => setExpandedPassed(previous => { const next = new Set(previous); if (next.has(test.id)) next.delete(test.id); else next.add(test.id); return next; })}
+            sx={{ mt: 0.5, minHeight: 36, fontWeight: 700, color: "#2563eb" }}>{expanded ? "閉じる" : "結果を大きく見る"}</Button>}
+          {expanded && actual && <Box sx={{ height: 168, mt: 1, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}>
+            <BookShelfFigure values={actual} label={labels.actualLabel} />
+          </Box>}
+        </Box>;
+      }
       // 不一致だけ詳細に開く。
       return <Box key={test.id} data-test-id={test.id} sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
         {header}
