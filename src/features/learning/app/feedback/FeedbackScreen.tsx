@@ -135,6 +135,11 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
   // そのもの（GPT レビュー §5）。選択の体裁と二重の進むボタンをやめる。
   const actionPhase = f?.actionHref ? new URL(f.actionHref, "http://localhost").searchParams.get("phase") : null;
   const actionIsNext = !!actionPhase && !!nextPhaseKey && actionPhase === nextPhaseKey;
+  // 次の一歩の固定バー（2026-11-24）：称賛カードに場面が入って縦が伸び、
+  // 行動ボタンが画面下に埋もれる問題への対処。本文の流れの中のボタンは
+  // 消し、ボタンは画面下に常時ある1つだけにする（二重の出口を作らない）。
+  const topCandidate = f ? feedbackCandidates(f)[0] : undefined;
+  const showActionBar = stage === "feedback" && !unavailable && actionIsNext && !!topCandidate?.actionHref;
   // マスコットの表情の拍：節の役割に表情を対応させる（文章の内容解析はしない）。
   // 受け渡し=point → praise が出たら celebrate → 改善点で thinking → 次の一歩で point に戻る。
   // 全節に付けるのではなく、この2拍だけに絞る（切り替えすぎると落ち着かない）。
@@ -257,16 +262,32 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, scene,
                     <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
                   </Box>
-                  <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} />
+                  <FeedbackCandidates candidates={feedbackCandidates(f)} onAction={onAction} framing={actionIsNext ? "next" : "choice"} hideFirstAction={showActionBar} />
                 </RevealRow>
               </Box>
               )}
             </Box>}
         {children}
         </Box>
+        {showActionBar && <Box sx={{ height: 92, flexShrink: 0 }} />}
       </motion.div>
     )}
     </AnimatePresence>
+    {showActionBar && topCandidate && <motion.div
+      initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: reduce || fastForward ? 0 : rowDelay(sections.length + rowOffset), duration: 0.35 }}
+      style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30, backgroundColor: "#fff", borderTop: "1px solid #dbe3ef", boxShadow: "0 -4px 16px rgba(15, 23, 42, 0.06)" }}>
+      <Box sx={{ maxWidth: 760, mx: "auto", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+          <ArrowForwardIcon sx={{ fontSize: 20, color: playerTokens.focus }} />
+          <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>次の一歩</Typography>
+        </Box>
+        <Button variant="contained" sx={{ ...primaryButtonSx, flex: 1, minHeight: 52 }}
+          onClick={() => { if (!onAction?.(topCandidate.actionHref) && topCandidate.actionHref) window.location.href = topCandidate.actionHref; }}>
+          {topCandidate.actionLabel}
+        </Button>
+      </Box>
+    </motion.div>}
     {!actionIsNext && <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ justifyContent: "center", mt: 1, flexShrink: 0 }}>
       <Button data-feedback-skip variant={f?.actionHref ? "text" : "contained"} onClick={onProceed}
         sx={f?.actionHref ? { minHeight: 48, px: 2, fontSize: 16, fontWeight: 700, color: playerTokens.control } : primaryButtonSx}>
