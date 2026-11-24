@@ -37,27 +37,38 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey,
   const delay = reduced ? 0 : index * stagger;
   // 獲得感はレアリティで差をつける（2026-11-24）：高いレアリティほどトロフィーを
   // 大きくし、登場の縮小率（spec.scale）も大きくする。発光・放射は従来どおり spec 依存。
-  const badgeSize = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
+  const badgeSizeBase = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
+  const badgeSize = layout === "card" ? badgeSizeBase - 8 : badgeSizeBase;
   const Icon = (item.iconKey && achievementIcons[item.iconKey]) || EmojiEventsIcon;
-  const badge = <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize }}>
+  // メダルの造形もレアリティで変える（2026-11-24）：色を見る前に形で特別さが
+  // 伝わるようにする。コモン＝素のメダル、レア＝リボン付き、エピック＝リボン＋
+  // 二重リング、レジェンダリー＝さらに星の飾り。
+  const medalTier = item.rarity === "LEGENDARY" ? 3 : item.rarity === "EPIC" ? 2 : item.rarity === "RARE" ? 1 : 0;
+  const badge = <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize + (medalTier >= 1 ? 10 : 0) }}>
     {!reduced && Array.from({ length: spec.rays }, (_, i) => <Box key={i} component={motion.span} aria-hidden
       initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.7, 0], scale: [0.6, 1.4, 1.8] }} transition={{ duration: 0.7, delay: delay + 0.1 + i * 0.035 }}
       sx={{ position: "absolute", left: `${50 + 62 * Math.cos(i * 2 * Math.PI / spec.rays)}%`, top: `${50 + 62 * Math.sin(i * 2 * Math.PI / spec.rays)}%`, color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Box>)}
-    <Box sx={{ width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
+    {medalTier >= 1 && <>
+      <Box aria-hidden sx={{ position: "absolute", left: badgeSize * 0.22, bottom: 0, width: badgeSize * 0.2, height: 14, bgcolor: tone.color, transform: "rotate(14deg)", borderRadius: 0.5 }} />
+      <Box aria-hidden sx={{ position: "absolute", right: badgeSize * 0.22, bottom: 0, width: badgeSize * 0.2, height: 14, bgcolor: tone.color, transform: "rotate(-14deg)", borderRadius: 0.5 }} />
+    </>}
+    <Box sx={{ position: "relative", width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
       <Icon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
+      {medalTier >= 2 && <Box aria-hidden sx={{ position: "absolute", inset: 4, borderRadius: "50%", border: `2px solid ${tone.border}`, opacity: 0.65 }} />}
     </Box>
+    {medalTier >= 3 && <Box aria-hidden sx={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)", color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 18 }} /></Box>}
   </Box>;
   const texts = <Box sx={{ minWidth: 0 }}>
     <Typography sx={{ fontSize: 12, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>
-    <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{item.title}</Typography>
-    <Typography sx={{ fontSize: 15 }}>{item.description}</Typography>
+    <Typography component="h3" sx={{ fontWeight: 800, fontSize: layout === "card" ? 16 : 18 }}>{item.title}</Typography>
+    <Typography sx={{ fontSize: layout === "card" ? 14 : 15 }}>{item.description}</Typography>
   </Box>;
   // 縦カード形（2026-11-24、Kanato の指定）：トロフィーを上に置き、レアリティ→
   // 名前→説明を縦に積む。単元リザルトのゾーン専用で、フェーズ結果のバンドは横形のまま。
   if (layout === "card") return <Box component={motion.div} data-achievement-id={item.id}
     initial={reduced ? false : { opacity: 0, scale: spec.scale, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
     transition={{ duration: reduced ? 0 : 0.45, delay, ease: "easeOut" }}
-    sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, p: 2, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "center",
+    sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, p: 1.5, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "center",
       boxShadow: !reduced && spec.glow ? `0 0 ${spec.glow}px ${tone.border}` : "none" }}>
     {badge}
     {texts}
@@ -86,7 +97,7 @@ function UnlockList({ items, stagger, onEvent, placement, phaseKey, layout = "ro
     play("achievementUnlocked");
   }, [items, play]);
   return <Box sx={layout === "card"
-    ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, width: "100%" }
+    ? { display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.5, width: "100%" }
     : { display: "grid", gap: 1, width: "100%" }}>
     {items.map((item, index) => <AchievementUnlock key={item.id} item={item} index={index} stagger={stagger} onEvent={onEvent} placement={placement} phaseKey={phaseKey} layout={layout} />)}
   </Box>;
@@ -123,7 +134,7 @@ export function NextAchievementRow({ title, description, rarity, progress, goal 
   title: string; description: string; rarity: string; progress: number; goal: number;
 }) {
   const tone = presentationFor(rarity).tone;
-  return <Box component="section" aria-label="次の実績" data-next-achievement sx={{ width: "100%", maxWidth: 880, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
+  return <Box component="section" aria-label="次の実績" data-next-achievement sx={{ width: "100%", maxWidth: 1060, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
     <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 1.5 }}>
       <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>次の実績</Typography>
       <Typography component="a" href="/achievements" sx={{ fontSize: 14, fontWeight: 700, color: "#2563eb", textDecoration: "none", whiteSpace: "nowrap" }}>実績一覧を見る</Typography>
@@ -151,6 +162,7 @@ export function NextAchievementRow({ title, description, rarity, progress, goal 
         </Box>
       )}
       <Typography sx={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap" }}>{progress} / {goal}</Typography>
+      {goal > progress && <Box component="span" sx={{ bgcolor: "#dcfce7", color: "#15803d", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999, whiteSpace: "nowrap" }}>あと {goal - progress}</Box>}
     </Box>
   </Box>;
 }

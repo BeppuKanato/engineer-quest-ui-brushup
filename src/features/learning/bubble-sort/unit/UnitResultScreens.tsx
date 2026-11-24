@@ -5,8 +5,6 @@ import BuildIcon from "@mui/icons-material/Build";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import SchoolIcon from "@mui/icons-material/School";
 import StarsIcon from "@mui/icons-material/Stars";
 import { Box, Button, Typography } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
@@ -256,18 +254,6 @@ function StatTile({ icon, headline, value, label, sub }: { icon: ReactNode; head
   </Box>;
 }
 
-/** ステージ2の出口に置く「次の挑戦」の選択カード（2026-11-24）。 */
-function NextActionCard({ href, icon, title, sub }: { href: string; icon: ReactNode; title: string; sub: string }) {
-  return <Box component={Link} href={href} sx={{ flex: "1 1 260px", display: "flex", alignItems: "center", gap: 1.5, border: `1px solid ${playerTokens.layers.layer1}`, borderRadius: 2, bgcolor: playerTokens.surface, p: 2, textDecoration: "none", color: "inherit" }}>
-    <Box aria-hidden sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "#e3ecfd", color: "#2563eb", display: "grid", placeItems: "center", flexShrink: 0 }}>{icon}</Box>
-    <Box sx={{ flex: 1 }}>
-      <Typography component="p" sx={{ fontSize: 16, fontWeight: 900 }}>{title}</Typography>
-      <Typography component="p" sx={{ fontSize: 14 }}>{sub}</Typography>
-    </Box>
-    <ArrowForwardIcon aria-hidden sx={{ color: playerTokens.control, flexShrink: 0 }} />
-  </Box>;
-}
-
 /** 単元完了時の最終リザルト。Kanato は賞賛あり派（2026-11-24）：この画面も
  * 紙吹雪・トロフィー・大きめのマスコットで修了を祝い、同時に成果の記録も担う。
  * 次の一歩はフィードバックが担う。
@@ -295,6 +281,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   const reduced = useReducedMotion();
   useEffect(() => { headingRef.current?.focus(); }, []);
   const [stage, setStage] = useState(1);
+  const [detailOpen, setDetailOpen] = useState(false);
   const showStage1 = !staged || stage === 1;
   const showStage2 = !staged || stage === 2;
   // 冒頭の流れ（トロフィー→経路の描画→ゴールの鼓動）が終わるまでの目安。
@@ -334,6 +321,22 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   if (questionTotal > 0) tiles.push({ icon: <StarsIcon sx={{ fontSize: 30 }} />, headline: firstCorrectTotal === questionTotal ? "全問正解" : eventuallyTotal === questionTotal ? "全問題クリア" : `${eventuallyTotal} 問クリア`, value: `${eventuallyTotal} / ${questionTotal} 問`, label: "正解（確認問題・応用問題）", sub: `初回で正解 ${firstCorrectTotal} 問` });
   if (implementation?.testRuns !== undefined) tiles.push({ icon: <BuildIcon sx={{ fontSize: 30 }} />, headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
   if (implementation?.hintUsage !== undefined) tiles.push({ icon: <EmojiObjectsIcon sx={{ fontSize: 30 }} />, headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
+  // 称賛の主見出しは、今回の学習結果に応じた具体的なものにする（2026-11-24）：
+  // 修了の事実は見出し（修了！）が担い、ここは「この学習者ならでは」の成果を言う。
+  const praiseHeadline = implementation?.hintUsage !== undefined && hintTotal === 0 && implementation?.testRuns === 1
+    ? "しかも、ヒントなしで一発クリア！"
+    : implementation?.hintUsage !== undefined && hintTotal === 0
+      ? "しかも、ヒントなしでクリア！"
+      : questionTotal > 0 && firstCorrectTotal === questionTotal
+        ? "しかも、全問初回で正解！"
+        : questionTotal > 0 && eventuallyTotal === questionTotal && firstCorrectTotal < questionTotal
+          ? "つまずいても、全部解き切った！"
+          : "ついに、自分の力で実装できたね！";
+  // 到達状況の要約（2026-11-24）：復習候補 = 初回で間違えた問題がある確認フェーズ。
+  const reviewCandidates = bubbleSortUnitPhases.filter((_, index) => {
+    const s = summaries[index];
+    return s?.totalQuestions !== undefined && s.firstAttemptCorrect !== undefined && s.firstAttemptCorrect < s.totalQuestions;
+  });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
   return <Box component="section" ref={sectionRef} aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, p: 2 }}>
@@ -345,7 +348,6 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     {/* 称賛は一つのシーンとして出す（2026-11-24）：トロフィー・見出し・マスコットを
         淡い金の放射光の中に寄せ、視線を一箇所に集める。 */}
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.25, width: "100%", maxWidth: 1060, py: 3, px: 2, borderRadius: 4,
-      border: "2px solid rgba(245, 158, 11, 0.45)",
       background: "radial-gradient(ellipse 72% 92% at 50% 30%, rgba(217, 119, 6, 0.20), rgba(217, 119, 6, 0) 72%), linear-gradient(180deg, #fffdf4, #ffffff)" }}>
       <Box component={motion.div} aria-hidden="true" data-final-result-mark
         initial={reduced ? false : { scale: 0.8, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
@@ -354,7 +356,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         <EmojiEventsIcon sx={{ fontSize: 84, color: "#d97706" }} />
       </Box>
       <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortUnitText.finalHeading}</Typography>
-      <Typography component="p" sx={{ fontSize: 26, fontWeight: 900, textAlign: "center", lineHeight: 1.4 }}>ついに、<Box component="span" sx={{ color: "#b45309" }}>自分の力で実装できた</Box>ね！</Typography>
+      <Typography component="p" sx={{ fontSize: 26, fontWeight: 900, textAlign: "center", lineHeight: 1.4 }}>{praiseHeadline}</Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <MascotFigure mascotId="red-panda" alt="相棒" size="XL" state="celebrate" motion="float" grounding="shadow" />
         <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
@@ -362,7 +364,6 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         </Box>
       </Box>
     </Box>
-    <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>理解から実装まで、すべてのステップを達成</Typography>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
     {/* 開始時の問いへの答え（2026-11-24）：ミッションの棚が並んだ姿を見せる。 */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 1060, p: 2, bgcolor: "#fffbeb", border: "2px solid #d97706", borderRadius: 2 }}>
@@ -400,7 +401,16 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
     </Box>}
     {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
-    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 1060 }}>
+    {/* 到達状況は要約を既定にする（2026-11-24）：全ステップ完了＋復習候補の数と
+        名前。7行の詳細は開いた人だけが見る（フィードバック画面の要約層と同じ形）。 */}
+    <Box sx={{ textAlign: "center" }}>
+      <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>全{bubbleSortUnitPhases.length}ステップ完了</Typography>
+      {reviewCandidates.length > 0 && <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>復習候補：{reviewCandidates.length}ステップ（{reviewCandidates.map(phase => phase.shortName).join("、")}）</Typography>}
+      <Button onClick={() => setDetailOpen(value => !value)} sx={{ mt: 0.5, minHeight: 40, fontWeight: 700, color: playerTokens.control }}>
+        {detailOpen ? "閉じる" : "到達状況を詳しく見る"}
+      </Button>
+    </Box>
+    {detailOpen && <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 1060 }}>
       {bubbleSortUnitPhases.map((phase, index) => {
         const line = summaryLine(index, summaries[index]);
         const phaseSummary = summaries[index];
@@ -412,25 +422,28 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
           <Typography component="p" sx={{ fontSize: 16 }}>
             {phase.phase}. {phase.formalName}{line ? ` ― ${line}` : ""}
           </Typography>
-          {reviewCandidate && <Box component="span" sx={{ ml: "auto", bgcolor: "#e3ecfd", color: "#2563eb", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999, whiteSpace: "nowrap" }}>復習候補</Box>}
+          {reviewCandidate && <Box component="span" sx={{ bgcolor: "#e3ecfd", color: "#2563eb", fontWeight: 800, fontSize: 13, px: 1, py: 0.25, borderRadius: 999, whiteSpace: "nowrap" }}>復習候補</Box>}
           <Button size="small" onClick={() => onReviewPhase(index)}
-            sx={{ ml: reviewCandidate ? 0.5 : "auto", minHeight: 36, color: playerTokens.control, whiteSpace: "nowrap" }}>復習する</Button>
+            sx={{ ml: "auto", minHeight: 36, color: playerTokens.control, whiteSpace: "nowrap" }}>復習する</Button>
         </Box>;
       })}
-    </Box>
+    </Box>}
     <Typography component="p" sx={{ textAlign: "center", fontSize: 16, maxWidth: 640 }}>{bubbleSortImplementationContent.result.closing}</Typography>
     {goalAchievement}
     {/* 「この単元で獲得した実績」の一覧は出さない（2026-11-24、Kanato の指示）：
         新しい実績ゾーンと同じ内容の二重表示になるため。 */}
     <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{bubbleSortUnitText.reviewNote}</Typography>
-    {onShowFeedback && <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>}
-    {/* 次の行動の選択肢（2026-11-24）：学んだことを使う／新しい単元へ進む。
-        コース一覧への戻りは「別の単元を学ぶ」カードが担う。 */}
-    <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mt: 1 }}>次は何に挑戦する？</Typography>
-    <Box sx={{ display: "flex", gap: 1.5, width: "100%", maxWidth: 1060, flexWrap: "wrap", mb: 2 }}>
-      <NextActionCard href="/missions" icon={<RocketLaunchIcon sx={{ fontSize: 26 }} />} title="発展ミッションに挑戦" sub="学んだアルゴリズムを使う実践課題" />
-      <NextActionCard href="/courses" icon={<SchoolIcon sx={{ fontSize: 26 }} />} title="別の単元を学ぶ" sub="新しい問題の解き方を身につける" />
-    </Box>
+    {/* 出口はフィードバックに一本化する（2026-11-24、Kanato の指示）：次の学習の
+        選択肢はフィードバックの後に出すもので、ここで競合させない。何が得られるかは
+        見出しと一文で先に伝える。 */}
+    {onShowFeedback ? <>
+      <Box sx={{ textAlign: "center", mt: 1 }}>
+        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>今回の学習を振り返ろう</Typography>
+        <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>学習結果をもとに、成長した点と次の一歩を確認できます。</Typography>
+      </Box>
+      <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
+      <Button variant="text" component={Link} href="/courses" sx={{ mb: 2, minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
+    </> : <Button variant="contained" component={Link} href="/courses" sx={{ ...nextButtonSx, mb: 2 }}>{bubbleSortUnitText.backToCourses}</Button>}
     </Box>}
   </Box>;
 }
