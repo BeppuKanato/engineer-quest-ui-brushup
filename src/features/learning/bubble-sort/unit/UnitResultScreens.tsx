@@ -256,8 +256,11 @@ function StatTile({ icon, headline, value, label, sub }: { icon: ReactNode; head
 
 /** 単元完了時の最終リザルト。Kanato は賞賛あり派（2026-11-24）：この画面も
  * 紙吹雪・トロフィー・大きめのマスコットで修了を祝い、同時に成果の記録も担う。
- * 次の一歩はフィードバックが担う。 */
-export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewards, onShowFeedback, newAchievements, goalAchievement }: {
+ * 次の一歩はフィードバックが担う。
+ * 到達直後（staged）は体験ごとに2ステージへ分ける：ステージ1＝修了を祝う
+ * （トロフィー・称賛・学習経路・ミッション達成）、ステージ2＝成果と報酬
+ * （成績・実績・記録）。再訪時は記録として1ページ全表示にする。 */
+export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewards, onShowFeedback, newAchievements, goalAchievement, staged = false, newAchievementCount }: {
   rewards?: LearningRewards;
   renderRewards?: (rewards: LearningRewards) => ReactNode;
   newAchievements?: ReactNode;
@@ -267,32 +270,41 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   onShowFeedback?: () => void;
   /** 大目標の達成の提示（#370）。単元完了と重なる達成を結果の一部として出す。 */
   goalAchievement?: ReactNode;
+  /** 修了直後の到達かどうか。true なら2ステージ表示、false（再訪）なら全表示。 */
+  staged?: boolean;
+  /** ステージ1の前進ボタンに予告する新着実績の件数。 */
+  newAchievementCount?: number;
 }) {
   const headingRef = useRef<HTMLParagraphElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const stage2HeadingRef = useRef<HTMLParagraphElement>(null);
   const reduced = useReducedMotion();
   useEffect(() => { headingRef.current?.focus(); }, []);
-  // 実績ゾーンの出現は2条件（2026-11-24）：(1) トロフィー→学習経路の描画→
-  // ゴールの鼓動という冒頭の流れが終わること、(2) ゾーンの位置が実際に画面内に
-  // 入っていること。小さい画面で下に隠れている間に解除音と出現が終わってしまう
-  // のを防ぐ（時間で遅らせるだけでは「見た」ことにならないため）。
+  const [stage, setStage] = useState(1);
+  const showStage1 = !staged || stage === 1;
+  const showStage2 = !staged || stage === 2;
+  // 冒頭の流れ（トロフィー→経路の描画→ゴールの鼓動）が終わるまでの目安。
   const [pathDone, setPathDone] = useState(false);
-  const [zoneSeen, setZoneSeen] = useState(false);
-  const zoneAnchorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (reduced) { setPathDone(true); return; }
     const timer = setTimeout(() => setPathDone(true), 2300);
     return () => clearTimeout(timer);
   }, [reduced]);
+  // 実績ゾーンの出現：ステージ制ではステージ2が開いてから（必ず目に入る位置で
+  // 解除演出が始まる）。全表示では冒頭の流れの後。
+  const [stage2Ready, setStage2Ready] = useState(false);
   useEffect(() => {
-    const el = zoneAnchorRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") { setZoneSeen(true); return; }
-    const io = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) { setZoneSeen(true); io.disconnect(); }
-    }, { threshold: 0.1 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  const rewardsReady = pathDone && zoneSeen;
+    if (!staged || stage !== 2) return;
+    const timer = setTimeout(() => setStage2Ready(true), 250);
+    return () => clearTimeout(timer);
+  }, [staged, stage]);
+  const rewardsReady = staged ? stage2Ready : pathDone;
+  // ステージ2へ進んだら先頭へ戻し、見出しへフォーカスする。
+  useEffect(() => {
+    if (!staged || stage !== 2) return;
+    sectionRef.current?.scrollIntoView({ block: "start" });
+    stage2HeadingRef.current?.focus();
+  }, [staged, stage]);
   // 要約タイルはサマリにある記録だけから組み立てる（記録のない項目は出さない）。
   const assessed = bubbleSortUnitPhases.map((_, index) => summaries[index])
     .filter(summary => summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined);
@@ -307,9 +319,11 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
   if (implementation?.testRuns !== undefined) tiles.push({ icon: <BuildIcon sx={{ fontSize: 30 }} />, headline: implementation.testRuns === 1 ? "一発でクリア" : "試行錯誤してクリア", value: `${implementation.testRuns} 回`, label: "自分で実装のテスト実行" });
   if (implementation?.hintUsage !== undefined) tiles.push({ icon: <EmojiObjectsIcon sx={{ fontSize: 30 }} />, headline: hintTotal > 0 ? "ヒントを手がかりにクリア" : "ヒントなしでクリア", value: hintTotal > 0 ? `${hintTotal} 回` : "未使用", label: "ヒント使用" });
   // スクロールはこの画面専用に持たず、外側（画面全幅）のスクロールに任せる（#150）。
-  return <Box component="section" aria-label="単元完了のリザルト"
+  return <Box component="section" ref={sectionRef} aria-label="単元完了のリザルト"
     sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, p: 2 }}>
     <ResultConfetti preset="final" />
+    {showStage1 && <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.35 }}
+      sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, width: "100%" }}>
     {/* 修了の象徴はチェックではなくトロフィー（2026-11-24、Kanato の指定）。
         金はこの画面とゴールの星ノードに限る特別色として使う。 */}
     {/* 称賛は一つのシーンとして出す（2026-11-24）：トロフィー・見出し・マスコットを
@@ -330,6 +344,7 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         </Box>
       </Box>
     </Box>
+    <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>理解から実装まで、すべてのステップを達成</Typography>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} labels={bubbleSortUnitPhases.map(phase => phase.shortName)} />
     {/* 開始時の問いへの答え（2026-11-24）：ミッションの棚が並んだ姿を見せる。 */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", maxWidth: 1060, p: 2, bgcolor: "#fff", border: "2px solid #16a34a", borderRadius: 2 }}>
@@ -350,11 +365,21 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
         <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>バブルソートを使って、バラバラだった本を順番に並べられるようになりました。</Typography>
       </Box>
     </Box>
+    {staged && (pathDone ? (
+      <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.4 }}>
+        <Button variant="contained" onClick={() => setStage(2)} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>
+          学習成果を見る{newAchievementCount ? `（新しい実績 ${newAchievementCount} 件）` : ""}
+        </Button>
+      </Box>
+    ) : <Box sx={{ height: 48 }} />)}
+    </Box>}
+    {showStage2 && <Box component={motion.div} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : 0.35 }}
+      sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, width: "100%" }}>
+    <Typography ref={stage2HeadingRef} component="h3" tabIndex={-1} sx={{ fontSize: 22, fontWeight: 900, outline: "none" }}>今回の学習成果</Typography>
     {/* 並びは「成果を確認する→報酬が与えられる→次を狙う→振り返る」の順（2026-11-24）。 */}
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 1060 }}>
       {tiles.map(tile => <StatTile key={tile.label} icon={tile.icon} headline={tile.headline} label={tile.label} value={tile.value} sub={tile.sub} />)}
     </Box>}
-    <Box ref={zoneAnchorRef} sx={{ width: "100%", maxWidth: 1060 }} />
     {rewardsReady && newAchievements}
     <Typography component="p" sx={{ fontWeight: 900, fontSize: 18 }}>{bubbleSortUnitText.summaryHeading}</Typography>
     <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, width: "100%", maxWidth: 1060 }}>
@@ -378,5 +403,6 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       <Button variant="contained" onClick={onShowFeedback} sx={{ ...nextButtonSx, minHeight: 48, px: 3, fontSize: 16, fontWeight: 700 }}>フィードバックへ進む</Button>
       <Button variant="text" component={Link} href="/courses" sx={{ mb: 2, minHeight: 44, fontWeight: 700, color: playerTokens.control }}>{bubbleSortUnitText.backToCourses}</Button>
     </> : <Button variant="contained" component={Link} href="/courses" sx={{ ...nextButtonSx, mb: 2 }}>{bubbleSortUnitText.backToCourses}</Button>}
+    </Box>}
   </Box>;
 }

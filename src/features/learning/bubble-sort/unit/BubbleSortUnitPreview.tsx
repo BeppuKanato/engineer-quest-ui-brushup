@@ -58,6 +58,8 @@ export type BubbleSortUnitPreviewProps = {
   // 実績の提示（#333）。結果画面のバンドと最終リザルトの新着ゾーンの差し込み口。
   renderPhaseAchievements?: (phaseKey: string) => ReactNode;
   renderNewAchievements?: () => ReactNode;
+  /** 最終リザルトのステージ1ボタンに新着実績の件数を予告するための数。 */
+  finalUnlockCount?: number;
   // 大目標の達成の提示（#370）。結果画面のバンドと最終リザルトのゾーンの差し込み口。
   renderPhaseGoalAchievement?: (phaseKey: string) => ReactNode;
   renderFinalGoalAchievement?: () => ReactNode;
@@ -72,7 +74,7 @@ export type BubbleSortUnitPreviewProps = {
   renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode; scene?: ReactNode }) => ReactNode;
   renderUnitFeedbackScreen?: (nav: { goBack: () => void; figure: ReactNode; summary?: ReactNode }) => ReactNode;
 };
-export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0, initialFurthestIndex, initialUnitComplete = false, initialCompletedPhases = [], initialSummaries = {}, codeDraftBaseKey, onCodeDraftError, onPhaseComplete, onFinalResult, onLearningEvent, rewards, renderRewards, renderPhaseAchievements, renderNewAchievements, renderPhaseGoalAchievement, renderFinalGoalAchievement, onCheckPhaseCompleted, feedbackEnabled = false, renderPhaseFeedbackScreen, renderUnitFeedbackScreen }: BubbleSortUnitPreviewProps = {}) {
+export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0, initialFurthestIndex, initialUnitComplete = false, initialCompletedPhases = [], initialSummaries = {}, codeDraftBaseKey, onCodeDraftError, onPhaseComplete, onFinalResult, onLearningEvent, rewards, renderRewards, renderPhaseAchievements, renderNewAchievements, finalUnlockCount, renderPhaseGoalAchievement, renderFinalGoalAchievement, onCheckPhaseCompleted, feedbackEnabled = false, renderPhaseFeedbackScreen, renderUnitFeedbackScreen }: BubbleSortUnitPreviewProps = {}) {
   const first = initialPhaseIndex === null ? null : Math.max(0, Math.min(initialPhaseIndex, bubbleSortUnitPhases.length - 1));
   const [screen, setScreen] = useState<Screen>(first === null ? { kind: "final" } : { kind: "phase", index: first });
   const screenRef = useRef(screen);
@@ -323,6 +325,7 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
         )}
         {screen.kind === "final" && (
           <UnitFinalResult rewards={rewards} renderRewards={renderRewards} newAchievements={renderNewAchievements?.()} summaries={summaries} onReviewPhase={goToPhase}
+            staged={!(initialUnitComplete || first === null)} newAchievementCount={finalUnlockCount}
             onShowFeedback={feedbackEnabled && renderUnitFeedbackScreen ? () => setScreen({ kind: "unitFeedback" }) : undefined} goalAchievement={renderFinalGoalAchievement?.()} />
         )}
         {screen.kind === "unitFeedback" && renderUnitFeedbackScreen?.({
