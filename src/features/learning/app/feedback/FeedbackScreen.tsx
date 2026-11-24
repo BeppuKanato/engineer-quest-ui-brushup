@@ -202,12 +202,22 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
               <FeedbackDelivery state={beat} />
               <FeedbackObservation id={result.id} href={f.actionHref} candidates={feedbackCandidates(f)} />
               {spotlightActive ? (
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, px: 2, gap: 1.5 }}>
-                  {/* 何の話か分かるよう、カードと同じ節ラベルを上に置いて枠付けする */}
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: playerTokens.control }}>あなたの学び</Typography>
-                  <motion.div layoutId="praise-headline" transition={{ layout: { type: "spring", stiffness: 240, damping: 30 } }}>
-                    <Typography sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.6, textAlign: "center" }}>{f.praiseHeadline}</Typography>
-                  </motion.div>
+                <Box sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 320, px: 2, gap: 1.5 }}>
+                  {/* 発見の瞬間の舞台：見出しの背後に光を落とし、きらめきを散らす。
+                      「スポットライト」と呼ぶ以上、光の演出そのものが要る（2026-11-24 指摘） */}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+                    style={{ position: "absolute", left: "50%", top: "50%", width: 560, height: 560, marginLeft: -280, marginTop: -280, borderRadius: "50%", pointerEvents: "none",
+                      background: "radial-gradient(closest-side, rgba(37,99,235,0.20), rgba(37,99,235,0.06) 55%, rgba(37,99,235,0) 72%)" }} />
+                  {/* 枠付けの言葉は節ラベルではなく、この瞬間の意味（今回いちばんの収穫）を言う */}
+                  <Typography sx={{ position: "relative", fontSize: 16, fontWeight: 800, color: playerTokens.control }}>今回いちばんの収穫</Typography>
+                  <Box sx={{ position: "relative" }}>
+                    <SpotlightSparkles />
+                    <motion.div layoutId="praise-headline"
+                      initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+                      transition={{ layout: { type: "spring", stiffness: 240, damping: 30 }, opacity: { duration: 0.35 }, scale: { duration: 0.4 } }}>
+                      <Typography sx={{ fontSize: 24, fontWeight: 900, lineHeight: 1.6, textAlign: "center" }}>{f.praiseHeadline}</Typography>
+                    </motion.div>
+                  </Box>
                 </Box>
               ) : (
               <Box sx={{ mt: 1.5 }}>
@@ -224,7 +234,13 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
                     {f?.praiseHeadline && <motion.div layoutId="praise-headline" transition={{ layout: { type: "spring", stiffness: 240, damping: 30 } }} style={{ marginBottom: 8 }}>
                       <Typography sx={{ fontSize: 22, fontWeight: 900, lineHeight: 1.5 }}>{f.praiseHeadline}</Typography>
                     </motion.div>}
-                    <Typography sx={{ fontSize: 18, fontWeight: f?.praiseHeadline ? 500 : 700, lineHeight: 1.8 }}>{praise}</Typography>
+                    {/* スポットライト後は、見出しが着地してから本文を出す。
+                        本文が先に出ていると飛行中の見出しと文字同士が重なる（2026-11-24 実測） */}
+                    <motion.div {...(hadSpotlightRef.current && !fastForward
+                      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5, duration: 0.3 } }
+                      : { initial: false, animate: { opacity: 1 } })}>
+                      <Typography sx={{ fontSize: 18, fontWeight: f?.praiseHeadline ? 500 : 700, lineHeight: 1.8 }}>{praise}</Typography>
+                    </motion.div>
                   </motion.div>
                 </RevealRow>}
                 {sections.map((section, i) => (
@@ -254,6 +270,27 @@ export function FeedbackScreen({ kind, eventId, heading, header, summary, nextPh
       </Button>
     </Stack>}
   </Box>;
+}
+
+/** スポットライトのきらめき。見出しの周りに小さな星を順に弾けさせる（装飾は発見の瞬間だけ）。 */
+function SpotlightSparkles() {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  const stars = [
+    { left: -52, top: -16, size: 20, delay: 0.25, color: "#f59e0b" },
+    { right: -58, top: -10, size: 24, delay: 0.4, color: "#2563eb" },
+    { left: -30, bottom: -24, size: 15, delay: 0.55, color: "#2563eb" },
+    { right: -34, bottom: -20, size: 17, delay: 0.68, color: "#f59e0b" },
+    { left: "46%", top: -38, size: 14, delay: 0.8, color: "#f59e0b" },
+  ] as const;
+  return <>{stars.map((s, i) => (
+    <motion.span key={i} initial={{ scale: 0, rotate: -40, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }}
+      transition={{ delay: s.delay, type: "spring", stiffness: 320, damping: 15 }}
+      style={{ position: "absolute", ...("left" in s ? { left: s.left } : {}), ...("right" in s ? { right: s.right } : {}),
+        ...("top" in s ? { top: s.top } : {}), ...("bottom" in s ? { bottom: s.bottom } : {}), display: "flex", pointerEvents: "none" }}>
+      <svg width={s.size} height={s.size} viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14.4 9.6 L23 12 L14.4 14.4 L12 23 L9.6 14.4 L1 12 L9.6 9.6 Z" fill={s.color} /></svg>
+    </motion.span>
+  ))}</>;
 }
 
 /**
