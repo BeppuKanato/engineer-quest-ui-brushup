@@ -146,8 +146,8 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
       onProceed={nav.goNext} proceedLabel="そのまま次へ"
       onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goNext(); }} />;
   }, [phaseFeedbackEventId, unit]);
-  const renderUnitFeedbackScreen = useCallback((nav: { goBack: () => void; figure: ReactNode }) => (
-    <FeedbackScreen kind="unit" eventId={courseId} heading="単元のフィードバック"
+  const renderUnitFeedbackScreen = useCallback((nav: { goBack: () => void; figure: ReactNode; summary?: ReactNode }) => (
+    <FeedbackScreen kind="unit" eventId={courseId} heading="単元のフィードバック" summary={nav.summary}
       onProceed={nav.goBack} proceedLabel="結果に戻る"
       onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }} />
   ), [courseId]);

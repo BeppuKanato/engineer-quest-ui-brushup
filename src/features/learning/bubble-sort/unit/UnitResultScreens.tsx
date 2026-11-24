@@ -180,6 +180,31 @@ export function PhaseResultSummaryLine({ summary }: { summary?: BubbleSortUnitPh
   </Box>;
 }
 
+/**
+ * 単元フィードバックの頭に引き継ぐ、単元全体の要約（2026-11-24）。
+ * 段階の要約行と同じ文法（ドット＋事実文）で、確認問題3段階の合計と
+ * 実装のテスト実行回数を1行にまとめる。記録がなければ出さない。
+ */
+export function UnitResultSummaryLine({ summaries }: { summaries: Readonly<Record<number, BubbleSortUnitPhaseSummary>> }) {
+  const assessed = bubbleSortUnitPhases.map((_, index) => summaries[index])
+    .filter(summary => summary?.totalQuestions !== undefined && summary.firstAttemptCorrect !== undefined);
+  const firstCorrectTotal = assessed.reduce((sum, summary) => sum + (summary?.firstAttemptCorrect ?? 0), 0);
+  const questionTotal = assessed.reduce((sum, summary) => sum + (summary?.totalQuestions ?? 0), 0);
+  const eventuallyTotal = assessed.reduce((sum, summary) => sum + (summary?.eventuallyCorrect ?? summary?.firstAttemptCorrect ?? 0), 0);
+  const implementation = summaries[bubbleSortUnitPhases.length - 1];
+  if (questionTotal === 0 && implementation?.testRuns === undefined) return null;
+  const text = questionTotal > 0
+    ? (eventuallyTotal >= questionTotal
+      ? `全${questionTotal}問に正解（初回で${firstCorrectTotal}問正解）`
+      : `${questionTotal}問中${eventuallyTotal}問正解（初回で${firstCorrectTotal}問正解）`)
+    : "";
+  const implText = implementation?.testRuns !== undefined ? `自分で実装 テスト${implementation.testRuns}回で通過` : "";
+  return <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+    {questionTotal > 0 && <ResultScoreDots total={questionTotal} firstAttemptCorrect={firstCorrectTotal} eventuallyCorrect={eventuallyTotal} dotSize={13} />}
+    <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{[text, implText].filter(Boolean).join("・")}</Typography>
+  </Box>;
+}
+
 /** フィードバックが無い場合に単体で出すリザルト画面。称賛ブロック＋次への導線だけを持つ。 */
 export function UnitResultScreen({ phase, summary, onNext, nextLabel, achievements, goalAchievement }: {
   phase: BubbleSortUnitPhase;
@@ -257,6 +282,14 @@ export function UnitFinalResult({ summaries, onReviewPhase, rewards, renderRewar
       <DrawnCheck />
     </Box>
     <Typography ref={headingRef} component="h2" tabIndex={-1} sx={headingSx}>{bubbleSortImplementationContent.result.title}</Typography>
+    {/* 単元完了の反応（2026-11-24、段階の結果画面と同じ役割）。称賛の見出しは
+        既にあるため、マスコットは学習者のやり切りに反応する一言だけを添える。 */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, maxWidth: 640 }}>
+      <MascotFigure mascotId="red-panda" alt="相棒" size="M" state="celebrate" motion="float" grounding="shadow" />
+      <Box sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: "14px", px: 2, py: 1.25 }}>
+        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>最後まで、自分の手でやり切ったね。</Typography>
+      </Box>
+    </Box>
     <UnitPathMiniMap count={bubbleSortUnitPhases.length} />
     {tiles.length > 0 && <Box data-final-stats sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center", width: "100%", maxWidth: 640 }}>
       {tiles.map(tile => <StatTile key={tile.label} label={tile.label} value={tile.value} />)}

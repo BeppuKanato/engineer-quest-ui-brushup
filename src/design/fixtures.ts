@@ -428,6 +428,28 @@ export const resolveFixture = (path: string): unknown => {
  * 他は初回正解）に合わせている。大目標は再設計で廃止済みのため goalSnapshot は null。
  */
 function designFeedbackResult(key: string) {
+  // 単元フィードバック用の文面。想定する記録は、実際に歩けるケース
+  // （確認3段階で各1問だけ初回誤答→見直して正解＝初回18/21問、実装はテスト1回で通過）。
+  if (key.startsWith("/feedback-v1/unit/")) {
+    const actionHref = "/courses";
+    const nextStep = "コース一覧から次の単元を選び、動きの確認から始める";
+    const reason = "バブルソートの学び方は次の単元でも同じ形で使えます。";
+    return {
+      id: "design-feedback-unit", status: "COMPLETED", goalSnapshot: null,
+      conceptSnapshot: null,
+      feedback: {
+        praise: "動きの確認・コードの確認・応用問題の3つで、取り違えたところをその場で見直して直すやり方が続き、最後は自分の手でコードを完成させました。つまずきを立て直すやり方が、単元を通して身についたのが、今回いちばんの収穫です。",
+        praiseHeadline: "見直して直すやり方が、単元を通して身についた！",
+        strength: "確認問題の初回正解は21問中18問。比べるペアの進み方、コードの各行の意味、交換が起きる場面の判断がそろっています。実装も、テスト1回で通過しました。",
+        strengthHeadline: "動き・コード・応用の判断が、初回でそろっている",
+        improvement: "3つの確認で取り違えたのは、どれも初めて見る場面での位置の判断でした。新しい場面では、まず1周終わった時点の並びを確かめてから次を追うと、取り違えが減ります。",
+        improvementHeadline: "新しい場面では、まず途中の状態を確かめる",
+        nextGoal: "次の単元でも、動きから考える習慣を続ける",
+        nextStep, reason, actionLabel: "コース一覧で次の単元を選ぶ", actionHref,
+        recommendations: [{ candidateId: "candidate-1", nextStep, reason, actionLabel: "コース一覧で次の単元を選ぶ", actionHref }],
+      },
+    };
+  }
   // イベントIDは {courseId}:{phaseKey}:{nextPhaseKey} の形で、次フェーズの
   // キーも含む。フェーズの判定は自フェーズの区切り位置で行うこと
   // （素朴な includes だと次フェーズ名に誤マッチする）。

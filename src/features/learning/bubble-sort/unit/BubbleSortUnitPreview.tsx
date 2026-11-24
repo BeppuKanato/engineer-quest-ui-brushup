@@ -26,7 +26,7 @@ import { BubbleSortImplementationPreview } from "../implementation/BubbleSortImp
 import { BubbleSortMotivationPreview } from "../motivation/BubbleSortMotivationPreview";
 import { bubbleSortUnitPhases, nextPhaseLabel, bubbleSortUnitText, bubbleSortUnitTitle, type BubbleSortUnitPhase } from "./unit.content";
 import type { BubbleSortUnitPhaseSummary } from "./unit.types";
-import { PhaseResultHeader, PhaseResultSummaryLine, UnitFinalResult, UnitResultScreen } from "./UnitResultScreens";
+import { PhaseResultHeader, PhaseResultSummaryLine, UnitFinalResult, UnitResultScreen, UnitResultSummaryLine } from "./UnitResultScreens";
 import { FeedbackPositionFigure } from "../../app/feedback/FeedbackPositionFigure";
 
 type Screen = { kind: "phase"; index: number } | { kind: "result"; index: number } | { kind: "bridge"; index: number } | { kind: "final" } | { kind: "feedback"; index: number } | { kind: "unitFeedback" };
@@ -70,7 +70,7 @@ export type BubbleSortUnitPreviewProps = {
   /** フィードバックがこの学習者に適用される見込みがあるか。false の間は結果画面の前進が従来のブリッジへ向かう。 */
   feedbackEnabled?: boolean;
   renderPhaseFeedbackScreen?: (phaseKey: string, nextPhaseKey: string | null, nav: { goToPhase: (phaseKey: string) => void; goNext: () => void; goBack: () => void; figure: ReactNode; header?: ReactNode; summary?: ReactNode; scene?: ReactNode }) => ReactNode;
-  renderUnitFeedbackScreen?: (nav: { goBack: () => void; figure: ReactNode }) => ReactNode;
+  renderUnitFeedbackScreen?: (nav: { goBack: () => void; figure: ReactNode; summary?: ReactNode }) => ReactNode;
 };
 export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0, initialFurthestIndex, initialUnitComplete = false, initialCompletedPhases = [], initialSummaries = {}, codeDraftBaseKey, onCodeDraftError, onPhaseComplete, onFinalResult, onLearningEvent, rewards, renderRewards, renderPhaseAchievements, renderNewAchievements, renderPhaseGoalAchievement, renderFinalGoalAchievement, onCheckPhaseCompleted, feedbackEnabled = false, renderPhaseFeedbackScreen, renderUnitFeedbackScreen }: BubbleSortUnitPreviewProps = {}) {
   const first = initialPhaseIndex === null ? null : Math.max(0, Math.min(initialPhaseIndex, bubbleSortUnitPhases.length - 1));
@@ -328,6 +328,7 @@ export function BubbleSortUnitPreview({ embedded = false, initialPhaseIndex = 0,
         {screen.kind === "unitFeedback" && renderUnitFeedbackScreen?.({
           goBack: () => setScreen({ kind: "final" }),
           figure: buildFeedbackFigure(bubbleSortUnitPhases.length - 1, true),
+          summary: <UnitResultSummaryLine summaries={summaries} />,
         })}
       </Box>
     </Box>
