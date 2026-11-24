@@ -2,7 +2,7 @@
 
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { LEARNING_EDITOR_THEME, learningEditorTextCursor, setupLearningEditor } from "../../code/learningEditor";
-import { Box, Button, LinearProgress, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Chip, LinearProgress, Tab, Tabs, Typography } from "@mui/material";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { disposePyodideRunner, preparePyodide } from "../../../../lib/pyodideRunner";
@@ -11,7 +11,7 @@ import { ImplementationLevelSelector } from "../../implementation/Implementation
 import type { ImplementationInputLevel } from "../../implementation/inputLevel";
 import { useImplementationInputLevel } from "../../implementation/useImplementationInputLevel";
 
-import FlagIcon from "@mui/icons-material/Flag";
+import { missionThumbnailFor } from "@/design/MissionThumbnail";
 import { findUnitMission } from "../../app/missionRegistry";
 import { DrawnCheck } from "../../app/DrawnCheck";
 import { ResultConfetti } from "../../app/ResultConfetti";
@@ -184,15 +184,20 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
         {content.caption}
       </Typography>
       {/* 最終チャレンジは単元ミッションの達成そのもの（再設計 2026-11-22）。
-          画面の冒頭で、単元画面・提示と同じミッションと達成の条件を出す。 */}
+          「同じ課題だ」と分かるよう、単元画面のミッションバンドと同一の
+          サムネイル・チップ・題を使う（絵と色が同一性の担い手）。 */}
       {(() => {
         const mission = findUnitMission("course-algorithm-bubble-sort-v2");
-        if (!mission) return null;
-        return <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 1.5, border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", px: 2, py: 1 }}>
-          <FlagIcon aria-hidden sx={{ color: "#2563eb", fontSize: 22, flexShrink: 0 }} />
+        const thumbnail = missionThumbnailFor("course-algorithm-bubble-sort-v2");
+        if (!mission || !thumbnail) return null;
+        return <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2, border: "2px solid #2563eb", borderRadius: 3, bgcolor: "#fff", px: 2, py: 1.25 }}>
+          <Box aria-hidden sx={{ width: 150, flexShrink: 0, borderRadius: 1.5, overflow: "hidden" }}>{thumbnail}</Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>単元ミッション：{mission.title}</Typography>
-            <Typography component="p" sx={{ fontSize: 14 }}>達成の条件：{mission.successCondition}。下のテストは、その確認です。</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Chip label="単元ミッション" size="small" sx={{ fontWeight: 800, bgcolor: "#2563eb", color: "#fff" }} />
+              <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>{mission.title}</Typography>
+            </Box>
+            <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>達成の条件：{mission.successCondition}。下のテストは、その確認です。</Typography>
           </Box>
         </Box>;
       })()}
