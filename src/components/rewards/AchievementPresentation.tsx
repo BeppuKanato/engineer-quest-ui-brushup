@@ -18,9 +18,9 @@ export type AchievementPresentationItem = { id: string; title: string; descripti
  * トロフィーバッジがポップインする。出現はその場限りで、記録としての要約は別に残る。
  * 動きを減らす設定では静止表示にし、放射も出さない（ResultConfetti と同じ扱い）。
  */
-function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey }: {
+function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey, layout = "row" }: {
   item: AchievementPresentationItem; index: number; stagger: number;
-  onEvent?: LearningObserver; placement: "phase-result" | "unit-result-new" | "create-submission"; phaseKey?: string;
+  onEvent?: LearningObserver; placement: "phase-result" | "unit-result-new" | "create-submission"; phaseKey?: string; layout?: "row" | "card";
 }) {
   const reduced = useReducedMotion(), spec = presentationFor(item.rarity), tone = spec.tone;
   useLearningVisit(onEvent, true, "achievement_present_view", item.id, { placement, phaseKey, rarity: item.rarity });
@@ -28,30 +28,42 @@ function AchievementUnlock({ item, index, stagger, onEvent, placement, phaseKey 
   // 獲得感はレアリティで差をつける（2026-11-24）：高いレアリティほどトロフィーを
   // 大きくし、登場の縮小率（spec.scale）も大きくする。発光・放射は従来どおり spec 依存。
   const badgeSize = item.rarity === "EPIC" || item.rarity === "LEGENDARY" ? 72 : item.rarity === "RARE" ? 64 : 56;
+  const badge = <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize }}>
+    {!reduced && Array.from({ length: spec.rays }, (_, i) => <Box key={i} component={motion.span} aria-hidden
+      initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.7, 0], scale: [0.6, 1.4, 1.8] }} transition={{ duration: 0.7, delay: delay + 0.1 + i * 0.035 }}
+      sx={{ position: "absolute", left: `${50 + 62 * Math.cos(i * 2 * Math.PI / spec.rays)}%`, top: `${50 + 62 * Math.sin(i * 2 * Math.PI / spec.rays)}%`, color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Box>)}
+    <Box sx={{ width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
+      <EmojiEventsIcon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
+    </Box>
+  </Box>;
+  const texts = <Box sx={{ minWidth: 0 }}>
+    <Typography sx={{ fontSize: 12, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>
+    <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{item.title}</Typography>
+    <Typography sx={{ fontSize: 15 }}>{item.description}</Typography>
+  </Box>;
+  // 縦カード形（2026-11-24、Kanato の指定）：トロフィーを上に置き、レアリティ→
+  // 名前→説明を縦に積む。単元リザルトのゾーン専用で、フェーズ結果のバンドは横形のまま。
+  if (layout === "card") return <Box component={motion.div} data-achievement-id={item.id}
+    initial={reduced ? false : { opacity: 0, scale: spec.scale, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+    transition={{ duration: reduced ? 0 : 0.45, delay, ease: "easeOut" }}
+    sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, p: 2, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "center",
+      boxShadow: !reduced && spec.glow ? `0 0 ${spec.glow}px ${tone.border}` : "none" }}>
+    {badge}
+    {texts}
+  </Box>;
   return <Box component={motion.div} data-achievement-id={item.id}
     initial={reduced ? false : { opacity: 0, scale: spec.scale, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
     transition={{ duration: reduced ? 0 : 0.45, delay, ease: "easeOut" }}
     sx={{ position: "relative", display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: `2px solid ${tone.border}`, borderRadius: 2, bgcolor: tone.bgcolor, textAlign: "left",
       boxShadow: !reduced && spec.glow ? `0 0 ${spec.glow}px ${tone.border}` : "none" }}>
-    <Box sx={{ position: "relative", flexShrink: 0, width: badgeSize, height: badgeSize }}>
-      {!reduced && Array.from({ length: spec.rays }, (_, i) => <Box key={i} component={motion.span} aria-hidden
-        initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.7, 0], scale: [0.6, 1.4, 1.8] }} transition={{ duration: 0.7, delay: delay + 0.1 + i * 0.035 }}
-        sx={{ position: "absolute", left: `${50 + 62 * Math.cos(i * 2 * Math.PI / spec.rays)}%`, top: `${50 + 62 * Math.sin(i * 2 * Math.PI / spec.rays)}%`, color: tone.color, lineHeight: 0 }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Box>)}
-      <Box sx={{ width: badgeSize, height: badgeSize, borderRadius: "50%", border: `2px solid ${tone.border}`, bgcolor: colors.surface, display: "grid", placeItems: "center" }}>
-        <EmojiEventsIcon aria-hidden sx={{ color: tone.color, fontSize: badgeSize * 0.56 }} />
-      </Box>
-    </Box>
-    <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{ fontSize: 12, fontWeight: 800, color: tone.color }}>{tone.label}</Typography>
-      <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{item.title}</Typography>
-      <Typography sx={{ fontSize: 15 }}>{item.description}</Typography>
-    </Box>
+    {badge}
+    {texts}
   </Box>;
 }
 
-function UnlockList({ items, stagger, onEvent, placement, phaseKey }: {
+function UnlockList({ items, stagger, onEvent, placement, phaseKey, layout = "row" }: {
   items: readonly AchievementPresentationItem[]; stagger: number;
-  onEvent?: LearningObserver; placement: "phase-result" | "unit-result-new" | "create-submission"; phaseKey?: string;
+  onEvent?: LearningObserver; placement: "phase-result" | "unit-result-new" | "create-submission"; phaseKey?: string; layout?: "row" | "card";
 }) {
   const { play } = useSoundEffect();
   const presentedIds = useRef(new Set<string>());
@@ -62,8 +74,10 @@ function UnlockList({ items, stagger, onEvent, placement, phaseKey }: {
     fresh.forEach((item) => presentedIds.current.add(item.id));
     play("achievementUnlocked");
   }, [items, play]);
-  return <Box sx={{ display: "grid", gap: 1, width: "100%" }}>
-    {items.map((item, index) => <AchievementUnlock key={item.id} item={item} index={index} stagger={stagger} onEvent={onEvent} placement={placement} phaseKey={phaseKey} />)}
+  return <Box sx={layout === "card"
+    ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, width: "100%" }
+    : { display: "grid", gap: 1, width: "100%" }}>
+    {items.map((item, index) => <AchievementUnlock key={item.id} item={item} index={index} stagger={stagger} onEvent={onEvent} placement={placement} phaseKey={phaseKey} layout={layout} />)}
   </Box>;
 }
 
@@ -81,7 +95,7 @@ export function NewAchievementZone({ items, onEvent }: { items: readonly Achieve
   if (!items.length) return null;
   return <Box component="section" aria-label={text.newAchievements} data-new-achievements sx={{ width: "100%", maxWidth: 640, color: colors.text, p: 2, bgcolor: colors.background, borderRadius: 2 }}>
     <Typography component="h2" sx={{ fontWeight: 800, fontSize: 22, mb: 2 }}>{text.newAchievements}</Typography>
-    <UnlockList items={items} stagger={0.35} onEvent={onEvent} placement="unit-result-new" />
+    <UnlockList items={items} stagger={0.35} onEvent={onEvent} placement="unit-result-new" layout="card" />
   </Box>;
 }
 
