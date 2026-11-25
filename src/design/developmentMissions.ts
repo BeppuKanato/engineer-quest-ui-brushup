@@ -106,16 +106,18 @@ export const developmentMissions: DevMission[] = [
     },
     outputExample: [
       { value: "7", label: "最短で通る部屋数（入口と出口を含む）" },
-      { value: "11", label: "調べた部屋数（スコアの計算に使う）" },
+      { value: "10", label: "調べた部屋数（スコアの計算に使う）" },
     ],
     // 実測（キューから取り出した順に数え、出口を取り出した時点で止める）：
-    // 経路7マス＋経路の外を調べた4マス＝11マス。
+    // 経路7マス＋経路の外を調べた3マス＝10マス。
     exampleTrace: {
       pathCells: [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2]],
-      examinedCells: [[0, 3], [2, 1], [2, 3], [3, 3]],
+      examinedCells: [[0, 3], [2, 1], [3, 3]],
     },
     countLabel: "調べた部屋数",
-    scoring: { best: 14, plain: 26 },
+    // 実測：通常の幅優先探索（出口で打ち切り）=14、双方向探索=8、全探索=43。
+    // 学んだ方法そのままだと満点にならないよう、満点側の基準は双方向探索の実測に置く。
+    scoring: { best: 8, plain: 26 },
     tests: [
       { id: "d1", label: "基本のダンジョン", input: ["5 5", "S...#", "##.#.", "...#.", ".#...", ".#G.."].join("\n"), expectedAnswer: "7" },
       { id: "d2", label: "出口にたどり着けない", input: ["3 3", "S#.", "##.", "..G"].join("\n"), expectedAnswer: "-1" },

@@ -72,12 +72,21 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
   });
   const [panel, setPanel] = useState<"statement" | "tests" | "console" | "hints">("statement");
   const [runtime, setRuntime] = useState<"loading" | "ready" | "error">("loading");
-  const [running, setRunning] = useState(false);
+  const [runningTests, setRunningTests] = useState(false);
+  const [runningFree, setRunningFree] = useState(false);
+  const running = runningTests || runningFree;
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [freeOut, setFreeOut] = useState<{ stdout: string; error: string | null } | null>(null);
   const [result, setResult] = useState<{ points: number; rank: string; count: number } | null>(null);
   const [modalClosed, setModalClosed] = useState(false);
-  const [hintsShown, setHintsShown] = useState(1);
+  const [hintsShown, setHintsShown] = useState(0);
+  // 自己ベストは画面の中で保持する（再挑戦で消えない）。prevBest は今回の結果が出る直前のベスト。
+  const [sessionBest, setSessionBest] = useState<{ points: number; rank: string } | null>(mission?.selfBest ?? null);
+  const [prevBest, setPrevBest] = useState<{ points: number; rank: string } | null>(mission?.selfBest ?? null);
+  const sessionBestRef = useRef<{ points: number; rank: string } | null>(mission?.selfBest ?? null);
+  const [testedCode, setTestedCode] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [openInputs, setOpenInputs] = useState<Record<string, boolean>>({});
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
   useEffect(() => {
@@ -95,12 +104,15 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
   const scoringTest = mission.tests.find((t) => t.scoring);
   const passedCount = mission.tests.filter((t) => outcomes[t.id]?.status === "pass").length;
   // 自己ベストと今回の記録は別物。ベストは「これまでの最大」、今回の記録は結果そのもの。
-  const bestPoints = Math.max(mission.selfBest?.points ?? -1, result?.points ?? -1);
-  const hasBest = bestPoints >= 0;
+  const displayBest = sessionBest ?? (result ? { points: result.points, rank: result.rank } : null);
+  const bestPoints = displayBest?.points ?? -1;
+  const hasBest = displayBest !== null;
   const bestRank = hasBest ? rankForPoints(bestPoints) : null;
-  const isFirstClear = !!result && !mission.selfBest;
-  const isRecordUpdate = !!result && !!mission.selfBest && result.points > mission.selfBest.points;
+  const isFirstClear = !!result && !prevBest;
+  const isRecordUpdate = !!result && !!prevBest && result.points > prevBest.points;
   const celebrate = isFirstClear || isRecordUpdate;
+  const resultsStale = testedCode !== null && testedCode !== code && Object.keys(outcomes).length > 0;
+  const scoreMissing = !!scoringTest && outcomes[scoringTest.id]?.status === "fail" && outcomes[scoringTest.id]?.answer === scoringTest.expectedAnswer;
 
   const persist = (next: string) => {
     setCode(next);
@@ -109,10 +121,12 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
 
   const runTests = async () => {
     if (running || runtime !== "ready") return;
-    setRunning(true);
+    setRunningTests(true);
     setPanel("tests");
     setOutcomes({});
     setResult(null);
+    setRunError(null);
+    setTestedCode(code);
     const acc: Record<string, Outcome> = {};
     try {
       // テストごとに分けて実行する。前回の結果が残ったまま新しい実行が始まると、
@@ -131,6 +145,11 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             answer,
             count: Number.isNaN(count) ? undefined : count,
           };
+          // スコア計測テストで答えは合っているのに2行目が数字でない場合は、通過にしない。
+          // 「全件通過なのにスコアが出ない」状態を作らないため。
+          if (t.scoring && answer === t.expectedAnswer && Number.isNaN(count)) {
+            acc[t.id] = { status: "fail", answer, count: undefined };
+          }
         }
         setOutcomes({ ...acc });
       }
@@ -139,24 +158,35 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
         const count = acc[scoringTest.id]?.count;
         if (typeof count === "number") {
           const points = pointsForCount(count, mission.scoring);
-          setResult({ points, rank: rankForPoints(points), count });
+          const rank = rankForPoints(points);
+          setPrevBest(sessionBestRef.current);
+          if (points > (sessionBestRef.current?.points ?? -1)) {
+            const nb = { points, rank };
+            sessionBestRef.current = nb;
+            setSessionBest(nb);
+          }
+          setResult({ points, rank, count });
           setModalClosed(false);
         }
       }
+    } catch {
+      setRunError("テストの実行が時間切れになりました。コードを見直して、もう一度実行してください。");
     } finally {
-      setRunning(false);
+      setRunningTests(false);
     }
   };
 
   const runFree = async () => {
     if (running || runtime !== "ready") return;
-    setRunning(true);
+    setRunningFree(true);
     setPanel("console");
     try {
       const out = await runProgramFree(code, mission.tests[0].input);
       setFreeOut({ stdout: out.stdout, error: out.stderr ? out.stderr : null });
+    } catch {
+      setFreeOut({ stdout: "", error: "実行が時間切れになりました。無限ループになっていないか確認してください。" });
     } finally {
-      setRunning(false);
+      setRunningFree(false);
     }
   };
 
@@ -190,13 +220,15 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
         <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "flex-end", gap: 0.5, ml: "auto", flexShrink: 0 }}>
           <Box sx={{ position: "relative", bgcolor: "#eef4fc", border: "1.5px solid #bfdbfe", borderRadius: 3, px: 1.75, py: 1.25, mb: 2.5, maxWidth: 300 }}>
             <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7, fontWeight: 700 }}>
-              {mission.selfBest
-                ? `前回のベストは ${mission.selfBest.points} 点。今日は超えられるかな？`
+              {sessionBest
+                ? result && sessionBest !== prevBest
+                  ? `ベストは ${sessionBest.points} 点まで上がったよ。`
+                  : `前回のベストは ${sessionBest.points} 点。今日は超えられるかな？`
                 : "解き方は自分で選ぶミッション。まずはクリアを目指そう。"}
             </Typography>
             <Box sx={{ position: "absolute", right: -7, bottom: 18, width: 14, height: 14, bgcolor: "#eef4fc", borderRight: "1.5px solid #bfdbfe", borderTop: "1.5px solid #bfdbfe", transform: "rotate(45deg)" }} />
           </Box>
-          <MascotBust state={mission.selfBest ? "cheer" : "point"} width={148} height={102} imgSize={182} />
+          <MascotBust state={sessionBest ? "cheer" : "point"} width={148} height={102} imgSize={182} />
         </Box>
       </Box>
 
@@ -224,9 +256,14 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                     ? `次の${nextRank(bestPoints)!.rank}ランクまで あと ${nextRank(bestPoints)!.min - bestPoints}点`
                     : "最高ランクに到達しています"}
                 </Typography>
-                {result && mission.selfBest && result.points < mission.selfBest.points && (
+                {result && displayBest && result.points < displayBest.points && (
                   <Typography component="p" sx={{ fontSize: 14, width: "100%" }}>
-                    今回の記録：{result.points}点（自己ベストまであと {mission.selfBest.points - result.points}点）
+                    今回の記録：{result.points}点（自己ベストまであと {displayBest.points - result.points}点）
+                  </Typography>
+                )}
+                {result && displayBest && prevBest && result.points === displayBest.points && result.points <= prevBest.points && (
+                  <Typography component="p" sx={{ fontSize: 14, width: "100%" }}>
+                    今回の記録：{result.points}点（自己ベストと同点）
                   </Typography>
                 )}
               </Box>
@@ -235,14 +272,14 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             )}
           </Box>
         </Box>
-        {result && !celebrate && mission.selfBest && (
+        {result && !celebrate && displayBest && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2, pt: 2, borderTop: "1px solid #eef2f7", flexWrap: "wrap" }}>
             <Typography component="p" sx={{ fontSize: 16, fontWeight: 900 }}>全テスト通過</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <RankMedal rank={result.rank} size={30} />
               <Typography component="p" sx={{ fontSize: 16, fontWeight: 700 }}>今回 {result.points}点</Typography>
             </Box>
-            <Typography component="p" sx={{ fontSize: 14 }}>自己ベスト {mission.selfBest.points}点まであと {mission.selfBest.points - result.points}点</Typography>
+            <Typography component="p" sx={{ fontSize: 14 }}>{result.points < displayBest.points ? `自己ベスト ${displayBest.points}点まであと ${displayBest.points - result.points}点` : "自己ベストと同点です"}</Typography>
             <Box sx={{ flex: 1 }} />
             <Button variant="outlined" onClick={() => { setOutcomes({}); setResult(null); }} sx={{ fontWeight: 800 }}>もう一度挑戦する</Button>
           </Box>
@@ -270,9 +307,9 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
               <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>
                 {mission.countLabel}：{result.count}
                 {isRecordUpdate
-                  ? `／前回 ${mission.selfBest!.points}点から +${result.points - mission.selfBest!.points}点`
+                  ? `／前回 ${prevBest!.points}点から +${result.points - prevBest!.points}点`
                   : "／初めての記録です"}
-                {isRecordUpdate && mission.selfBest!.rank !== result.rank ? `／${mission.selfBest!.rank}ランクから${result.rank}ランクに上がりました` : ""}
+                {isRecordUpdate && prevBest!.rank !== result.rank ? `／${prevBest!.rank}ランクから${result.rank}ランクに上がりました` : ""}
               </Typography>
               <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>
                 {nextRank(result.points)
@@ -281,9 +318,17 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
               </Typography>
             </Box>
             <Box sx={{ display: "flex", gap: 1.5, px: 3, py: 2, flexWrap: "wrap", justifyContent: "center" }}>
-              <Button variant="outlined" onClick={() => setModalClosed(true)} sx={{ fontWeight: 800 }}>コードを見る</Button>
-              <Button variant="outlined" onClick={() => { setOutcomes({}); setResult(null); setModalClosed(true); }} sx={{ fontWeight: 800 }}>もう一度挑戦する</Button>
-              <Button variant="contained" onClick={() => router.push("/missions")} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>発展ミッション一覧へ</Button>
+              {result.points >= 950 ? (
+                <>
+                  <Button variant="outlined" onClick={() => setModalClosed(true)} sx={{ fontWeight: 800 }}>コードを確認する</Button>
+                  <Button variant="contained" onClick={() => router.push("/missions")} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>次のミッションへ</Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outlined" onClick={() => router.push("/missions")} sx={{ fontWeight: 800 }}>発展ミッション一覧へ</Button>
+                  <Button variant="contained" onClick={() => setModalClosed(true)} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>解法を改善する</Button>
+                </>
+              )}
             </Box>
           </Box>
         )}
@@ -297,7 +342,7 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             <Button size="small" variant="outlined" disabled={running || runtime !== "ready"} onClick={runFree} sx={{ fontWeight: 800 }}>試しに実行</Button>
             <Button size="small" variant="contained" disabled={running || runtime !== "ready"} onClick={runTests} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>テストとスコアを実行</Button>
             <Typography component="p" role="status" sx={{ fontSize: 14, ml: "auto" }}>
-              {runtime === "loading" ? "実行環境を準備しています…" : runtime === "error" ? "実行環境を読み込めませんでした" : running ? "実行中…" : "実行できます。"}
+              {runtime === "loading" ? "実行環境を準備しています…" : runtime === "error" ? "実行環境を読み込めませんでした" : runningTests ? "テストを実行中…" : runningFree ? "実行中…" : "実行できます。"}
             </Typography>
           </Box>
           <Box sx={{ flex: 1, minHeight: 0 }}>
@@ -324,6 +369,7 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             {panel === "statement" && (
               <Box>
                 <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 1 }}>{mission.title}</Typography>
+                <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mt: 1 }}>入出力の例</Typography>
                 <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mt: 1.5, mb: 1 }}>入力の見方（例）</Typography>
                 <MissionInputVisual visual={mission.inputVisual} />
                 <Typography component="p" sx={{ fontSize: 14, fontWeight: 700, mt: 2, mb: 1 }}>出力の例</Typography>
@@ -360,10 +406,19 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             {panel === "tests" && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Typography component="p" sx={{ fontSize: 16, fontWeight: 700 }}>
-                  {running
+                  {runningTests
                     ? `検証中…（${Object.keys(outcomes).length} / ${mission.tests.length} 件終わりました）`
                     : `${passedCount} / ${mission.tests.length} 件通過`}
                 </Typography>
+                {resultsStale && (
+                  <Typography component="p" sx={{ fontSize: 14 }}>コードが変更されています。これは前回の結果です。再実行すると更新されます。</Typography>
+                )}
+                {runError && (
+                  <Typography component="p" sx={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{runError}</Typography>
+                )}
+                {scoreMissing && (
+                  <Typography component="p" sx={{ fontSize: 14 }}>答えは合っていますが、2行目の「{mission.countLabel}」が数字でないため、スコアを計算できません。</Typography>
+                )}
                 {mission.tests.map((t) => {
                   const o = outcomes[t.id];
                   return (
@@ -371,9 +426,16 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Typography component="p" sx={{ fontSize: 16, fontWeight: 700, flex: 1 }}>{t.label}</Typography>
                         {t.scoring && <Chip size="small" label="スコア計測" sx={{ bgcolor: "#fef3c7", fontWeight: 700 }} />}
-                        {running && !o ? <Chip size="small" label="結果待ち" sx={{ bgcolor: "#eef2f7", fontWeight: 700 }} /> : stamp(o)}
+                        {runningTests && !o ? <Chip size="small" label="結果待ち" sx={{ bgcolor: "#eef2f7", fontWeight: 700 }} /> : stamp(o)}
                       </Box>
-                      <Box component="pre" sx={{ m: 0, mt: 1, p: 1, bgcolor: "#f8fafc", borderRadius: 1, fontFamily: "monospace", fontSize: 14, overflowX: "auto", maxHeight: 120, overflowY: "auto" }}>{t.input}</Box>
+                      {(openInputs[t.id] ?? o?.status !== "pass") ? (
+                        <Box component="pre" sx={{ m: 0, mt: 1, p: 1, bgcolor: "#f8fafc", borderRadius: 1, fontFamily: "monospace", fontSize: 14, overflowX: "auto", maxHeight: 120, overflowY: "auto" }}>{t.input}</Box>
+                      ) : null}
+                      {o?.status === "pass" && (
+                        <Button size="small" onClick={() => setOpenInputs((prev) => ({ ...prev, [t.id]: !(prev[t.id] ?? false) }))} sx={{ mt: 0.5, fontWeight: 700, alignSelf: "flex-start" }}>
+                          {(openInputs[t.id] ?? false) ? "入力を閉じる" : "入力を見る"}
+                        </Button>
+                      )}
                       {o?.status === "fail" && (
                         <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>
                           あなたの答え：{o.answer || "（出力なし）"}／期待する答え：{t.expectedAnswer}
@@ -402,6 +464,10 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
             )}
             {panel === "hints" && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
+                  <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, flex: 1 }}>解き方のヒント</Typography>
+                  <Typography component="p" sx={{ fontSize: 14 }}>{hintsShown} / {mission.hints.length} 件閲覧</Typography>
+                </Box>
                 {mission.hints.slice(0, hintsShown).map((h, i) => (
                   <Box key={h} sx={{ display: "flex", gap: 1.25 }}>
                     <Box sx={{ flexShrink: 0, width: 26, height: 26, borderRadius: "50%", bgcolor: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900 }}>{i + 1}</Box>
@@ -410,7 +476,7 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                 ))}
                 {hintsShown < mission.hints.length && (
                   <Button variant="outlined" onClick={() => setHintsShown((n) => n + 1)} sx={{ fontWeight: 800, alignSelf: "flex-start" }}>
-                    もう1つヒントを見る（あと{mission.hints.length - hintsShown}件）
+                    {hintsShown === 0 ? `ヒントを見る（全部で${mission.hints.length}件）` : `もう1つヒントを見る（あと${mission.hints.length - hintsShown}件）`}
                   </Button>
                 )}
                 <Typography component="p" sx={{ fontSize: 14 }}>ヒントは1つずつ開けます。解き方そのものは示さず、考え方の手がかりだけを置いています。</Typography>

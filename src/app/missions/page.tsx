@@ -35,7 +35,7 @@ export default function MissionsPage() {
                     : mission.selfBest
                       ? <Chip size="small" label="クリア済み" sx={{ bgcolor: "#16a34a", color: "#fff", fontWeight: 700 }} />
                       : <Chip size="small" label="挑戦できる" sx={{ bgcolor: "#dcfce7", color: "#166534", fontWeight: 700 }} />}
-                  <Chip size="small" variant="outlined" label={`解放条件：${mission.unlockUnitName}の単元完了`} />
+                  {mission.unlocked && <Chip size="small" variant="outlined" label={`解放条件：${mission.unlockUnitName}の単元完了`} />}
                 </Box>
                 <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{mission.title}</Typography>
                 <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.8, mt: 0.75 }}>{mission.problem}</Typography>
@@ -74,7 +74,7 @@ export default function MissionsPage() {
                     onClick={() => router.push(`/missions/${mission.id}`)}
                     sx={{ mt: 2.5, minHeight: 48, alignSelf: "flex-start", px: 3, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
                   >
-                    {mission.selfBest ? "記録に挑戦する →" : "挑戦する →"}
+                    {mission.selfBest ? (mission.selfBest.rank === "S" ? "もう一度挑戦する →" : "記録に挑戦する →") : "挑戦する →"}
                   </Button>
                 ) : (
                   <Button
