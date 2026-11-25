@@ -8,6 +8,7 @@ import { useUserSession } from "@/app/component/userSession";
 import { ApiError, fetcher } from "@/lib/fetcher";
 import { completeLearningPhase, completeLearningUnit, startLearningUnit, type LearningProgress, type UnlockedAchievement } from "@/api/learning.api";
 import { FeedbackDestination } from "@/app/component/feedbackV1";
+import { MissionUnlockNotice } from "@/design/MissionUnlockNotice";
 import { auth } from "@/lib/firebase";
 import { BfsUnitPreview } from "../bfs/unit/BfsUnitPreview";
 import { BubbleSortUnitPreview } from "../bubble-sort/unit/BubbleSortUnitPreview";
@@ -34,6 +35,18 @@ import { isDesignMode } from "@/design/fixtures";
 import { MissionPresentation } from "@/design/MissionPresentation";
 import { hasSeenMissionStory } from "@/design/missionStoryStore";
 import { findUnitMission } from "./missionRegistry";
+
+/** コース ID から単元名を引く（発展ミッションの解放対応付け用。実アプリではミッション側のデータで対応付ける）。 */
+const unitNameForCourse = (courseId: string): string => {
+  if (courseId.includes("breadth-first-search")) return "幅優先探索";
+  if (courseId.includes("depth-first-search")) return "深さ優先探索";
+  if (courseId.includes("binary-search")) return "二分探索";
+  if (courseId.includes("bubble-sort")) return "バブルソート";
+  if (courseId.includes("maze-digging")) return "穴掘り法";
+  if (courseId.includes("wall-extension")) return "棒倒し法";
+  if (courseId.includes("greedy")) return "貪欲法";
+  return "";
+};
 
 export function LearningScreen({ courseId, reviewPhaseKey }: { courseId: string; reviewPhaseKey?: string }) {
   const unit = findLearningUnit(courseId), { firebaseUser } = useUserSession();
@@ -154,7 +167,11 @@ function LearningRun({ unit, progress, reviewPhaseKey }: { unit: LearningUnit; p
   const renderUnitFeedbackScreen = useCallback((nav: { goBack: () => void; figure: ReactNode; summary?: ReactNode }) => (
     <FeedbackScreen kind="unit" eventId={courseId} heading="単元のフィードバック" summary={nav.summary}
       onProceed={nav.goBack} proceedLabel="結果に戻る"
-      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }} />
+      onUnavailable={() => { setFeedbackAvailability("unavailable"); nav.goBack(); }}>
+      {/* 発展ミッションへの導線：単元完了で解放されるミッションを、フィードバックの流れの中で出す。
+          実アプリでは courseId から単元を引く（ここではコース ID の部分一致で対応付けている）。 */}
+      <MissionUnlockNotice unitName={unitNameForCourse(courseId)} />
+    </FeedbackScreen>
   ), [courseId]);
   const onFinalResult = useCallback(() => setFinalShown(true), []);
   useEffect(() => {
