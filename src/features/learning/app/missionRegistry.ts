@@ -58,10 +58,11 @@ export const unitMissions: Record<string, UnitMission> = {
 
 export const findUnitMission = (courseId: string): UnitMission | undefined => unitMissions[courseId];
 
-// 発展ミッションとの接続の下書き（2026-11-23）：単元画面の波マップのゴールの先に、
-// この単元で挑戦できるようになる発展ミッションをノードとして付ける。
-// 題は旧「作る」クエストの流用。状態はダミーの学習状況に合わせた仮置き。
+// 発展ミッションとの接続（2026-11-25決定）：単元画面では波マップの下に、この単元で開く
+// 発展ミッションのセクションを出す。対応付けの正本は Issue #507 の導線の節。
+// 状態（ready・自己ベスト）は発展ミッション側のデータを正とする（一覧と一致させる）。
 export type DevelopmentMissionLink = {
+  missionId: string;
   title: string;
   /** ノードの下に出す状態（挑戦できる／この単元を終えると挑戦できる、など）。 */
   status: string;
@@ -70,16 +71,13 @@ export type DevelopmentMissionLink = {
 
 export const developmentLinks: Record<string, DevelopmentMissionLink[]> = {
   "course-algorithm-breadth-first-search-v1": [
-    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
-    { title: "ゲームのスキルツリー", status: "挑戦できる", ready: true },
+    { missionId: "dungeon-escape", title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
   ],
   "course-algorithm-depth-first-search-v1": [
-    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
-    { title: "ゲームのスキルツリー", status: "挑戦できる", ready: true },
+    { missionId: "island-count", title: "島の数を数える", status: "挑戦できる", ready: true },
   ],
   "course-algorithm-binary-search-v1": [
-    { title: "ショップの商品検索", status: "この単元を終えると挑戦できる", ready: false },
-    { title: "ダンジョンの最短脱出", status: "挑戦できる", ready: true },
+    { missionId: "first-broken-version", title: "バグが入った版を特定する", status: "この単元を終えると挑戦できる", ready: false },
   ],
 };
 

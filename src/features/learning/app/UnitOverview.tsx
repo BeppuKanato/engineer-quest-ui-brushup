@@ -33,6 +33,9 @@ import knowledgeCardsData from "../../../design/data/knowledgeCards.json";
 import { knowledgeCardTones, uncollectedTone } from "../../../components/rewards/rarity.tokens";
 import { useLearningLog } from "./useLearningLog";
 import { findDevelopmentLinks, findUnitMission, missionPlayUrl } from "./missionRegistry";
+import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
+import { findDevelopmentMission } from "@/design/developmentMissions";
+import { RankMedal } from "@/design/RankMedal";
 
 
 // 波形の形状は unitPathGeometry に共通化（最終リザルトのミニマップと共有）。
@@ -52,6 +55,8 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   const learningPhases = unit?.phases.slice(0, 6) ?? [];
   const completed = progress?.phases.filter(phase => learningPhases.some(item => item.id === phase.phaseKey) && phase.status === "COMPLETED").length ?? 0;
   const missionDone = progress?.unit?.status === "COMPLETED";
+  const devLinks = findDevelopmentLinks(courseId);
+  const devAnyReady = devLinks.some((link) => findDevelopmentMission(link.missionId)?.unlocked);
   const missionReady = next === 6;
   const waveNext = missionDone ? null : next;
   const nextPhase = next !== null && next < 6 ? unit?.phases[next] : null;
@@ -127,12 +132,50 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
           <Box sx={{ mt: 1, display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, flexWrap: "wrap" }}>
             <Typography sx={{ fontSize: 14, color: "text.primary" }}>任意フェーズは、学習段階の進捗には数えません。</Typography>
-            {findDevelopmentLinks(courseId).length > 0 && (
-              <Link href="/missions" style={{ color: "#2563eb", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
-                発展ミッション一覧へ
-              </Link>
-            )}
           </Box>
+          {devLinks.length > 0 && (
+            <Box component="section" aria-label="発展ミッション" sx={{ mt: 3.5 }}>
+              <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, flexWrap: "wrap" }}>
+                <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900 }}>この単元の発展ミッション</Typography>
+                <Typography sx={{ fontSize: 14 }}>{devAnyReady ? "この単元は完了しました。ここからが本題です。" : "最終チャレンジの先にあります。この単元を終えると開きます。"}</Typography>
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, mt: 1.5 }}>
+                {devLinks.map((link) => {
+                  const m = findDevelopmentMission(link.missionId);
+                  if (!m) return null;
+                  return (
+                    <Box key={m.id} sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: 3, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                      <Box sx={{ height: 150, flexShrink: 0 }}>{developmentMissionThumbnailFor(m.id)}</Box>
+                      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 0.75, flex: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          <Chip size="small" label="発展ミッション" sx={{ bgcolor: "#2563eb", color: "#fff", fontWeight: 800 }} />
+                          {m.unlocked
+                            ? <Chip size="small" label="挑戦できる" sx={{ bgcolor: "#dcfce7", color: "#166534", fontWeight: 800 }} />
+                            : <Chip size="small" label="この単元を終えると解放" sx={{ bgcolor: "#f1f5f9", fontWeight: 800 }} />}
+                        </Box>
+                        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{m.title}</Typography>
+                        <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>{m.problem}</Typography>
+                        {m.selfBest && (
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <RankMedal rank={m.selfBest.rank} size={26} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>自己ベスト：{m.selfBest.points}点</Typography>
+                          </Box>
+                        )}
+                        <Box sx={{ flex: 1 }} />
+                        {m.unlocked ? (
+                          <Button component={Link} href={`/missions/${m.id}`} variant="contained" sx={{ alignSelf: "flex-start", minHeight: 44, px: 2.5, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>
+                            {m.selfBest ? "記録に挑戦する →" : "挑戦する →"}
+                          </Button>
+                        ) : (
+                          <Button disabled variant="outlined" sx={{ alignSelf: "flex-start", minHeight: 44, px: 2.5, fontWeight: 800 }}>単元を終えると挑戦できる</Button>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
           {/* 概念の確認状況は出さない（2026-11-23決定）：概念名はカリキュラム側の語彙で、
               学習者の行動につながらない。代わりに実績と知識カードの提示を置く。 */}
           <UnitAchievements courseId={courseId} />
