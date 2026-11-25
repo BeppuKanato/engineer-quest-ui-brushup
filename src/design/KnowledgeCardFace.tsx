@@ -153,23 +153,23 @@ export const KnowledgeCardFace: React.FC<{ card: CardFaceData; owned: boolean; l
           </Box>
         </Box>
         <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 0.6, minWidth: 0 }}>
-          <Typography component="p" sx={{ fontSize: 16, fontWeight: 900, lineHeight: 1.4 }}>{card.title}</Typography>
+          <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, lineHeight: 1.4 }}>{card.title}</Typography>
           {owned ? (
             <>
-              <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>{card.description}</Typography>
-              <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>{card.description}</Typography>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
                 <Box component="span" sx={{ fontWeight: 800 }}>つながり：</Box>{card.connection}
               </Typography>
-              <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
                 <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
               </Typography>
             </>
           ) : (
             <>
-              <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
                 <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
               </Typography>
-              <Typography component="p" sx={{ fontSize: 13.5, lineHeight: 1.7 }}>まだ持っていないカードです。中身は、関連する単元で獲得すると開けます。</Typography>
+              <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>まだ持っていないカードです。中身は、関連する単元で獲得すると開けます。</Typography>
             </>
           )}
         </Box>
@@ -197,23 +197,23 @@ export const KnowledgeCardFace: React.FC<{ card: CardFaceData; owned: boolean; l
         {cardIllustrationFor(card.id)}
       </Box>
       <Box sx={{ p: 1.5, pt: 1.25, display: "flex", flexDirection: "column", gap: 0.75 }}>
-        <Typography component="p" sx={{ fontSize: 16.5, fontWeight: 900, lineHeight: 1.4 }}>{card.title}</Typography>
+        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, lineHeight: 1.4 }}>{card.title}</Typography>
         {owned ? (
           <>
-            <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.75 }}>{card.description}</Typography>
-            <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.75 }}>
+            <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.75 }}>{card.description}</Typography>
+            <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.75 }}>
               <Box component="span" sx={{ fontWeight: 800 }}>つながり：</Box>{card.connection}
             </Typography>
-            <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.75 }}>
+            <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.75 }}>
               <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
             </Typography>
           </>
         ) : (
           <>
-            <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.75 }}>
+            <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.75 }}>
               <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
             </Typography>
-            <Typography component="p" sx={{ fontSize: 13.5, lineHeight: 1.7 }}>まだ持っていないカードです。中身は、関連する単元で獲得すると開けます。</Typography>
+            <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>まだ持っていないカードです。中身は、関連する単元で獲得すると開けます。</Typography>
           </>
         )}
       </Box>

@@ -23,7 +23,7 @@ export const MissionInputVisual: React.FC<{ visual: DevMission["inputVisual"] }>
                       width: 30, height: 30, borderRadius: 1,
                       bgcolor: l?.bg ?? "#f1f5f9", color: l?.fg ?? "#111827",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 15, fontWeight: 900, fontFamily: "monospace",
+                      fontSize: 16, fontWeight: 900, fontFamily: "monospace",
                     }}
                   >
                     {ch}
@@ -40,7 +40,7 @@ export const MissionInputVisual: React.FC<{ visual: DevMission["inputVisual"] }>
             const l = legendByMark.get(String(s));
             return (
               <Box key={i} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
-                <Typography component="p" sx={{ fontSize: 12, fontWeight: 700 }}>{i + 1}</Typography>
+                <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>{i + 1}</Typography>
                 <Box
                   sx={{
                     width: 32, height: 42, borderRadius: 1.5, position: "relative", overflow: "hidden",
@@ -57,7 +57,7 @@ export const MissionInputVisual: React.FC<{ visual: DevMission["inputVisual"] }>
                     </Box>
                   )}
                 </Box>
-                <Typography component="p" sx={{ fontSize: 11 }}>{i === 0 ? "版の番号" : ""}</Typography>
+                <Typography component="p" sx={{ fontSize: 14 }}>{i === 0 ? "版の番号" : ""}</Typography>
               </Box>
             );
           })}
@@ -66,7 +66,7 @@ export const MissionInputVisual: React.FC<{ visual: DevMission["inputVisual"] }>
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
         {visual.legend.map((l) => (
           <Box key={l.mark} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-            <Box sx={{ width: 22, height: 22, borderRadius: 0.75, bgcolor: l.bg, color: l.fg, border: "1px solid #5b7186", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, fontFamily: "monospace" }}>
+            <Box sx={{ width: 22, height: 22, borderRadius: 0.75, bgcolor: l.bg, color: l.fg, border: "1px solid #5b7186", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, fontFamily: "monospace" }}>
               {l.mark}
             </Box>
             <Typography component="p" sx={{ fontSize: 14 }}>{l.label}</Typography>

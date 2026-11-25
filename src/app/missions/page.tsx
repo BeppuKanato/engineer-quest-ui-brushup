@@ -38,13 +38,13 @@ export default function MissionsPage() {
                   <Chip size="small" variant="outlined" label={`解放条件：${mission.unlockUnitName}の単元完了`} />
                 </Box>
                 <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{mission.title}</Typography>
-                <Typography component="p" sx={{ fontSize: 15, lineHeight: 1.8, mt: 0.75 }}>{mission.problem}</Typography>
+                <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.8, mt: 0.75 }}>{mission.problem}</Typography>
                 <Box sx={{ mt: 1.75 }}>
                   {mission.selfBest ? (
                     <>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <RankMedal rank={mission.selfBest.rank} size={28} />
-                        <Typography component="p" sx={{ fontSize: 15 }}>自己ベスト：{mission.selfBest.points}点</Typography>
+                        <Typography component="p" sx={{ fontSize: 16 }}>自己ベスト：{mission.selfBest.points}点</Typography>
                         {nextRank(mission.selfBest.points) && (
                           <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>次の{nextRank(mission.selfBest.points)!.rank}ランクまであと {nextRank(mission.selfBest.points)!.min - mission.selfBest.points}点</Typography>
                         )}
@@ -58,7 +58,7 @@ export default function MissionsPage() {
                       )}
                     </>
                   ) : (
-                    <Typography component="p" sx={{ fontSize: 15 }}>自己ベスト：まだ記録なし</Typography>
+                    <Typography component="p" sx={{ fontSize: 16 }}>自己ベスト：まだ記録なし</Typography>
                   )}
                 </Box>
                 <Box sx={{ flex: 1 }} />
