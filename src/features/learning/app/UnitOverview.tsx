@@ -32,10 +32,9 @@ import StyleIcon from "@mui/icons-material/Style";
 import knowledgeCardsData from "../../../design/data/knowledgeCards.json";
 import { knowledgeCardTones, uncollectedTone } from "../../../components/rewards/rarity.tokens";
 import { useLearningLog } from "./useLearningLog";
-import { findDevelopmentLinks, findUnitMission, missionPlayUrl } from "./missionRegistry";
+import { findDevelopmentLinks, findUnitMission, missionPlayUrl, type DevelopmentMissionLink } from "./missionRegistry";
 import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
 import { findDevelopmentMission } from "@/design/developmentMissions";
-import { RankMedal } from "@/design/RankMedal";
 
 
 // 波形の形状は unitPathGeometry に共通化（最終リザルトのミニマップと共有）。
@@ -56,7 +55,6 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   const completed = progress?.phases.filter(phase => learningPhases.some(item => item.id === phase.phaseKey) && phase.status === "COMPLETED").length ?? 0;
   const missionDone = progress?.unit?.status === "COMPLETED";
   const devLinks = findDevelopmentLinks(courseId);
-  const devAnyReady = devLinks.some((link) => findDevelopmentMission(link.missionId)?.unlocked);
   const missionReady = next === 6;
   const waveNext = missionDone ? null : next;
   const nextPhase = next !== null && next < 6 ? unit?.phases[next] : null;
@@ -129,53 +127,15 @@ export function UnitOverview({ courseId }: { courseId: string }) {
           </Stack>
           <LinearProgress aria-label="単元の進捗" variant="determinate" value={completed / 6 * 100} sx={{ my: 2, height: 8, borderRadius: 4, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 4 } }} />
           {startError && <Alert severity="error" sx={{ my: 2 }}>{startError}</Alert>}
-          <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
+          <UnitPathMap unit={unit} next={waveNext} completedIds={new Set(progress.phases.filter(phase => phase.status === "COMPLETED").map(phase => phase.phaseKey))} hasProgress={!!progress.unit} starting={starting} missionReady={missionReady} missionDone={missionDone} devLinks={devLinks} onStart={(index, isCurrent) => void start(isCurrent ? undefined : index)} onMission={goMission} />
           <Box sx={{ mt: 1, display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 2, flexWrap: "wrap" }}>
             <Typography sx={{ fontSize: 14, color: "text.primary" }}>任意フェーズは、学習段階の進捗には数えません。</Typography>
+            {devLinks.length > 0 && (
+              <Link href="/missions" style={{ color: "#2563eb", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+                発展ミッション一覧へ
+              </Link>
+            )}
           </Box>
-          {devLinks.length > 0 && (
-            <Box component="section" aria-label="発展ミッション" sx={{ mt: 3.5 }}>
-              <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, flexWrap: "wrap" }}>
-                <Typography component="h2" sx={{ fontSize: 18, fontWeight: 900 }}>この単元の発展ミッション</Typography>
-                <Typography sx={{ fontSize: 14 }}>{devAnyReady ? "この単元は完了しました。ここからが本題です。" : "最終チャレンジの先にあります。この単元を終えると開きます。"}</Typography>
-              </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, mt: 1.5 }}>
-                {devLinks.map((link) => {
-                  const m = findDevelopmentMission(link.missionId);
-                  if (!m) return null;
-                  return (
-                    <Box key={m.id} sx={{ bgcolor: "#fff", border: "1px solid #dbe3ef", borderRadius: 3, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                      <Box sx={{ height: 150, flexShrink: 0 }}>{developmentMissionThumbnailFor(m.id)}</Box>
-                      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 0.75, flex: 1 }}>
-                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                          <Chip size="small" label="発展ミッション" sx={{ bgcolor: "#2563eb", color: "#fff", fontWeight: 800 }} />
-                          {m.unlocked
-                            ? <Chip size="small" label="挑戦できる" sx={{ bgcolor: "#dcfce7", color: "#166534", fontWeight: 800 }} />
-                            : <Chip size="small" label="この単元を終えると解放" sx={{ bgcolor: "#f1f5f9", fontWeight: 800 }} />}
-                        </Box>
-                        <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{m.title}</Typography>
-                        <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>{m.problem}</Typography>
-                        {m.selfBest && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <RankMedal rank={m.selfBest.rank} size={26} />
-                            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>自己ベスト：{m.selfBest.points}点</Typography>
-                          </Box>
-                        )}
-                        <Box sx={{ flex: 1 }} />
-                        {m.unlocked ? (
-                          <Button component={Link} href={`/missions/${m.id}`} variant="contained" sx={{ alignSelf: "flex-start", minHeight: 44, px: 2.5, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>
-                            {m.selfBest ? "記録に挑戦する →" : "挑戦する →"}
-                          </Button>
-                        ) : (
-                          <Button disabled variant="outlined" sx={{ alignSelf: "flex-start", minHeight: 44, px: 2.5, fontWeight: 800 }}>単元を終えると挑戦できる</Button>
-                        )}
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
           {/* 概念の確認状況は出さない（2026-11-23決定）：概念名はカリキュラム側の語彙で、
               学習者の行動につながらない。代わりに実績と知識カードの提示を置く。 */}
           <UnitAchievements courseId={courseId} />
@@ -185,7 +145,7 @@ export function UnitOverview({ courseId }: { courseId: string }) {
   </Box>;
 }
 
-function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionReady, missionDone, onStart, onMission }: {
+function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionReady, missionDone, devLinks, onStart, onMission }: {
   unit: LearningUnit;
   next: number | null;
   completedIds: ReadonlySet<string>;
@@ -193,6 +153,7 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   starting: boolean;
   missionReady: boolean;
   missionDone: boolean;
+  devLinks: DevelopmentMissionLink[];
   onStart: (index: number, isCurrent: boolean) => void;
   onMission: () => void;
 }) {
@@ -228,6 +189,32 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
   };
   const doneUntil = next === null ? 1 : count === 1 ? 0 : next / (count - 1);
   const first = point(0), last = point(count - 1);
+  // 発展ミッションノード（2026-11-25 Kanato）：最終チャレンジの先に破線でつなぐ。
+  // 完了前は灰色で見せておき、完了後の初回訪問で色づく演出（解放）を出す。
+  const devMissions = devLinks.flatMap((link) => {
+    const m = findDevelopmentMission(link.missionId);
+    return m ? [m] : [];
+  });
+  const devOffsets: Record<number, [number, number][]> = vertical
+    ? { 1: [[168, 6]], 2: [[158, -84], [168, 88]], 3: [[148, -122], [184, 0], [150, 108]] }
+    : { 1: [[6, 168]], 2: [[-84, 158], [88, 168]], 3: [[-122, 148], [0, 184], [108, 150]] };
+  const devPos = (i: number) => {
+    const [dx, dy] = (devOffsets[devMissions.length] ?? devOffsets[1])[i] ?? [0, 0];
+    return { x: last.x + dx, y: last.y + dy };
+  };
+  const devStorageKey = `engineer-quest:mission-nodes-celebrated:${unit.courseId}`;
+  const [devCelebrate, setDevCelebrate] = useState(false);
+  useEffect(() => {
+    if (!missionDone || devMissions.length === 0) return;
+    let seen = false;
+    try { seen = localStorage.getItem(devStorageKey) === "1"; } catch { /* 読めなければ初回扱い */ }
+    if (!seen) {
+      if (!reduced) setDevCelebrate(true);
+      try { localStorage.setItem(devStorageKey, "1"); } catch { /* 保存できなくても表示は続ける */ }
+    }
+    // devMissions は毎レンダーで変わるため、件数だけを依存にする
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missionDone, devMissions.length, reduced, devStorageKey]);
   return (
     <Box
       component="section"
@@ -277,6 +264,11 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
           <text x={vertical ? last.x - 52 : last.x + 6} y={vertical ? last.y - 10 : last.y - 56} textAnchor="end" fontSize={24} fontWeight={700} fill="#d97706">ゴール</text>
         </g>
         )}
+        {/* 発展ミッションノードと最終チャレンジをつなぐ破線 */}
+        {devMissions.map((m, i) => {
+          const to = devPos(i);
+          return <line key={m.id} x1={last.x} y1={last.y} x2={to.x} y2={to.y} stroke={missionDone ? tokens.progress.next : "#cbd5e1"} strokeWidth={2.5} strokeDasharray="5 6" />;
+        })}
         {/* 任意フェーズと本線をつなぐ破線 */}
         {optionals.map((o) => {
           const wave = wavePoint(o.t);
@@ -406,6 +398,48 @@ function UnitPathMap({ unit, next, completedIds, hasProgress, starting, missionR
               <Typography sx={{ fontSize: 14, color: "text.primary" }}>{o.timing}</Typography>
             </Box>
           </Box>
+        );
+      })}
+      {/* 発展ミッションノード：最終チャレンジの先に置く。同一性は挑戦画面・一覧と同じ
+          場面イラストで運ぶ。完了前はグレースケールで「まだ」を表し、完了後の初回訪問では
+          色づき＋「解放されました」の演出を出す（localStorage で訪問済みを覚える）。 */}
+      {devMissions.map((m, i) => {
+        const pos = devPos(i);
+        const unlocked = missionDone;
+        const node = (
+          <>
+            <Box
+              component={motion.div}
+              key={devCelebrate ? "celebrating" : "plain"}
+              initial={devCelebrate ? { filter: "grayscale(1)", scale: 0.7, opacity: 0.4 } : false}
+              animate={{ filter: "grayscale(0)", scale: 1, opacity: 1 }}
+              transition={{ duration: reduced ? 0 : 0.7, delay: reduced ? 0 : 0.5 + i * 0.25, type: "spring", bounce: 0.45 }}
+              sx={{ width: 96, height: 68, borderRadius: 2.5, overflow: "hidden", border: `2.5px solid ${unlocked ? "#2563eb" : "#cbd5e1"}`, bgcolor: "#fff", ...(unlocked ? {} : { filter: "grayscale(1)", opacity: 0.55 }) }}
+            >
+              {developmentMissionThumbnailFor(m.id)}
+            </Box>
+            {devCelebrate && (
+              <Box
+                component={motion.span}
+                initial={{ opacity: 0, y: 6, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 1 + i * 0.25, duration: 0.3 }}
+                sx={{ position: "absolute", right: "calc(100% + 10px)", top: "50%", transform: "translateY(-50%)", bgcolor: "#16a34a", color: "#fff", px: 1.25, py: 0.4, borderRadius: 999, fontSize: 14, fontWeight: 800, whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2 }}
+              >
+                解放されました
+              </Box>
+            )}
+            <Box sx={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 190, textAlign: "right", pointerEvents: "none" }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{m.title}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.primary" }}>{unlocked ? (m.selfBest ? `自己ベスト ${m.selfBest.points}点` : "挑戦できる") : "単元完了で解放"}</Typography>
+            </Box>
+          </>
+        );
+        const wrapSx = { position: "absolute" as const, left: `${(pos.x / xDen) * 100}%`, top: `${(pos.y / yDen) * 100}%`, transform: "translate(-50%, -50%)", width: 96, height: 68, textDecoration: "none" };
+        return unlocked ? (
+          <Box key={m.id} component={Link} href={`/missions/${m.id}`} aria-label={`発展ミッション：${m.title}（挑戦できる）`} sx={wrapSx}>{node}</Box>
+        ) : (
+          <Box key={m.id} aria-label={`発展ミッション：${m.title}（単元完了で解放）`} sx={wrapSx}>{node}</Box>
         );
       })}
     </Box>
