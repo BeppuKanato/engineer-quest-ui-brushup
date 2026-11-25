@@ -447,22 +447,35 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                 {!runningTests && Object.keys(outcomes).length > 0 && passedCount < mission.tests.length && (
                   <Box sx={{ border: "1px solid #e2e8f0", borderRadius: 2, p: 1.5 }}>
                     <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>解決方法に迷っていますか？</Typography>
+                    <Typography component="p" sx={{ fontSize: 14, mt: 0.5 }}>ヒントは今すぐ見られます。掲示板の回答は後から届きます。</Typography>
                     <Box sx={{ display: "flex", gap: 1, mt: 1.25, flexWrap: "wrap" }}>
-                      <Button variant="outlined" onClick={() => setPanel("hints")} sx={{ fontWeight: 800 }}>ヒントを見る</Button>
+                      <Button variant="contained" onClick={() => setPanel("hints")} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>ヒントを見る</Button>
                       <Button
-                        variant="contained"
-                        onClick={() => setQuickPost({
-                          category: "ERROR_HELP",
-                          courseId: missionCourseIds[mission.id],
-                          contextLabel: `${mission.unlockUnitName} › 発展ミッション『${mission.title}』`,
-                          code,
-                        })}
-                        sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
+                        variant="outlined"
+                        onClick={() => {
+                          const failed = mission.tests.filter((t) => outcomes[t.id] && outcomes[t.id].status !== "pass");
+                          const resultsDetail = failed.map((t) => {
+                            const o = outcomes[t.id];
+                            return o.status === "error"
+                              ? `${t.label}：実行エラー\n${o.error ?? ""}`
+                              : `${t.label}：不合格\n期待する答え：${t.expectedAnswer}\n実際の答え：${o.answer || "（出力なし）"}`;
+                          }).join("\n\n");
+                          setQuickPost({
+                            category: "ERROR_HELP",
+                            courseId: missionCourseIds[mission.id],
+                            contextLabel: `${mission.unlockUnitName} › 発展ミッション『${mission.title}』`,
+                            attachments: [
+                              { id: "code", label: "現在のコード", kind: "code", detail: code, defaultChecked: true },
+                              { id: "results", label: "テスト結果（不合格のケース）", kind: "text", detail: resultsDetail, defaultChecked: true },
+                            ],
+                          });
+                        }}
+                        sx={{ fontWeight: 800 }}
                       >
                         仲間に相談する
                       </Button>
                     </Box>
-                    <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>相談するときは、今のコードを添付できます。</Typography>
+                    <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>相談するときは、今のコードと不合格のテスト結果を添付できます（中身は投稿前に確認できます）。</Typography>
                   </Box>
                 )}
                 {mission.tests.map((t) => {

@@ -6,7 +6,8 @@
 import type { User } from "firebase/auth";
 import type { AuthUser, GetMeResponse } from "@/api/auth.api";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
-import type { QuestBoardOptions, QuestBoardReactionSummary, QuestComment, QuestPostDetail, QuestPostStatus, QuestPostSummary } from "@/api/questBoard.api";
+import type { CreateQuestPostPayload, QuestBoardOptions, QuestBoardReactionSummary, QuestComment, QuestPostCategory, QuestPostDetail, QuestPostStatus, QuestPostSummary } from "@/api/questBoard.api";
+import { developmentMissions } from "./developmentMissions";
 import type { Course } from "@/app/courses/type";
 import achievementsData from "./data/achievements.json";
 
@@ -132,14 +133,11 @@ export const homeFixture: HomeResponse = {
       { date: "2026-11-22", label: "日", learned: false, isToday: false },
     ],
   },
-  // 掲示板の投稿は利用者が書くものなので、ここは仮の文面（初期コンテンツの想定に合わせた典型的なつまずき）。
+  // ホームに出すのは「修了した単元の未解決質問」だけ（新着順ではない）。
+  // 提示には理由（修了した単元）と状態（まだ回答がない/未解決）を付ける。
   questions: [
-    { id: "design-post-6", title: "真ん中より大きいのに右半分を探してしまいます", createdAt: "2026-11-20T13:05:00+09:00", href: "/quest-board/design-post-6" },
-    { id: "design-post-1", title: "キューから取り出すタイミングが分かりません", createdAt: "2026-11-19T09:12:00+09:00", href: "/quest-board/design-post-1" },
-    { id: "design-post-2", title: "二分探索で範囲が1つになっても終わらないのはなぜ？", createdAt: "2026-11-18T16:40:00+09:00", href: "/quest-board/design-post-2" },
-    { id: "design-post-3", title: "バブルソートで交換が止まる条件が分かりません", createdAt: "2026-11-18T11:05:00+09:00", href: "/quest-board/design-post-3" },
-    { id: "design-post-4", title: "DFSとBFSはどう使い分けるのですか", createdAt: "2026-11-17T15:22:00+09:00", href: "/quest-board/design-post-4" },
-    { id: "design-post-5", title: "貪欲法で大きい硬貨から使う理由が知りたいです", createdAt: "2026-11-16T10:48:00+09:00", href: "/quest-board/design-post-5" },
+    { id: "design-post-9", title: "キューに頂点を追加する順番が分かりません", createdAt: "2026-11-25T09:20:00+09:00", href: "/quest-board/design-post-9", courseTitle: "幅優先探索", commentCount: 0, authorName: "みく", excerpt: "同じ距離にある頂点が複数あるとき、どちらからキューに追加してもいいのでしょうか。", status: "OPEN" },
+    { id: "design-post-1", title: "キューから取り出すタイミングが分かりません", createdAt: "2026-11-19T09:12:00+09:00", href: "/quest-board/design-post-1", courseTitle: "幅優先探索", commentCount: 2, authorName: "あかり", excerpt: "取り出すのは「その頂点から広げるとき」で合っていますか。入れた順に取り出す理由も知りたいです。", status: "OPEN" },
   ],
   user: {
     displayName: "サンプル",
@@ -476,6 +474,17 @@ type BoardCommentSeed = QuestComment & { isSolution?: boolean };
 type BoardPostSeed = QuestPostSummary & { comments: BoardCommentSeed[] };
 const boardPosts: BoardPostSeed[] = [
   {
+    id: "design-post-9", category: "QUESTION", categoryLabel: "質問",
+    title: "キューに頂点を追加する順番が分かりません",
+    body: "幅優先探索で、同じ距離にある頂点が複数あるとき、どちらからキューに追加してもいいのでしょうか。追加する順番で、調べる順番も変わってしまう気がします。",
+    excerpt: "", code: null, referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-breadth-first-search-v1", courseTitle: "幅優先探索", commentCount: 0, reactions: reactionsOf(0, 0, 0),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-25T09:20:00+09:00", updatedAt: "2026-11-25T09:20:00+09:00",
+    ...boardAuthorMiku,
+    comments: [],
+  },
+  {
     id: "design-post-7", category: "WORK_SHARE", categoryLabel: "作品共有",
     title: "発展ミッション『ダンジョンの最短脱出』で767点が取れました",
     body: "幅優先探索の単元を終えて、発展ミッションのダンジョンに挑戦しました。ふつうの幅優先探索だと767点（Bランク）でした。調べた部屋数を数えるのがスコアになるので、ゴールに着いたらすぐ止めるのが大事でした。次は両方向から探してAランクをねらいます。",
@@ -596,6 +605,14 @@ for (const post of boardPosts) {
 const boardStatusOverrides = new Map<string, QuestPostStatus>();
 const boardAppendedComments = new Map<string, QuestComment[]>();
 const boardSolutionOverrides = new Map<string, string>();
+/** 回答へのリアクション（参考になった/ありがとう）の件数と自分の状態。 */
+const boardCommentReactions = new Map<string, { helpful: number; thanks: number }>([
+  ["c6-1", { helpful: 2, thanks: 1 }],
+  ["c2-1", { helpful: 3, thanks: 0 }],
+  ["c1-1", { helpful: 2, thanks: 1 }],
+  ["c1-2", { helpful: 1, thanks: 0 }],
+]);
+const boardCommentUserTypes = new Map<string, Array<"HELPFUL" | "THANKS">>();
 
 const boardSummaryOf = (post: BoardPostSeed): QuestPostSummary => {
   const { comments: _comments, ...summary } = post;
@@ -612,14 +629,54 @@ const boardDetailOf = (post: BoardPostSeed): QuestPostDetail => {
   const comments = [...post.comments, ...(boardAppendedComments.get(post.id) ?? [])].map((comment) => ({
     ...comment,
     isSolution: solutionId ? comment.id === solutionId : Boolean((comment as BoardCommentSeed).isSolution),
+    reactions: {
+      ...(boardCommentReactions.get(comment.id) ?? { helpful: 0, thanks: 0 }),
+      userTypes: boardCommentUserTypes.get(comment.id) ?? [],
+    },
   }));
   // 解決した回答が指定された投稿は、並びも「解決した回答を先頭」に寄せる。
   comments.sort((a, b) => Number(b.isSolution ?? false) - Number(a.isSolution ?? false));
   return { ...boardSummaryOf(post), comments };
 };
 
-const boardFixture = (path: string): unknown => {
+const boardFixture = (path: string, payload?: unknown): unknown => {
   const [key, queryString] = path.split("?");
+  // 作成 POST：本文を受け取れるようになったので、実際に投稿を足して返す
+  // （クイック投稿・通常投稿のどちらからでも、一覧と詳細にそのまま反映される）。
+  if (key === "/quest-board" && payload && typeof payload === "object" && "category" in payload) {
+    const p = payload as CreateQuestPostPayload;
+    const course = coursesFixture.find((c) => c.id === p.courseId);
+    const mission = developmentMissions.find((m) => m.id === p.missionId);
+    const category = p.category as QuestPostCategory;
+    const post: BoardPostSeed = {
+      id: `design-post-created-${Date.now()}`,
+      category,
+      categoryLabel: boardOptions.categories.find((c) => c.value === category)?.label ?? category,
+      title: p.title,
+      body: p.body,
+      excerpt: p.body.length > 90 ? `${p.body.slice(0, 90)}…` : p.body,
+      code: p.code ?? null,
+      referenceUrl: p.referenceUrl ?? null,
+      status: "OPEN",
+      courseId: p.courseId ?? null,
+      courseTitle: course?.title ?? null,
+      missionId: p.missionId ?? null,
+      missionTitle: mission?.title ?? null,
+      workScore: p.workScore,
+      workRank: p.workRank,
+      commentCount: 0,
+      reactions: reactionsOf(0, 0, 0),
+      canResolve: category === "QUESTION" || category === "ERROR_HELP",
+      isOwner: true,
+      isDeleted: false,
+      createdAt: "2026-11-25T14:00:00+09:00",
+      updatedAt: "2026-11-25T14:00:00+09:00",
+      ...boardAuthorSelf,
+      comments: [],
+    };
+    boardPosts.unshift(post);
+    return { postId: post.id };
+  }
   if (key === "/quest-board") {
     const params = new URLSearchParams(queryString ?? "");
     let posts = boardPosts.map(boardSummaryOf);
@@ -642,6 +699,22 @@ const boardFixture = (path: string): unknown => {
     const next: QuestPostStatus = (boardStatusOverrides.get(post.id) ?? post.status) === "OPEN" ? "RESOLVED" : "OPEN";
     boardStatusOverrides.set(post.id, next);
     return { status: next, updatedAt: "2026-11-25T10:00:00+09:00" };
+  }
+  const commentReactionMatch = key.match(/^\/quest-board\/([^/]+)\/comments\/([^/]+)\/reactions\/(HELPFUL|THANKS)$/);
+  if (commentReactionMatch) {
+    const commentId = decodeURIComponent(commentReactionMatch[2]);
+    const type = commentReactionMatch[3] as "HELPFUL" | "THANKS";
+    const counts = boardCommentReactions.get(commentId) ?? { helpful: 0, thanks: 0 };
+    const userTypes = boardCommentUserTypes.get(commentId) ?? [];
+    const has = userTypes.includes(type);
+    const nextTypes = has ? userTypes.filter((t) => t !== type) : [...userTypes, type];
+    const nextCounts = {
+      helpful: counts.helpful + (type === "HELPFUL" ? (has ? -1 : 1) : 0),
+      thanks: counts.thanks + (type === "THANKS" ? (has ? -1 : 1) : 0),
+    };
+    boardCommentReactions.set(commentId, nextCounts);
+    boardCommentUserTypes.set(commentId, nextTypes);
+    return { reactions: { ...nextCounts, userTypes: nextTypes } };
   }
   const solutionMatch = key.match(/^\/quest-board\/([^/]+)\/comments\/([^/]+)\/solution$/);
   if (solutionMatch) {
@@ -679,7 +752,7 @@ const boardFixture = (path: string): unknown => {
 };
 
 // パスに対応するフィクスチャを返す。無い場合は undefined。
-export const resolveFixture = (path: string): unknown => {
+export const resolveFixture = (path: string, payload?: unknown): unknown => {
   const key = path.split("?")[0];
   // フェーズ完了・単元完了の POST は動的パスなのでパターンで受ける。
   // 最小の正常応答を返し、デザインモードでもフェーズ遷移を通せるようにする
@@ -709,7 +782,7 @@ export const resolveFixture = (path: string): unknown => {
       achievedBigGoals: [],
     };
   }
-  const board = boardFixture(path);
+  const board = boardFixture(path, payload);
   if (board !== undefined) return board;
   // フィードバック画面の仮データ（2026-11-23）: 文面ありの状態をデザイン確認できるようにする。
   if (key.startsWith("/feedback-v1/phase/") || key.startsWith("/feedback-v1/unit/")) return designFeedbackResult(key);

@@ -13,7 +13,11 @@ export type HomeResponse = {
   resume: (HomeUnit & { nextStep: string | null }) | null;
   hasInProgressUnit: boolean;
   week: { streakDays: number; days: { date: string; label: string; learned: boolean; isToday: boolean }[] };
-  questions: { id: string; title: string; createdAt: string; href: string }[];
+  questions: {
+    id: string; title: string; createdAt: string; href: string;
+    /** 回答促進の提示に使う付加情報（ある場合は「学んだ知識を活かそう」として出す）。 */
+    courseTitle?: string; commentCount?: number; authorName?: string; excerpt?: string; status?: string;
+  }[];
   user: {
     displayName: string | null;
     selectedMascotId: string;

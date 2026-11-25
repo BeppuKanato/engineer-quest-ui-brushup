@@ -62,6 +62,8 @@ export type QuestComment = QuestBoardAuthorInfo & {
   body: string;
   /** 投稿者が「解決した回答」に指定した回答かどうか。 */
   isSolution?: boolean;
+  /** 回答者への評価（参考になった/ありがとう）。 */
+  reactions?: { helpful: number; thanks: number; userTypes: Array<"HELPFUL" | "THANKS"> };
   createdAt: string;
   updatedAt: string;
 };
@@ -95,6 +97,9 @@ export type CreateQuestPostPayload = {
   courseId?: string;
   /** 関連する発展ミッション（courseId と排他）。 */
   missionId?: string;
+  /** 成果共有のスコアとランク（サンドボックス表示用。本アプリではサーバー側の挑戦記録から引く）。 */
+  workScore?: number;
+  workRank?: string;
 };
 
 export type QuestBoardListParams = {
@@ -251,5 +256,19 @@ export const markQuestCommentSolution = async (
     { method: "POST", token, body: JSON.stringify({}) }
   );
   invalidateClientQueries([queryTags.questBoard]);
+  return result;
+};
+
+/** 回答へのリアクション（参考になった/ありがとう）の切り替え。 */
+export const toggleQuestCommentReaction = async (
+  token: string,
+  postId: string,
+  commentId: string,
+  type: "HELPFUL" | "THANKS"
+): Promise<{ reactions: { helpful: number; thanks: number; userTypes: Array<"HELPFUL" | "THANKS"> } }> => {
+  const result = await fetcher<{ reactions: { helpful: number; thanks: number; userTypes: Array<"HELPFUL" | "THANKS"> } }>(
+    `/quest-board/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/reactions/${type}`,
+    { method: "POST", token, body: JSON.stringify({}) }
+  );
   return result;
 };

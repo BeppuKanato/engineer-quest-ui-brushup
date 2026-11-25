@@ -310,6 +310,44 @@ export default function NewQuestPostPage() {
                 </Box>
               </Box>
 
+              <TextField
+                label="タイトル"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                error={Boolean(titleError && title.length > 0)}
+                helperText={
+                  title.length > 0
+                    ? titleError || `${title.trim().length} / ${titleMaxLength}文字`
+                    : `必須・${titleMinLength}〜${titleMaxLength}文字`
+                }
+                inputProps={{ maxLength: titleMaxLength + 20 }}
+                required
+                fullWidth
+              />
+
+              <Box>
+                <Typography sx={{ fontSize: 14, lineHeight: 1.7, mb: 1 }}>
+                  {bodyHints[category]}
+                </Typography>
+                <TextField
+                  label="本文"
+                  value={body}
+                  placeholder={bodyPlaceholders[category]}
+                  onChange={(event) => setBody(event.target.value)}
+                  error={Boolean(bodyError && body.length > 0)}
+                  helperText={
+                    body.length > 0
+                      ? bodyError || `${body.trim().length} / ${bodyMaxLength}文字`
+                      : `必須・${bodyMinLength}〜${bodyMaxLength}文字`
+                  }
+                  inputProps={{ maxLength: bodyMaxLength + 100 }}
+                  required
+                  fullWidth
+                  multiline
+                  minRows={7}
+                />
+              </Box>
+
               <Box>
                 <SectionLabel>関連（任意）</SectionLabel>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.75 }}>単元</Typography>
@@ -377,43 +415,6 @@ export default function NewQuestPostPage() {
                 )}
               </Box>
 
-              <TextField
-                label="タイトル"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                error={Boolean(titleError && title.length > 0)}
-                helperText={
-                  title.length > 0
-                    ? titleError || `${title.trim().length} / ${titleMaxLength}文字`
-                    : `必須・${titleMinLength}〜${titleMaxLength}文字`
-                }
-                inputProps={{ maxLength: titleMaxLength + 20 }}
-                required
-                fullWidth
-              />
-
-              <Box>
-                <Typography sx={{ fontSize: 14, lineHeight: 1.7, mb: 1 }}>
-                  {bodyHints[category]}
-                </Typography>
-                <TextField
-                  label="本文"
-                  value={body}
-                  placeholder={bodyPlaceholders[category]}
-                  onChange={(event) => setBody(event.target.value)}
-                  error={Boolean(bodyError && body.length > 0)}
-                  helperText={
-                    body.length > 0
-                      ? bodyError || `${body.trim().length} / ${bodyMaxLength}文字`
-                      : `必須・${bodyMinLength}〜${bodyMaxLength}文字`
-                  }
-                  inputProps={{ maxLength: bodyMaxLength + 100 }}
-                  required
-                  fullWidth
-                  multiline
-                  minRows={7}
-                />
-              </Box>
 
               {codeOpen ? (
                 <TextField

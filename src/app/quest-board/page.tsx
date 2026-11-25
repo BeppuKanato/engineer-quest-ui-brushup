@@ -177,10 +177,27 @@ export default function QuestBoardPage() {
 
   const SHARE_CATEGORIES: QuestPostCategory[] = ["WORK_SHARE", "CODE_SHARE", "MEMO", "REFERENCE"];
   const displayPosts = (board?.posts ?? []).filter((post) => {
-    if (view === "WAITING") return isResolvableCategory(post.category) && post.status === "OPEN" && post.commentCount === 0;
+    if (view === "WAITING") return isResolvableCategory(post.category) && post.status === "OPEN";
     if (view === "SHARE") return SHARE_CATEGORIES.includes(post.category);
     return true;
   });
+  // 未解決の質問は、回答がまだ無いものを先に出す（回答1件でも未解決なら残す）。
+  const sortedPosts = view === "WAITING"
+    ? [...displayPosts].sort((a, b) => a.commentCount - b.commentCount)
+    : displayPosts;
+  /** タブを切り替えたとき、タブと矛盾する種類の絞り込みは解除する。 */
+  const changeView = (next: typeof view) => {
+    if (next === "WAITING" && category !== "ALL" && !isResolvableCategory(category)) {
+      setCategory("ALL");
+      if (token) void loadBoard(token, { view: next, category: "ALL" }).catch(() => undefined);
+    } else if (next === "SHARE" && category !== "ALL" && !SHARE_CATEGORIES.includes(category)) {
+      setCategory("ALL");
+      if (token) void loadBoard(token, { view: next, category: "ALL" }).catch(() => undefined);
+    } else if (token) {
+      void loadBoard(token, { view: next }).catch(() => undefined);
+    }
+    setView(next);
+  };
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -294,10 +311,10 @@ export default function QuestBoardPage() {
               </Button>
             </Box>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <FilterChip selected={view === "ALL"} onClick={() => setView("ALL")}>すべて</FilterChip>
-              <FilterChip selected={view === "WAITING"} onClick={() => setView("WAITING")}>回答募集中</FilterChip>
-              <FilterChip selected={view === "SHARE"} onClick={() => setView("SHARE")}>学び・作品共有</FilterChip>
-              <FilterChip selected={view === "MINE"} onClick={() => setView("MINE")}>自分の投稿</FilterChip>
+              <FilterChip selected={view === "ALL"} onClick={() => changeView("ALL")}>すべて</FilterChip>
+              <FilterChip selected={view === "WAITING"} onClick={() => changeView("WAITING")}>未解決の質問</FilterChip>
+              <FilterChip selected={view === "SHARE"} onClick={() => changeView("SHARE")}>学び・作品共有</FilterChip>
+              <FilterChip selected={view === "MINE"} onClick={() => changeView("MINE")}>自分の投稿</FilterChip>
             </Box>
             {filtersOpen && (
               <>
@@ -329,7 +346,7 @@ export default function QuestBoardPage() {
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Typography sx={{ fontSize: 16, fontWeight: 800 }}>
-              {isLoading ? "読み込み中" : `${displayPosts.length}件の投稿 ・ 新着順`}
+              {isLoading ? "読み込み中" : `${sortedPosts.length}件の投稿 ・ ${view === "WAITING" ? "回答がまだ無い順" : "新着順"}`}
             </Typography>
             <Box sx={{ flex: 1 }} />
             {hasActiveFilters && (
@@ -350,8 +367,8 @@ export default function QuestBoardPage() {
               [0, 1, 2].map((index) => (
                 <Skeleton key={index} variant="rounded" height={168} sx={{ borderRadius: 3 }} />
               ))
-            ) : displayPosts.length ? (
-              displayPosts.map((post) => <PostCard key={post.id} post={post} />)
+            ) : sortedPosts.length ? (
+              sortedPosts.map((post) => <PostCard key={post.id} post={post} />)
             ) : (
               <Paper elevation={0} sx={{ p: 5, borderRadius: 3, border: "1px solid #e2e8f0", textAlign: "center" }}>
                 <Box sx={{ display: "flex", justifyContent: "center" }}>

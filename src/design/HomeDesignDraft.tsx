@@ -12,7 +12,6 @@
 //   形は「見出し＋代表の1件＋要約＋行き先リンク」で揃える。小さい画面では縦に積む
 // - 文字は役割の5種、見出しは本文色。意味色は予約制（橙＝ストリーク、レアリティ色は実績とカードの中だけ）
 
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import StyleIcon from "@mui/icons-material/Style";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -62,16 +61,6 @@ function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: str
   );
 }
 
-// 掲示板の行に要るタグと返信数は、ホームのAPIにまだ無いので叩き台では仮置きする。
-const POST_META: Record<string, { tag: string; replies: number }> = {
-  "design-post-6": { tag: "二分探索", replies: 0 },
-  "design-post-1": { tag: "幅優先探索", replies: 3 },
-  "design-post-2": { tag: "二分探索", replies: 1 },
-  "design-post-3": { tag: "バブルソート", replies: 2 },
-  "design-post-4": { tag: "深さ優先探索", replies: 5 },
-  "design-post-5": { tag: "貪欲法", replies: 0 },
-};
-
 // 復習の問題は実在の教材から引く（フィクスチャと同じキー）。
 const reviewMaterial = resolveReviewMaterial({
   courseId: "course-algorithm-binary-search-v1",
@@ -87,8 +76,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
-  // ホームの掲示板は、学習中の単元で絞って新着順に2件だけ出す（自分に関係ある情報にする）。
-  const boardQuestions = (current ? questions.filter((q) => POST_META[q.id]?.tag === current.title) : questions).slice(0, 2);
+  // ホームの掲示板は「修了した単元の未解決質問」を出す。新着順ではなく、
+  // 自分が答えられる質問であること（理由）と状態（まだ回答がない等）を付けて提示する。
+  const boardQuestions = questions.slice(0, 2);
   // 再開先と推奨先が同じ単元なら、前回の続きは独立させず狙いの中の引用に畳む。
   const sameUnit = Boolean(resume && current && resume.id === current.id);
   const nearAchievement = today.nearAchievements[0];
@@ -389,36 +379,38 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Stack>
             </Box>
           </Box>
-          {/* 掲示板：右の縦長の列。学習中の単元で絞って新着順に2件 */}
+          {/* 掲示板：右の縦長の列。修了した単元の未解決質問を、理由つきで出す */}
           {boardQuestions.length > 0 && (
-            <Box component="section" aria-label="掲示板・学習中の単元から" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-              <TileTitle>掲示板（学習中の単元から）</TileTitle>
+            <Box component="section" aria-label="掲示板・修了した単元から" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
+              <TileTitle>学んだ知識を活かそう</TileTitle>
+              <Typography fontSize={14} sx={{ mt: 0.5 }}>
+                あなたが修了した単元で、仲間が質問しています。
+              </Typography>
               <Box>
                 <Stack divider={<Divider flexItem />}>
-                  {boardQuestions.map((question) => {
-                    const meta = POST_META[question.id];
-                    return (
-                      <Box key={question.id} component={Link} href={question.href} sx={{ display: "flex", gap: 1.25, py: 1.5, textDecoration: "none", color: "inherit", alignItems: "flex-start" }}>
-                        <Box component="img" src="/images/mascots/red-panda/face.png" alt="" sx={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", bgcolor: "#eef1f5", flexShrink: 0 }} />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography fontWeight={900} fontSize={18} sx={{ lineHeight: 1.45 }}>
-                            {question.title}
-                          </Typography>
-                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                            {meta && <Chip label={meta.tag} size="small" sx={{ height: 20, fontSize: 14, fontWeight: 700 }} />}
-                            {meta && (
-                              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.primary" }}>
-                                <ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />
-                                <Typography fontSize={14} fontWeight={800}>
-                                  {meta.replies}
-                                </Typography>
-                              </Stack>
-                            )}
-                          </Stack>
-                        </Box>
-                      </Box>
-                    );
-                  })}
+                  {boardQuestions.map((question) => (
+                    <Box key={question.id} sx={{ py: 1.5 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        {question.courseTitle && <Chip label={question.courseTitle} size="small" sx={{ height: 22, fontSize: 14, fontWeight: 700 }} />}
+                        <Typography fontSize={14} fontWeight={800} color={question.commentCount === 0 ? PRIMARY : "text.primary"}>
+                          {question.commentCount === 0 ? "まだ回答がありません" : `回答 ${question.commentCount}件 ・ まだ解決していません`}
+                        </Typography>
+                      </Stack>
+                      <Typography fontWeight={900} fontSize={18} sx={{ lineHeight: 1.45, mt: 0.75 }}>
+                        {question.title}
+                      </Typography>
+                      {question.excerpt && (
+                        <Typography fontSize={14} sx={{ mt: 0.5, lineHeight: 1.7 }}>{question.excerpt}</Typography>
+                      )}
+                      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1 }}>
+                        {question.authorName && <Typography fontSize={14}>{question.authorName} さん</Typography>}
+                        <Box sx={{ flex: 1 }} />
+                        <Button component={Link} href={question.href} variant="contained" size="small" sx={{ bgcolor: PRIMARY, fontWeight: 800 }}>
+                          回答してみる
+                        </Button>
+                      </Stack>
+                    </Box>
+                  ))}
                 </Stack>
               </Box>
               <Box sx={{ flex: 1 }} />

@@ -38,6 +38,7 @@ import {
   deleteQuestPost,
   getQuestPost,
   markQuestCommentSolution,
+  toggleQuestCommentReaction,
   toggleQuestReaction,
   updateQuestPost,
   updateQuestPostStatus,
@@ -244,6 +245,21 @@ export default function QuestPostDetailPage() {
     } catch (error) {
       console.error(error);
       setErrorMessage("解決した回答を指定できませんでした。");
+    }
+  };
+
+  const handleCommentReaction = async (commentId: string, type: "HELPFUL" | "THANKS") => {
+    if (!token || !post) return;
+    try {
+      const result = await toggleQuestCommentReaction(token, post.id, commentId, type);
+      setPost({
+        ...post,
+        comments: post.comments.map((comment) =>
+          comment.id === commentId ? { ...comment, reactions: result.reactions } : comment
+        ),
+      });
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -475,16 +491,40 @@ export default function QuestPostDetailPage() {
                           <Typography sx={{ fontSize: 16, whiteSpace: "pre-wrap", lineHeight: 1.8, mt: 1 }}>
                             {comment.body}
                           </Typography>
-                          {resolvable && post.canResolve && !comment.isSolution && (
-                            <Button
-                              size="small"
-                              startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16 }} />}
-                              onClick={() => handleMarkSolution(comment.id)}
-                              sx={{ mt: 1, fontWeight: 700, color: "#166534", minHeight: 32 }}
-                            >
-                              解決した回答にする
-                            </Button>
-                          )}
+                          <Box sx={{ display: "flex", gap: 1, mt: 1.25, flexWrap: "wrap", alignItems: "center" }}>
+                            {([
+                              { type: "HELPFUL" as const, label: "参考になった", count: comment.reactions?.helpful ?? 0 },
+                              { type: "THANKS" as const, label: "ありがとう", count: comment.reactions?.thanks ?? 0 },
+                            ]).map((item) => {
+                              const active = comment.reactions?.userTypes.includes(item.type) ?? false;
+                              return (
+                                <Button
+                                  key={item.type}
+                                  size="small"
+                                  variant={active ? "contained" : "outlined"}
+                                  onClick={() => handleCommentReaction(comment.id, item.type)}
+                                  sx={{
+                                    minHeight: 34, borderRadius: 999, fontWeight: 700,
+                                    ...(active
+                                      ? { bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }
+                                      : { color: "#111827", borderColor: "#cbd5e1", "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" } }),
+                                  }}
+                                >
+                                  {item.label} {item.count}
+                                </Button>
+                              );
+                            })}
+                            {resolvable && post.canResolve && !comment.isSolution && (
+                              <Button
+                                size="small"
+                                startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16 }} />}
+                                onClick={() => handleMarkSolution(comment.id)}
+                                sx={{ fontWeight: 700, color: "#166534", minHeight: 32 }}
+                              >
+                                解決した回答にする
+                              </Button>
+                            )}
+                          </Box>
                         </Box>
                       ))}
                     </Box>

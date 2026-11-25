@@ -74,6 +74,23 @@ export function HomeDashboard({ data, review, currentGoal }: { data: HomeRespons
       </Stack>
     </Section>
 
-    {questions.length > 0 && <Section id="questions" title="掲示板の新着質問"><Stack spacing={1.5}>{questions.map(question => <Box key={question.id} component={Link} href={question.href} sx={{ display: "block", textDecoration: "none", color: "inherit", p: 1.5, border: "1px solid #dbe3ef", borderRadius: 2 }}><Typography fontWeight={800}>{question.title}</Typography><Typography variant="caption" color="text.secondary">{new Date(question.createdAt).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}</Typography></Box>)}</Stack></Section>}
+    {questions.length > 0 && <Section id="questions" title="学んだ知識を活かそう">
+      <Typography sx={{ mb: 2 }}>あなたが修了した単元で、仲間が質問しています。回答することは、自分の理解を確かめる機会にもなります。</Typography>
+      <Stack spacing={1.5}>{questions.map(question => <Box key={question.id} sx={{ p: 2, border: "1px solid #dbe3ef", borderRadius: 2 }}>
+        <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+          {question.courseTitle && <Chip size="small" label={question.courseTitle} sx={{ fontWeight: 700 }} />}
+          <Typography fontSize={14} fontWeight={800} color={question.commentCount === 0 ? "#2563eb" : "inherit"}>
+            {question.commentCount === 0 ? "まだ回答がありません" : `回答 ${question.commentCount}件 ・ まだ解決していません`}
+          </Typography>
+        </Stack>
+        <Typography fontWeight={900} fontSize={18} sx={{ mt: 1 }}>{question.title}</Typography>
+        {question.excerpt && <Typography sx={{ mt: 0.5 }}>{question.excerpt}</Typography>}
+        <Stack direction="row" gap={2} alignItems="center" sx={{ mt: 1.5 }}>
+          {question.authorName && <Typography fontSize={14}>{question.authorName} さん</Typography>}
+          <Box sx={{ flex: 1 }} />
+          <Button component={Link} href={question.href} variant="contained" size="small" sx={{ fontWeight: 800 }}>回答してみる</Button>
+        </Stack>
+      </Box>)}</Stack>
+    </Section>}
   </Stack>;
 }

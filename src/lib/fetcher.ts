@@ -52,7 +52,9 @@ export const fetcher = async <T>(
 ): Promise<T> => {
     // デザインモード：API を呼ばず、src/design/fixtures.ts のフィクスチャを返す。
     if (isDesignMode()) {
-        const fixture = resolveFixture(path);
+        let payload: unknown;
+        try { payload = typeof options.body === "string" ? JSON.parse(options.body) : undefined; } catch { payload = undefined; }
+        const fixture = resolveFixture(path, payload);
         if (fixture !== undefined) {
             return structuredClone(fixture) as T;
         }
