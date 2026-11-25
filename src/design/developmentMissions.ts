@@ -26,9 +26,13 @@ export type DevMission = {
     inputFormat: string;
     outputFormat: string;
     conditions: string[];
-    exampleInput: string;
-    exampleOutput: string;
   };
+  /** 入力の見方（図解）：文章を読まなくても、記号の意味と入力の形が分かるようにする。 */
+  inputVisual:
+    | { kind: "grid"; firstLine: string; rows: string[]; legend: { mark: string; label: string; bg: string; fg: string }[] }
+    | { kind: "versions"; firstLine: string; states: number[]; legend: { mark: string; label: string; bg: string; fg: string }[] };
+  /** 出力の例（行ごとに意味の注記つき）。 */
+  outputExample: { value: string; label: string }[];
   /** スコアで数える量の名前（例：調べた部屋数）。 */
   countLabel: string;
   scoring: { best: number; plain: number };
@@ -57,13 +61,11 @@ export const pointsForCount = (count: number, scoring: { best: number; plain: nu
   return Math.max(300, Math.min(1000, Math.round(300 + 700 * ratio)));
 };
 
-export type ScoreTier = { id: string; label: string; rank: string; points: number };
-export const scoreTiers: ScoreTier[] = [
-  { id: "bronze", label: "ブロンズ", rank: "B", points: 550 },
-  { id: "silver", label: "シルバー", rank: "A", points: 800 },
-  { id: "gold", label: "ゴールド", rank: "S", points: 950 },
-];
-export const defaultTierId = "silver";
+/** 次のランクと、そこまでの点数。S なら null。 */
+export const nextRank = (points: number): { rank: string; min: number } | null => {
+  const sorted = [...rankThresholds].sort((a, b) => a.min - b.min);
+  return sorted.find((t) => points < t.min) ?? null;
+};
 
 /** ダミーペルソナの所持カード（BFS・DFS 完了、二分探索は学習中）。 */
 export const ownedCardIds = new Set<string>([
@@ -88,9 +90,22 @@ export const developmentMissions: DevMission[] = [
       inputFormat: "入力は、1行目に「タテのマス数 ヨコのマス数」、続く行にダンジョンの地図が与えられます。S が入口、G が出口、# が壁、. が通路です。",
       outputFormat: "出力は2行です。1行目に、入口から出口まで最短で進んだときに通る部屋数（入口と出口を含む）を出力してください。出口にたどり着けない場合は -1 を出力してください。2行目に、あなたのプログラムが調べた部屋の数を出力してください。",
       conditions: ["上下左右の4方向にだけ移動できます。壁のマスには入れません。", "調べた部屋数はスコアの計算に使います（答えの正しさとは別に数えます）。"],
-      exampleInput: ["5 5", "S...#", "##.#.", "...#.", ".#...", ".#G.."].join("\n"),
-      exampleOutput: "7\n（2行目に調べた部屋数）",
     },
+    inputVisual: {
+      kind: "grid",
+      firstLine: "1行目：タテのマス数とヨコのマス数（この例では 5 5）",
+      rows: ["S...#", "##.#.", "...#.", ".#...", ".#G.."],
+      legend: [
+        { mark: "S", label: "入口", bg: "#2563eb", fg: "#ffffff" },
+        { mark: "G", label: "出口", bg: "#d97706", fg: "#ffffff" },
+        { mark: "#", label: "壁（入れない）", bg: "#5b7186", fg: "#ffffff" },
+        { mark: ".", label: "通路", bg: "#e9dcc3", fg: "#111827" },
+      ],
+    },
+    outputExample: [
+      { value: "7", label: "最短で通る部屋数（入口と出口を含む）" },
+      { value: "11", label: "調べた部屋数（スコアの計算に使う）" },
+    ],
     countLabel: "調べた部屋数",
     scoring: { best: 14, plain: 26 },
     tests: [
@@ -118,9 +133,20 @@ export const developmentMissions: DevMission[] = [
       inputFormat: "入力は、1行目に「タテのマス数 ヨコのマス数」、続く行に地図が与えられます。# が陸地、. が海です。",
       outputFormat: "出力は2行です。1行目に島の数を出力してください。2行目に、あなたのプログラムが訪れたマスの数を出力してください。",
       conditions: ["上下左右でつながっている陸地を1つの島と数えます（斜めはつながりません）。", "訪れたマスの数はスコアの計算に使います（答えの正しさとは別に数えます）。"],
-      exampleInput: ["4 5", "##...", "##.#.", "...#.", ".##.."].join("\n"),
-      exampleOutput: "3\n（2行目に訪れたマス数）",
     },
+    inputVisual: {
+      kind: "grid",
+      firstLine: "1行目：タテのマス数とヨコのマス数（この例では 4 5）",
+      rows: ["##...", "##.#.", "...#.", ".##.."],
+      legend: [
+        { mark: "#", label: "陸地", bg: "#7da383", fg: "#ffffff" },
+        { mark: ".", label: "海", bg: "#93c5fd", fg: "#111827" },
+      ],
+    },
+    outputExample: [
+      { value: "3", label: "島の数" },
+      { value: "20", label: "訪れたマスの数（スコアの計算に使う）" },
+    ],
     countLabel: "訪れたマス数",
     scoring: { best: 36, plain: 54 },
     tests: [
@@ -148,9 +174,20 @@ export const developmentMissions: DevMission[] = [
       inputFormat: "入力は、1行目に版の数 N、2行目に N 個の状態（0 = 正常、1 = 壊れている）が半角スペース区切りで与えられます。壊れた版より後ろは全部壊れています。",
       outputFormat: "出力は2行です。1行目に、最初に壊れた版の番号（1から数える）を出力してください。壊れた版が無い場合は -1 を出力してください。2行目に、あなたのプログラムが確認した版の数を出力してください。",
       conditions: ["確認した版の数はスコアの計算に使います（答えの正しさとは別に数えます）。"],
-      exampleInput: ["8", "0 0 0 1 1 1 1 1"].join("\n"),
-      exampleOutput: "4\n（2行目に確認した版の数）",
     },
+    inputVisual: {
+      kind: "versions",
+      firstLine: "1行目：版の数（この例では 8）",
+      states: [0, 0, 0, 1, 1, 1, 1, 1],
+      legend: [
+        { mark: "0", label: "正常", bg: "#ffffff", fg: "#16a34a" },
+        { mark: "1", label: "壊れている", bg: "#cbd5e1", fg: "#111827" },
+      ],
+    },
+    outputExample: [
+      { value: "4", label: "最初に壊れた版の番号（1から数える）" },
+      { value: "3", label: "確認した版の数（スコアの計算に使う）" },
+    ],
     countLabel: "確認した版の数",
     scoring: { best: 7, plain: 37 },
     tests: [
