@@ -10,7 +10,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { disposePyodideRunner, preparePyodide } from "../../../../lib/pyodideRunner";
 import type { LearningInstrumentation } from "../../instrumentation/useLearningVisit";
-import { implementationInputLevelText, type ImplementationInputLevel } from "../../implementation/inputLevel";
+import { implementationInputLevels, implementationInputLevelText, type ImplementationInputLevel } from "../../implementation/inputLevel";
 import { useImplementationInputLevel } from "../../implementation/useImplementationInputLevel";
 
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
@@ -82,8 +82,9 @@ function LevelFillIllustration({ level }: { level: ImplementationInputLevel }) {
 
 /**
  * フェーズ7（自由実装・プログラム形式）。学習者は標準入力から読み、
- * 標準出力へ出すプログラムを書く。問題文は作業画面の「問題」タブに常駐し、
- * 開始ゲートは置かない。旧・関数形は implementation-legacy に保存。
+ * 標準出力へ出すプログラムを書く。入口では書き方の量を選ぶ（旧画面の
+ * 選択ゲートをプログラム形のテンプレートで残した）。問題文は作業画面の
+ * 「問題」タブにも常駐する。旧・関数形は implementation-legacy に保存。
  */
 export function BubbleSortImplementationPreview({ embedded = false, onComplete, onLearningEvent, active = true, codeDraftBaseKey, onCodeDraftError, onShowFinalResult }: LearningInstrumentation & { embedded?: boolean; onComplete?: (summary: BubbleSortImplementationSummary) => void; codeDraftBaseKey?: string; onCodeDraftError?: (failed: boolean) => void; onShowFinalResult?: () => void }) {
   // 下書きキーはプログラム形式専用にする（関数形の下書きと混ざらない）。
@@ -94,6 +95,8 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
   const [freeStatus, setFreeStatus] = useState<"idle" | "preparing" | "running">("idle");
   const [freeResult, setFreeResult] = useState<FreeExecutionResult | null>(null);
   const [panel, setPanel] = useState<"statement" | "tests" | "console" | "hints">("statement");
+  // 入口では書き方の量を選ぶ（旧画面の選択ゲートを、プログラム形に合わせて残す）。
+  const [started, setStarted] = useState(false);
   const [bridgeOpen, setBridgeOpen] = useState(false);
   const [showExample, setShowExample] = useState(false);
   const [failedRuns, setFailedRuns] = useState(0);
@@ -284,8 +287,55 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           </Box>
         </Box>;
       })()}
-      {complete && confettiReady && <ResultConfetti preset="final" />}
-      {!complete && <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1, flexWrap: "wrap" }}>
+      {/* 入口の量選択（旧画面のゲートを、プログラム形のテンプレートで残す）。 */}
+      {!started && <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", py: 2 }}>
+        <Typography component="p" sx={{ fontSize: 16, textAlign: "center", mb: 2.5 }}>{content.caption}</Typography>
+        <Box sx={{ maxWidth: 720, mx: "auto", border: "2px solid #2563eb", borderRadius: 3, bgcolor: "#fff", p: 2.5, mb: 3 }}>
+          <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{content.statement.title}</Typography>
+          <Typography component="p" sx={{ fontSize: 15, lineHeight: 1.8, mt: 0.75 }}>{content.statement.inputFormat} {content.statement.outputFormat}</Typography>
+          {sampleTest && <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mt: 1.5 }}>
+            <Box>
+              <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>{content.statement.exampleInputLabel}</Typography>
+              <Box component="pre" sx={{ m: 0, mt: 0.5, p: 1.5, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 15 }}>{programInputText(sampleTest.inputValues)}</Box>
+            </Box>
+            <Box>
+              <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>{content.statement.exampleOutputLabel}</Typography>
+              <Box component="pre" sx={{ m: 0, mt: 0.5, p: 1.5, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 15 }}>{programInputText(runBubbleSort(sampleTest.inputValues))}</Box>
+            </Box>
+          </Box>}
+        </Box>
+        <Typography component="p" id="implementation-level-label" sx={{ fontSize: 18, fontWeight: 900, textAlign: "center" }}>自分に合った書き方を選んで挑戦しましょう</Typography>
+        <Typography component="p" sx={{ fontSize: 15, textAlign: "center", mt: 0.5, mb: 2 }}>{implementationInputLevelText.note}</Typography>
+        <Box role="group" aria-labelledby="implementation-level-label" sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, gap: 2, maxWidth: 1180, mx: "auto", alignItems: "stretch" }}>
+          {implementationInputLevels.map(candidate => (
+            <Box key={candidate} sx={{ border: "2px solid #dbe3ef", borderRadius: 3, bgcolor: "#fff", p: 2.5, display: "flex", flexDirection: "column" }}>
+              <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, mb: 1 }}>{implementationInputLevelText.levels[candidate].label}</Typography>
+              <Box sx={{ mb: 1.5 }}><LevelFillIllustration level={candidate} /></Box>
+              <Typography component="p" sx={{ fontSize: 15, lineHeight: 1.7 }}>{implementationInputLevelText.levels[candidate].description}</Typography>
+              <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, mb: 1.5 }}>{implementationInputLevelText.levels[candidate].guide}</Typography>
+              <Box component="pre" aria-hidden sx={{ m: 0, p: 1.5, height: 176, bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 1.5, fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.65, whiteSpace: "pre", overflow: "hidden", color: colors.text, WebkitMaskImage: "linear-gradient(to right, black 88%, transparent)", maskImage: "linear-gradient(to right, black 88%, transparent)" }}>
+                {content.templates[candidate].split("\n").slice(0, 7).join("\n")}
+                {content.templates[candidate].split("\n").length > 7 ? "\n…" : ""}
+              </Box>
+              <Box sx={{ flex: 1 }} />
+              <Button variant="contained" onClick={() => { changeLevel(candidate); setStarted(true); }}
+                sx={{ mt: 2, minHeight: 48, alignSelf: "flex-end", px: 2.5, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>
+                この書き方で始める →
+              </Button>
+            </Box>
+          ))}
+        </Box>
+        <Box sx={{ display: "flex", gap: 2.5, justifyContent: "center", mt: 2 }}>
+          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
+            <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#94a3b8" }} />用意されている
+          </Box>
+          <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: 14 }}>
+            <Box aria-hidden sx={{ width: 22, height: 8, borderRadius: 999, bgcolor: "#fff", border: "1.6px dashed #2563eb" }} />自分で書く
+          </Box>
+        </Box>
+      </Box>}
+      {started && complete && confettiReady && <ResultConfetti preset="final" />}
+      {started && !complete && <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1, flexWrap: "wrap" }}>
         <Typography component="p" sx={{ fontSize: 15 }}>書き方：<Box component="span" sx={{ fontWeight: 800 }}>{level === "full" ? content.freeForm.modeFree : `${content.freeForm.bridgeLabel}（${implementationInputLevelText.levels[level].label}）`}</Box></Typography>
         {level === "full"
           ? <Button size="small" onClick={() => { setShowExample(false); setBridgeOpen(true); }} sx={{ minHeight: 36, color: playerTokens.focus, fontWeight: 700 }}>{content.freeForm.bridgeButton}</Button>
@@ -295,7 +345,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </>}
       </Box>}
       {/* 支援のエスカレーション：テストに2回つまずいたら、橋渡し（型）を一度だけ提案する。 */}
-      {!complete && level === "full" && failedRuns >= 2 && !bannerDismissed && (
+      {started && !complete && level === "full" && failedRuns >= 2 && !bannerDismissed && (
         <Box role="status" sx={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 1.5, border: "2px solid #2563eb", borderRadius: 2, bgcolor: "#fff", px: 2, py: 1 }}>
           <Typography component="p" sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>{content.freeForm.bannerText}</Typography>
           <Button variant="contained" size="small" onClick={() => { setShowExample(false); setBridgeOpen(true); }}
@@ -303,7 +353,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           <Button size="small" onClick={() => setBannerDismissed(true)} sx={{ minHeight: 40, color: colors.text, fontWeight: 700 }}>{content.freeForm.bannerDismiss}</Button>
         </Box>
       )}
-      <Box data-editor-workspace sx={{ flex: 1, minHeight: 0, overflowY: { xs: "auto", md: "hidden" }, display: { xs: "block", md: "grid" }, gridTemplateColumns: "minmax(0, 1.5fr) minmax(340px, 1fr)", gap: 2 }}>
+      {started && <Box data-editor-workspace sx={{ flex: 1, minHeight: 0, overflowY: { xs: "auto", md: "hidden" }, display: { xs: "block", md: "grid" }, gridTemplateColumns: "minmax(0, 1.5fr) minmax(340px, 1fr)", gap: 2 }}>
         <Box aria-label={text.code} sx={{ minWidth: 0, minHeight: { xs: 360, md: 0 }, height: { xs: "70dvh", md: "100%" }, display: "flex", flexDirection: "column", border: "2px solid #dbe3ef", "&:focus-within": { borderColor: "#2563eb" }, borderRadius: 1.5, overflow: "hidden", bgcolor: colors.panel,
           "& .monaco-editor .monaco-scrollable-element, & .monaco-editor .view-lines, & .monaco-editor .inputarea": { cursor: learningEditorTextCursor } }}>
           <Box role="group" aria-label={text.panel} sx={{ flexShrink: 0, p: 1, bgcolor: colors.panelAlt, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "flex-start" }}>
@@ -408,7 +458,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
             </Box>
           </Box>
         </Box>
-      </Box>
+      </Box>}
       {running && <Box sx={{ flexShrink: 0 }}>
         <Typography component="p" sx={{ textAlign: "center", fontSize: 14 }}>{content.status.timeoutNotice}</Typography>
       </Box>}
