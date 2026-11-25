@@ -6,6 +6,7 @@ import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineR
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import {
   Alert,
   Box,
@@ -29,11 +30,11 @@ import {
   getQuestBoardPosts,
   type QuestBoardListResponse,
   type QuestPostCategory,
-  type QuestPostStatus,
   type QuestPostSummary,
 } from "@/api/questBoard.api";
 import { QuestBoardAuthor } from "./_components/QuestBoardAuthor";
-import { CategoryChip, CourseChip, StatusChip, isResolvableCategory } from "./_components/BoardChips";
+import { CategoryChip, CourseChip, MissionChip, StatusChip, isResolvableCategory } from "./_components/BoardChips";
+import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
 import { AppHeader } from "@/app/component/appHeader";
 import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { MascotFigure } from "@/app/component/mascotFigure";
@@ -91,6 +92,7 @@ const PostCard = ({ post }: { post: QuestPostSummary }) => (
       <CategoryChip category={post.category} label={post.categoryLabel} />
       {isResolvableCategory(post.category) && <StatusChip status={post.status} commentCount={post.commentCount} />}
       {post.courseTitle && <CourseChip title={post.courseTitle} />}
+      {post.missionTitle && <MissionChip title={post.missionTitle} />}
       <Box sx={{ flex: 1 }} />
       <Typography sx={{ fontSize: 14 }}>{formatDate(post.createdAt)}</Typography>
     </Box>
@@ -104,12 +106,31 @@ const PostCard = ({ post }: { post: QuestPostSummary }) => (
         <Typography sx={{ fontSize: 14, fontWeight: 700 }}>コード付きの投稿</Typography>
       </Box>
     )}
+    {post.category === "WORK_SHARE" && post.missionTitle && (
+      <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mt: 1.25, p: 1.25, border: "1px solid #e2e8f0", borderRadius: 2, bgcolor: "#f8fafc" }}>
+        {post.missionId && (
+          <Box sx={{ width: 76, height: 54, borderRadius: 1.5, overflow: "hidden", flexShrink: 0, "& svg": { width: "100%", height: "100%", display: "block" } }}>
+            {developmentMissionThumbnailFor(post.missionId)}
+          </Box>
+        )}
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>発展ミッション</Typography>
+          <Typography sx={{ fontSize: 16, fontWeight: 800 }}>{post.missionTitle}</Typography>
+        </Box>
+        {typeof post.workScore === "number" && (
+          <Box sx={{ ml: "auto", textAlign: "right", flexShrink: 0 }}>
+            <Typography sx={{ fontSize: 18, fontWeight: 900 }}>{post.workScore}点</Typography>
+            {post.workRank && <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{post.workRank}ランク</Typography>}
+          </Box>
+        )}
+      </Box>
+    )}
     <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mt: 1.75 }}>
       <QuestBoardAuthor author={post} isDeleted={post.isDeleted} />
       <Box sx={{ flex: 1 }} />
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
         <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 18, color: "#334155" }} />
-        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>コメント {post.commentCount}</Typography>
+        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{isResolvableCategory(post.category) ? "回答" : "コメント"} {post.commentCount}</Typography>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
         <LightbulbOutlinedIcon sx={{ fontSize: 18, color: "#334155" }} />
@@ -130,26 +151,36 @@ export default function QuestBoardPage() {
   const [courses, setCourses] = useState<Course[]>(cachedBoardCourses ?? []);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<QuestPostCategory | "ALL">("ALL");
-  const [status, setStatus] = useState<QuestPostStatus | "ALL">("ALL");
   const [courseId, setCourseId] = useState("");
-  const [mineOnly, setMineOnly] = useState(false);
+  // 閲覧の目的はタブ（すべて/回答募集中/学び・作品共有/自分の投稿）、
+  // 種類・単元は「絞り込み」の中に格納する。状態はタブに吸収した。
+  const [view, setView] = useState<"ALL" | "WAITING" | "SHARE" | "MINE">("ALL");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(!cachedBoard);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const filtersReady = useRef(false);
 
-  const loadBoard = async (idToken: string, overrides: Partial<{ q: string; category: QuestPostCategory | "ALL"; status: QuestPostStatus | "ALL"; courseId: string; mine: boolean }> = {}) => {
+  const loadBoard = async (idToken: string, overrides: Partial<{ q: string; category: QuestPostCategory | "ALL"; courseId: string; view: typeof view }> = {}) => {
     const merged = {
       q: overrides.q ?? query, category: overrides.category ?? category,
-      status: overrides.status ?? status, courseId: overrides.courseId ?? courseId,
-      mine: overrides.mine ?? mineOnly,
+      courseId: overrides.courseId ?? courseId, view: overrides.view ?? view,
     };
     const data = await getQuestBoardPosts(idToken, {
       q: merged.q.trim() || undefined,
-      category: merged.category, status: merged.status,
-      courseId: merged.courseId || undefined, mine: merged.mine,
+      category: merged.category,
+      status: merged.view === "WAITING" ? "OPEN" : "ALL",
+      courseId: merged.courseId || undefined,
+      mine: merged.view === "MINE",
     });
     setBoard(data);
   };
+
+  const SHARE_CATEGORIES: QuestPostCategory[] = ["WORK_SHARE", "CODE_SHARE", "MEMO", "REFERENCE"];
+  const displayPosts = (board?.posts ?? []).filter((post) => {
+    if (view === "WAITING") return isResolvableCategory(post.category) && post.status === "OPEN" && post.commentCount === 0;
+    if (view === "SHARE") return SHARE_CATEGORIES.includes(post.category);
+    return true;
+  });
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -187,7 +218,7 @@ export default function QuestBoardPage() {
       .finally(() => { if (!cancelled) setIsLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, status, courseId, mineOnly]);
+  }, [category, courseId, view]);
 
   const handleSearch = async () => {
     if (!token) return;
@@ -203,10 +234,11 @@ export default function QuestBoardPage() {
     }
   };
 
-  const hasActiveFilters = category !== "ALL" || status !== "ALL" || courseId !== "" || mineOnly || query.trim() !== "";
+  const detailFilterCount = (category !== "ALL" ? 1 : 0) + (courseId !== "" ? 1 : 0);
+  const hasActiveFilters = category !== "ALL" || courseId !== "" || view !== "ALL" || query.trim() !== "";
   const clearFilters = () => {
-    setQuery(""); setCategory("ALL"); setStatus("ALL"); setCourseId(""); setMineOnly(false);
-    if (token) void loadBoard(token, { q: "", category: "ALL", status: "ALL", courseId: "", mine: false });
+    setQuery(""); setCategory("ALL"); setCourseId(""); setView("ALL");
+    if (token) void loadBoard(token, { q: "", category: "ALL", courseId: "", view: "ALL" });
   };
 
   const categoryCount = (value: QuestPostCategory) => allPosts.filter((p) => p.category === value).length;
@@ -228,7 +260,7 @@ export default function QuestBoardPage() {
             <Box sx={{ flex: 1, minWidth: 260 }}>
               <Typography sx={{ fontSize: 24, fontWeight: 900 }}>掲示板</Typography>
               <Typography sx={{ fontSize: 16, mt: 0.75, lineHeight: 1.7 }}>
-                分からないことを聞く、作ったものを見せる、学んだことを残す場所です。
+                質問する、学びを共有する、仲間の学習を助ける場所です。
               </Typography>
             </Box>
             <Button
@@ -261,43 +293,56 @@ export default function QuestBoardPage() {
                 検索
               </Button>
             </Box>
-            <FilterRow label="種類">
-              <FilterChip selected={category === "ALL"} onClick={() => setCategory("ALL")}>すべて {allPosts.length}</FilterChip>
-              {(board?.options.categories ?? []).map((option) => (
-                <FilterChip
-                  key={option.value}
-                  selected={category === option.value}
-                  onClick={() => setCategory(option.value as QuestPostCategory)}
-                >
-                  {option.label} {categoryCount(option.value as QuestPostCategory)}
-                </FilterChip>
-              ))}
-            </FilterRow>
-            <FilterRow label="状態">
-              <FilterChip selected={status === "ALL"} onClick={() => setStatus("ALL")}>すべて</FilterChip>
-              <FilterChip selected={status === "OPEN"} onClick={() => setStatus("OPEN")}>回答受付中</FilterChip>
-              <FilterChip selected={status === "RESOLVED"} onClick={() => setStatus("RESOLVED")}>解決済み</FilterChip>
-              <FilterChip selected={mineOnly} onClick={() => setMineOnly(!mineOnly)}>自分の投稿</FilterChip>
-            </FilterRow>
-            <FilterRow label="単元">
-              <FilterChip selected={courseId === ""} onClick={() => setCourseId("")}>すべて</FilterChip>
-              {courses.map((course) => (
-                <FilterChip key={course.id} selected={courseId === course.id} onClick={() => setCourseId(course.id)}>
-                  {course.title}
-                </FilterChip>
-              ))}
-            </FilterRow>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <FilterChip selected={view === "ALL"} onClick={() => setView("ALL")}>すべて</FilterChip>
+              <FilterChip selected={view === "WAITING"} onClick={() => setView("WAITING")}>回答募集中</FilterChip>
+              <FilterChip selected={view === "SHARE"} onClick={() => setView("SHARE")}>学び・作品共有</FilterChip>
+              <FilterChip selected={view === "MINE"} onClick={() => setView("MINE")}>自分の投稿</FilterChip>
+            </Box>
+            {filtersOpen && (
+              <>
+                <FilterRow label="種類">
+                  <FilterChip selected={category === "ALL"} onClick={() => setCategory("ALL")}>すべて {allPosts.length}</FilterChip>
+                  {(board?.options.categories ?? []).map((option) => (
+                    <FilterChip
+                      key={option.value}
+                      selected={category === option.value}
+                      onClick={() => setCategory(option.value as QuestPostCategory)}
+                    >
+                      {option.label} {categoryCount(option.value as QuestPostCategory)}
+                    </FilterChip>
+                  ))}
+                </FilterRow>
+                <FilterRow label="単元">
+                  <FilterChip selected={courseId === ""} onClick={() => setCourseId("")}>すべて</FilterChip>
+                  {courses.map((course) => (
+                    <FilterChip key={course.id} selected={courseId === course.id} onClick={() => setCourseId(course.id)}>
+                      {course.title}
+                    </FilterChip>
+                  ))}
+                </FilterRow>
+              </>
+            )}
           </Stack>
 
           {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Typography sx={{ fontSize: 16, fontWeight: 800 }}>
-              {isLoading ? "読み込み中" : `${board?.posts.length ?? 0}件の投稿`}
+              {isLoading ? "読み込み中" : `${displayPosts.length}件の投稿 ・ 新着順`}
             </Typography>
+            <Box sx={{ flex: 1 }} />
             {hasActiveFilters && (
               <Button onClick={clearFilters} sx={{ fontWeight: 700, color: "#2563eb" }}>条件をクリア</Button>
             )}
+            <Button
+              variant="outlined"
+              startIcon={<TuneRoundedIcon />}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              sx={{ minHeight: 40, fontWeight: 800, borderRadius: 999, color: "#111827", borderColor: "#cbd5e1", "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" } }}
+            >
+              絞り込み{detailFilterCount > 0 ? `（${detailFilterCount}）` : ""}
+            </Button>
           </Box>
 
           <Stack spacing={2}>
@@ -305,8 +350,8 @@ export default function QuestBoardPage() {
               [0, 1, 2].map((index) => (
                 <Skeleton key={index} variant="rounded" height={168} sx={{ borderRadius: 3 }} />
               ))
-            ) : board?.posts.length ? (
-              board.posts.map((post) => <PostCard key={post.id} post={post} />)
+            ) : displayPosts.length ? (
+              displayPosts.map((post) => <PostCard key={post.id} post={post} />)
             ) : (
               <Paper elevation={0} sx={{ p: 5, borderRadius: 3, border: "1px solid #e2e8f0", textAlign: "center" }}>
                 <Box sx={{ display: "flex", justifyContent: "center" }}>

@@ -25,6 +25,11 @@ import {
   type QuestPostCategory,
 } from "@/api/questBoard.api";
 import { categoryIcons } from "../_components/BoardChips";
+import { developmentMissions } from "@/design/developmentMissions";
+import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import { ActionButton } from "@/app/component/actionButton";
 import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { AppHeader } from "@/app/component/appHeader";
@@ -52,6 +57,16 @@ const categoryDescriptions: Record<string, string> = {
   CODE_SHARE: "書いたコードを共有する",
   MEMO: "学んだことをメモに残す",
   REFERENCE: "役立った資料を知らせる",
+};
+
+/** 種類ごとの本文の入力例。ガイドは補助で、埋めることを強制しない。 */
+const bodyPlaceholders: Record<string, string> = {
+  QUESTION: "例：キューから取り出すタイミングが分からない",
+  ERROR_HELP: "例：真ん中より大きいのに右半分を探してしまいます",
+  WORK_SHARE: "例：発展ミッションで767点が取れました",
+  CODE_SHARE: "例：幅優先探索を deque で書いてみました",
+  MEMO: "例：大きい硬貨から使うと枚数が少なくなる理由",
+  REFERENCE: "例：二分探索の図解が分かりやすい記事",
 };
 
 /** 種類ごとに本文の書き方を変える（回答がつきやすくなる書き方を面に出す）。 */
@@ -101,6 +116,9 @@ export default function NewQuestPostPage() {
   const [code, setCode] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [courseId, setCourseId] = useState("");
+  const [missionId, setMissionId] = useState("");
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [urlOpen, setUrlOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigatingAfterSubmit, setIsNavigatingAfterSubmit] =
     useState(false);
@@ -109,6 +127,14 @@ export default function NewQuestPostPage() {
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+
+  // 入力欄は種類で出し分ける：エラー相談・コード共有はコード欄を最初から開き、
+  // 参考リンクはURL欄を最初から開く。それ以外は「追加」ボタンで開く（任意欄が
+  // 最初から大きな面積を占めて、投稿の負担に見えないようにする）。
+  useEffect(() => {
+    setCodeOpen(category === "ERROR_HELP" || category === "CODE_SHARE");
+    setUrlOpen(category === "REFERENCE");
+  }, [category]);
 
   const titleError = getLengthError(
     title,
@@ -141,8 +167,8 @@ export default function NewQuestPostPage() {
     }
     if (nextTitle) setTitle(nextTitle);
     if (nextBody) setBody(nextBody);
-    if (nextCode) setCode(nextCode);
-    if (nextReferenceUrl) setReferenceUrl(nextReferenceUrl);
+    if (nextCode) { setCode(nextCode); setCodeOpen(true); }
+    if (nextReferenceUrl) { setReferenceUrl(nextReferenceUrl); setUrlOpen(true); }
     if (nextCourseId) setCourseId(nextCourseId);
   }, []);
 
@@ -190,6 +216,7 @@ export default function NewQuestPostPage() {
         code: code.trim() || undefined,
         referenceUrl: referenceUrl.trim() || undefined,
         courseId: courseId || undefined,
+        missionId: missionId || undefined,
       });
 
       play("saveSuccess");
@@ -236,7 +263,7 @@ export default function NewQuestPostPage() {
               新しい投稿
             </Typography>
             <Typography sx={{ fontSize: 16, mt: 1, lineHeight: 1.7 }}>
-              種類を選んで、タイトルと本文を書くと投稿できます。
+              小さな疑問や発見でも、気軽に共有しましょう。
             </Typography>
           </Box>
 
@@ -284,16 +311,17 @@ export default function NewQuestPostPage() {
               </Box>
 
               <Box>
-                <SectionLabel>関連する単元（任意）</SectionLabel>
+                <SectionLabel>関連（任意）</SectionLabel>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.75 }}>単元</Typography>
                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   <Button
-                    onClick={() => setCourseId("")}
+                    onClick={() => { setCourseId(""); setMissionId(""); }}
                     sx={{
                       minHeight: 38, px: 2, borderRadius: 999, fontSize: 14, fontWeight: 700,
-                      bgcolor: courseId === "" ? "#2563eb" : "#fff",
-                      color: courseId === "" ? "#fff" : "#111827",
-                      border: `1px solid ${courseId === "" ? "#2563eb" : "#cbd5e1"}`,
-                      "&:hover": { bgcolor: courseId === "" ? "#1d4ed8" : "#f1f5f9" },
+                      bgcolor: courseId === "" && missionId === "" ? "#2563eb" : "#fff",
+                      color: courseId === "" && missionId === "" ? "#fff" : "#111827",
+                      border: `1px solid ${courseId === "" && missionId === "" ? "#2563eb" : "#cbd5e1"}`,
+                      "&:hover": { bgcolor: courseId === "" && missionId === "" ? "#1d4ed8" : "#f1f5f9" },
                     }}
                   >
                     なし
@@ -301,7 +329,7 @@ export default function NewQuestPostPage() {
                   {courses.map((course) => (
                     <Button
                       key={course.id}
-                      onClick={() => setCourseId(course.id)}
+                      onClick={() => { setCourseId(course.id); setMissionId(""); }}
                       sx={{
                         minHeight: 38, px: 2, borderRadius: 999, fontSize: 14, fontWeight: 700,
                         bgcolor: courseId === course.id ? "#2563eb" : "#fff",
@@ -314,10 +342,38 @@ export default function NewQuestPostPage() {
                     </Button>
                   ))}
                 </Box>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mt: 1.75, mb: 0.75 }}>発展ミッション</Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {developmentMissions.map((mission) => (
+                    <Button
+                      key={mission.id}
+                      onClick={() => { setMissionId(mission.id); setCourseId(""); }}
+                      sx={{
+                        minHeight: 38, px: 2, borderRadius: 999, fontSize: 14, fontWeight: 700,
+                        bgcolor: missionId === mission.id ? "#2563eb" : "#fff",
+                        color: missionId === mission.id ? "#fff" : "#111827",
+                        border: `1px solid ${missionId === mission.id ? "#2563eb" : "#cbd5e1"}`,
+                        "&:hover": { bgcolor: missionId === mission.id ? "#1d4ed8" : "#f1f5f9" },
+                      }}
+                    >
+                      {mission.title}
+                    </Button>
+                  ))}
+                </Box>
                 {(isOptionsLoading || optionsError) && (
                   <Typography sx={{ fontSize: 14, mt: 1 }}>
                     {isOptionsLoading ? "単元を取得しています。" : "単元を取得できませんでした。"}
                   </Typography>
+                )}
+                {category === "WORK_SHARE" && missionId && (
+                  <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", mt: 2, p: 1.5, border: "1px solid #e2e8f0", borderRadius: 2, bgcolor: "#f8fafc" }}>
+                    <Box sx={{ width: 76, height: 54, borderRadius: 1.5, overflow: "hidden", flexShrink: 0, "& svg": { width: "100%", height: "100%", display: "block" } }}>
+                      {developmentMissionThumbnailFor(missionId)}
+                    </Box>
+                    <Typography sx={{ fontSize: 14, lineHeight: 1.7 }}>
+                      選んだ発展ミッションが投稿に付きます。スコアなどの記録は、ミッションの挑戦画面から共有すると自動で付きます。
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
@@ -343,6 +399,7 @@ export default function NewQuestPostPage() {
                 <TextField
                   label="本文"
                   value={body}
+                  placeholder={bodyPlaceholders[category]}
                   onChange={(event) => setBody(event.target.value)}
                   error={Boolean(bodyError && body.length > 0)}
                   helperText={
@@ -358,34 +415,66 @@ export default function NewQuestPostPage() {
                 />
               </Box>
 
-              <TextField
-                label="コード（任意）"
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                fullWidth
-                multiline
-                minRows={8}
-                placeholder="Pythonなどのプログラムを貼り付け"
-                InputProps={{
-                  sx: {
-                    bgcolor: "#f8fafc",
-                    fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace",
-                    "& textarea": {
-                      fontFamily:
-                        "ui-monospace, SFMono-Regular, Consolas, monospace",
-                      lineHeight: 1.7,
+              {codeOpen ? (
+                <TextField
+                  label="コード（任意）"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  fullWidth
+                  multiline
+                  minRows={8}
+                  placeholder="Pythonなどのプログラムを貼り付け"
+                  InputProps={{
+                    sx: {
+                      bgcolor: "#f8fafc",
+                      fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace",
+                      "& textarea": {
+                        fontFamily:
+                          "ui-monospace, SFMono-Regular, Consolas, monospace",
+                        lineHeight: 1.7,
+                      },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              ) : (
+                <Button
+                  variant="outlined"
+                  startIcon={<CodeRoundedIcon />}
+                  endIcon={<AddRoundedIcon />}
+                  onClick={() => setCodeOpen(true)}
+                  sx={{
+                    minHeight: 48, justifyContent: "flex-start", px: 2, borderRadius: 2,
+                    borderStyle: "dashed", borderColor: "#94a3b8", color: "#111827", fontWeight: 700,
+                    "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" },
+                  }}
+                >
+                  コードを追加
+                </Button>
+              )}
 
-              <TextField
-                label="参考URL（任意）"
-                value={referenceUrl}
-                onChange={(event) => setReferenceUrl(event.target.value)}
-                fullWidth
-                placeholder="https://..."
-              />
+              {urlOpen ? (
+                <TextField
+                  label="参考URL（任意）"
+                  value={referenceUrl}
+                  onChange={(event) => setReferenceUrl(event.target.value)}
+                  fullWidth
+                  placeholder="https://..."
+                />
+              ) : (
+                <Button
+                  variant="outlined"
+                  startIcon={<LinkRoundedIcon />}
+                  endIcon={<AddRoundedIcon />}
+                  onClick={() => setUrlOpen(true)}
+                  sx={{
+                    minHeight: 48, justifyContent: "flex-start", px: 2, borderRadius: 2,
+                    borderStyle: "dashed", borderColor: "#94a3b8", color: "#111827", fontWeight: 700,
+                    "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" },
+                  }}
+                >
+                  URLを追加
+                </Button>
+              )}
 
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                 <ActionButton
@@ -398,7 +487,7 @@ export default function NewQuestPostPage() {
                   onClick={handleSubmit}
                   sx={{ minHeight: 48, px: 4, fontWeight: 900, borderRadius: 2, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
                 >
-                  投稿する
+                  {`${categories.find((option) => option.value === category)?.label ?? "投稿"}を投稿する`}
                 </ActionButton>
                 {submitBlockReason && (
                   <Typography sx={{ fontSize: 14 }}>{submitBlockReason}</Typography>

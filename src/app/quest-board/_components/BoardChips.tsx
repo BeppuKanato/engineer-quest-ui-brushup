@@ -5,6 +5,7 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
@@ -69,6 +70,16 @@ export function CourseChip({ title }: { title: string }) {
     <Box sx={{ ...chipBase, bgcolor: "#f1f5f9" }}>
       <MenuBookRoundedIcon sx={{ fontSize: 17, color: "#334155" }} />
       <Typography component="span" sx={{ fontSize: 14, fontWeight: 700 }}>{title}</Typography>
+    </Box>
+  );
+}
+
+/** 発展ミッションへの関連付け。単元チップと並ぶ、もう一つの関連先。 */
+export function MissionChip({ title }: { title: string }) {
+  return (
+    <Box sx={{ ...chipBase, bgcolor: "#f1f5f9" }}>
+      <FlagRoundedIcon sx={{ fontSize: 17, color: "#334155" }} />
+      <Typography component="span" sx={{ fontSize: 14, fontWeight: 700 }}>発展ミッション『{title}』</Typography>
     </Box>
   );
 }

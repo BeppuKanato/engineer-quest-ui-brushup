@@ -42,6 +42,12 @@ export type QuestPostSummary = QuestBoardAuthorInfo & {
   status: QuestPostStatus;
   courseId: string | null;
   courseTitle: string | null;
+  /** 関連する発展ミッション（単元と並ぶ関連付け先）。 */
+  missionId?: string | null;
+  missionTitle?: string | null;
+  /** 作品共有に付く成果（スコアとランク）。 */
+  workScore?: number;
+  workRank?: string;
   commentCount: number;
   reactions: QuestBoardReactionSummary;
   canResolve: boolean;
@@ -54,6 +60,8 @@ export type QuestPostSummary = QuestBoardAuthorInfo & {
 export type QuestComment = QuestBoardAuthorInfo & {
   id: string;
   body: string;
+  /** 投稿者が「解決した回答」に指定した回答かどうか。 */
+  isSolution?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -85,6 +93,8 @@ export type CreateQuestPostPayload = {
   code?: string;
   referenceUrl?: string;
   courseId?: string;
+  /** 関連する発展ミッション（courseId と排他）。 */
+  missionId?: string;
 };
 
 export type QuestBoardListParams = {
@@ -225,6 +235,20 @@ export const updateQuestPostStatus = async (
       token,
       body: JSON.stringify({ status }),
     }
+  );
+  invalidateClientQueries([queryTags.questBoard]);
+  return result;
+};
+
+/** 回答を「解決した回答」に指定する。投稿は解決済みになる。 */
+export const markQuestCommentSolution = async (
+  token: string,
+  postId: string,
+  commentId: string
+): Promise<{ commentId: string; status: QuestPostStatus }> => {
+  const result = await fetcher<{ commentId: string; status: QuestPostStatus }>(
+    `/quest-board/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/solution`,
+    { method: "POST", token, body: JSON.stringify({}) }
   );
   invalidateClientQueries([queryTags.questBoard]);
   return result;

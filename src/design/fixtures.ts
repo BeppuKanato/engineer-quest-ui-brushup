@@ -472,14 +472,17 @@ const reactionsOf = (like: number, helpful: number, saved: number): QuestBoardRe
   userReactedTypes: [],
 });
 
-type BoardPostSeed = QuestPostSummary & { comments: QuestComment[] };
+type BoardCommentSeed = QuestComment & { isSolution?: boolean };
+type BoardPostSeed = QuestPostSummary & { comments: BoardCommentSeed[] };
 const boardPosts: BoardPostSeed[] = [
   {
     id: "design-post-7", category: "WORK_SHARE", categoryLabel: "作品共有",
     title: "発展ミッション『ダンジョンの最短脱出』で767点が取れました",
     body: "幅優先探索の単元を終えて、発展ミッションのダンジョンに挑戦しました。ふつうの幅優先探索だと767点（Bランク）でした。調べた部屋数を数えるのがスコアになるので、ゴールに着いたらすぐ止めるのが大事でした。次は両方向から探してAランクをねらいます。",
     excerpt: "", code: null, referenceUrl: "/my-works/design-work-1", status: "OPEN",
-    courseId: null, courseTitle: null, commentCount: 2, reactions: reactionsOf(8, 3, 0),
+    courseId: null, courseTitle: null,
+    missionId: "dungeon-escape", missionTitle: "ダンジョンの最短脱出", workScore: 767, workRank: "B",
+    commentCount: 2, reactions: reactionsOf(8, 3, 0),
     canResolve: false, isOwner: false, isDeleted: false,
     createdAt: "2026-11-24T15:30:00+09:00", updatedAt: "2026-11-24T15:30:00+09:00",
     ...boardAuthorYuta,
@@ -527,7 +530,7 @@ const boardPosts: BoardPostSeed[] = [
     createdAt: "2026-11-18T16:40:00+09:00", updatedAt: "2026-11-19T08:15:00+09:00",
     ...boardAuthorMiku,
     comments: [
-      { id: "c2-1", body: "範囲が1つになっても終わらないなら、更新で範囲が狭まっていないはずです。真ん中を含めたまま更新していないか確認してみてください。", createdAt: "2026-11-18T17:22:00+09:00", updatedAt: "2026-11-18T17:22:00+09:00", ...boardAuthorYuta },
+      { id: "c2-1", body: "範囲が1つになっても終わらないなら、更新で範囲が狭まっていないはずです。真ん中を含めたまま更新していないか確認してみてください。", isSolution: true, createdAt: "2026-11-18T17:22:00+09:00", updatedAt: "2026-11-18T17:22:00+09:00", ...boardAuthorYuta },
       { id: "c2-2", body: "私も同じところで詰まりました。lo と hi の値を1回ごとに書き出すと、どこで止まっているか一目で分かります。", createdAt: "2026-11-18T19:05:00+09:00", updatedAt: "2026-11-18T19:05:00+09:00", ...boardAuthorAkari },
       { id: "c2-3", body: "真ん中を含めたまま更新していました。mid + 1 / mid - 1 に直したら終わるようになりました。ありがとうございます。", createdAt: "2026-11-19T08:15:00+09:00", updatedAt: "2026-11-19T08:15:00+09:00", ...boardAuthorMiku },
     ],
@@ -592,6 +595,7 @@ for (const post of boardPosts) {
 
 const boardStatusOverrides = new Map<string, QuestPostStatus>();
 const boardAppendedComments = new Map<string, QuestComment[]>();
+const boardSolutionOverrides = new Map<string, string>();
 
 const boardSummaryOf = (post: BoardPostSeed): QuestPostSummary => {
   const { comments: _comments, ...summary } = post;
@@ -603,10 +607,16 @@ const boardSummaryOf = (post: BoardPostSeed): QuestPostSummary => {
   };
 };
 
-const boardDetailOf = (post: BoardPostSeed): QuestPostDetail => ({
-  ...boardSummaryOf(post),
-  comments: [...post.comments, ...(boardAppendedComments.get(post.id) ?? [])],
-});
+const boardDetailOf = (post: BoardPostSeed): QuestPostDetail => {
+  const solutionId = boardSolutionOverrides.get(post.id);
+  const comments = [...post.comments, ...(boardAppendedComments.get(post.id) ?? [])].map((comment) => ({
+    ...comment,
+    isSolution: solutionId ? comment.id === solutionId : Boolean((comment as BoardCommentSeed).isSolution),
+  }));
+  // 解決した回答が指定された投稿は、並びも「解決した回答を先頭」に寄せる。
+  comments.sort((a, b) => Number(b.isSolution ?? false) - Number(a.isSolution ?? false));
+  return { ...boardSummaryOf(post), comments };
+};
 
 const boardFixture = (path: string): unknown => {
   const [key, queryString] = path.split("?");
@@ -632,6 +642,14 @@ const boardFixture = (path: string): unknown => {
     const next: QuestPostStatus = (boardStatusOverrides.get(post.id) ?? post.status) === "OPEN" ? "RESOLVED" : "OPEN";
     boardStatusOverrides.set(post.id, next);
     return { status: next, updatedAt: "2026-11-25T10:00:00+09:00" };
+  }
+  const solutionMatch = key.match(/^\/quest-board\/([^/]+)\/comments\/([^/]+)\/solution$/);
+  if (solutionMatch) {
+    const post = boardPosts.find((p) => p.id === decodeURIComponent(solutionMatch[1]));
+    if (!post) return undefined;
+    boardSolutionOverrides.set(post.id, decodeURIComponent(solutionMatch[2]));
+    boardStatusOverrides.set(post.id, "RESOLVED");
+    return { commentId: decodeURIComponent(solutionMatch[2]), status: "RESOLVED" };
   }
   const commentsMatch = key.match(/^\/quest-board\/([^/]+)\/comments$/);
   if (commentsMatch) {

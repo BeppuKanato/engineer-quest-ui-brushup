@@ -13,6 +13,7 @@ import {
   findDevelopmentMission, nextRank, ownedCardIds, pointsForCount, rankForPoints,
   rankThresholds, type DevMission,
 } from "@/design/developmentMissions";
+import { QuickPostDialog, type QuickPostPreset } from "@/app/quest-board/_components/QuickPostDialog";
 import { LEARNING_EDITOR_THEME, setupLearningEditor } from "@/features/learning/code/learningEditor";
 import { preparePyodide, runProgramFree, runProgramTests } from "@/lib/pyodideRunner";
 import Editor, { type OnMount } from "@monaco-editor/react";
@@ -26,6 +27,13 @@ type CardRecord = { id: string; title: string; label: string; rarity: string; de
 const allCards = cardsData as unknown as CardRecord[];
 
 const draftKey = (missionId: string) => `engineer-quest:mission-code:${missionId}`;
+
+/** ミッション→対応単元（掲示板への関連付けに使う）。 */
+const missionCourseIds: Record<string, string> = {
+  "dungeon-escape": "course-algorithm-breadth-first-search-v1",
+  "island-count": "course-algorithm-depth-first-search-v1",
+  "first-broken-version": "course-algorithm-binary-search-v1",
+};
 
 /**
  * マスコットの見せ方（2026-11-25）：全身を小さく置くのではなく、
@@ -71,6 +79,7 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
     try { return localStorage.getItem(draftKey(mission.id)) ?? mission.starterCode; } catch { return mission.starterCode; }
   });
   const [panel, setPanel] = useState<"statement" | "tests" | "console" | "hints">("statement");
+  const [quickPost, setQuickPost] = useState<QuickPostPreset | null>(null);
   const [runtime, setRuntime] = useState<"loading" | "ready" | "error">("loading");
   const [runningTests, setRunningTests] = useState(false);
   const [runningFree, setRunningFree] = useState(false);
@@ -329,6 +338,22 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                   <Button variant="contained" onClick={() => setModalClosed(true)} sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>解法を改善する</Button>
                 </>
               )}
+              <Box sx={{ width: "100%", textAlign: "center" }}>
+                <Button
+                  onClick={() => {
+                    setModalClosed(true);
+                    setQuickPost({
+                      category: "WORK_SHARE",
+                      courseId: missionCourseIds[mission.id],
+                      contextLabel: `発展ミッション『${mission.title}』`,
+                      mission: { id: mission.id, title: mission.title, score: result.points, rank: result.rank },
+                    });
+                  }}
+                  sx={{ fontWeight: 800, color: "#2563eb" }}
+                >
+                  成果を仲間に共有する
+                </Button>
+              </Box>
             </Box>
           </Box>
         )}
@@ -419,6 +444,27 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
                 {scoreMissing && (
                   <Typography component="p" sx={{ fontSize: 14 }}>答えは合っていますが、2行目の「{mission.countLabel}」が数字でないため、スコアを計算できません。</Typography>
                 )}
+                {!runningTests && Object.keys(outcomes).length > 0 && passedCount < mission.tests.length && (
+                  <Box sx={{ border: "1px solid #e2e8f0", borderRadius: 2, p: 1.5 }}>
+                    <Typography component="p" sx={{ fontSize: 16, fontWeight: 800 }}>解決方法に迷っていますか？</Typography>
+                    <Box sx={{ display: "flex", gap: 1, mt: 1.25, flexWrap: "wrap" }}>
+                      <Button variant="outlined" onClick={() => setPanel("hints")} sx={{ fontWeight: 800 }}>ヒントを見る</Button>
+                      <Button
+                        variant="contained"
+                        onClick={() => setQuickPost({
+                          category: "ERROR_HELP",
+                          courseId: missionCourseIds[mission.id],
+                          contextLabel: `${mission.unlockUnitName} › 発展ミッション『${mission.title}』`,
+                          code,
+                        })}
+                        sx={{ fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
+                      >
+                        仲間に相談する
+                      </Button>
+                    </Box>
+                    <Typography component="p" sx={{ fontSize: 14, mt: 1 }}>相談するときは、今のコードを添付できます。</Typography>
+                  </Box>
+                )}
                 {mission.tests.map((t) => {
                   const o = outcomes[t.id];
                   return (
@@ -494,8 +540,23 @@ export function MissionChallengeDraft({ missionId }: { missionId: string }) {
               </Box>
             )}
           </Box>
+          <Box sx={{ borderTop: "1px solid #eef2f7", p: 1.5 }}>
+            <Button
+              fullWidth variant="outlined"
+              onClick={() => setQuickPost({
+                category: "QUESTION",
+                courseId: missionCourseIds[mission.id],
+                contextLabel: `${mission.unlockUnitName} › 発展ミッション『${mission.title}』`,
+                code,
+              })}
+              sx={{ minHeight: 44, fontWeight: 800, borderRadius: 2, color: "#111827", borderColor: "#cbd5e1", "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" } }}
+            >
+              仲間に質問する
+            </Button>
+          </Box>
         </Box>
       </Box>
+      <QuickPostDialog open={quickPost !== null} onClose={() => setQuickPost(null)} preset={quickPost} />
     </Box>
   );
 }
