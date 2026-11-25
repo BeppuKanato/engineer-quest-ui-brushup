@@ -35,7 +35,13 @@ const placeholderLine = (id: BubbleSortCodeLineId, description: string): string 
 };
 const placeholderGuide = "    # 「ここを書く」の行が、まだ書けていない場所です。その行を消して、自分のコードを書いてください。";
 
-const fullTemplate = "def bubble_sort(values):\n    # ここに、並び替えた新しいリストを返すコードを書く\n    pass";
+/**
+ * 自由実装の初期コード（2026-11-25、再設計の自由実装形）。
+ * 関数名も形も固定しない。決まりは「リストを受け取って、並び替えた新しい
+ * リストを返す関数を1つ書く」ことだけ。入口の関数は実行時に発見する
+ * （implementation.ts の discoverEntryFunction）。
+ */
+const fullTemplate = "# ここを書く：リストを受け取って、並び替えた新しいリストを返す関数を書く\n# 関数の名前は自由です。引数はリスト1つにしてください。\n";
 
 /** 骨格：制御構造（2つのループと条件分岐）と最後の return だけを残し、本体の行をすべてプレースホルダにする。 */
 const skeletonTemplate = [
@@ -69,6 +75,37 @@ const levelTemplates: Readonly<Record<ImplementationInputLevel, string>> = {
   "fill-in": fillInTemplate,
 };
 
+/**
+ * 自動チェック（網羅＋性質ベース）。小さい並びは網羅し、残りは種を固定した
+ * 乱数で生成する（毎回同じケースになり、結果が再現できる）。
+ * 期待する並びは教材データの正本から導く。入口の関数名は実行時に差し替える。
+ */
+const autoCaseValues: readonly (readonly number[])[] = (() => {
+  const cases: number[][] = [];
+  const permute = (items: number[], rest: number[]) => {
+    if (rest.length === 0) { cases.push(items); return; }
+    rest.forEach((value, index) => permute([...items, value], [...rest.slice(0, index), ...rest.slice(index + 1)]));
+  };
+  permute([], [1, 2, 3]);
+  for (let length = 1; length <= 3; length++) {
+    for (let mask = 0; mask < 2 ** length; mask++) {
+      cases.push(Array.from({ length }, (_, i) => ((mask >> i) & 1) + 1));
+    }
+  }
+  let seed = 20261125;
+  const random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  for (let i = 0; i < 18; i++) {
+    const length = 1 + Math.floor(random() * 9);
+    cases.push(Array.from({ length }, () => Math.floor(random() * 10)));
+  }
+  return cases;
+})();
+
+export const bubbleSortAutoTests: readonly PythonTestCase[] = autoCaseValues.map((values, index) => ({
+  id: `A${index + 1}`, label: `自動チェック${index + 1}`, functionName: "bubble_sort",
+  args: [[...values]], expected: [...runBubbleSort(values)],
+}));
+
 export const bubbleSortImplementationContent = {
   version: 1, id: "bubble-sort-implementation", phase: 7,
   caption: "どんな並びでも番号順に並び替えるコードを完成させて、ミッションを達成しましょう。",
@@ -81,6 +118,45 @@ export const bubbleSortImplementationContent = {
     testCase("J2", "逆順", "judgement", [5, 4, 3, 2, 1]),
     testCase("J3", "並び済み", "judgement", [1, 2, 3, 4]),
   ] satisfies ImplementationTest[],
+  /**
+   * 自由実装の仕様と、支援エスカレーション（ヒント → 橋渡し → お手本）の文言。
+   * 既存の書き方レベル（骨格・穴埋め）は削除せず、任意フェーズ6.5
+   * 「実装の橋渡し」の中身として残す（2026-11-25 Kanato 決定）。
+   */
+  freeForm: {
+    specTitle: "ミッションの仕様",
+    specItems: [
+      { label: "受け取るもの", text: "数値のリストを1つ" },
+      { label: "返すもの", text: "番号順（小さい順）に並び替えた、新しいリスト" },
+      { label: "条件", text: "元のリストは書き換えない。重複のある並び、逆順、並び済みの並びでも正しく並ぶこと" },
+      { label: "関数の決まり", text: "リストを受け取って返す関数を1つ書く。名前は自由" },
+    ],
+    startHeading: "自分のコードで、本を番号順に並べ替えよう",
+    startLead: "書き方は自由です。仕様を満たす関数を1つ書けば、ミッション達成です。",
+    startNote: "詰まったときは、ヒントと「型（橋渡し）」が使えます。テストと達成の条件は、どの書き方でも同じです。",
+    startButton: "書き始める",
+    resumeButton: "コードに戻る",
+    specButton: "仕様を見る",
+    modeFree: "自由に書く",
+    bridgeLabel: "実装の橋渡し",
+    bridgeButton: "型を使う（橋渡し）",
+    bridgeChangeButton: "型を変える",
+    bridgeBackButton: "自由に書くに戻る",
+    bridgeDialogTitle: "実装の橋渡し（任意フェーズ 6.5）",
+    bridgeDialogLead: "型を使うと、コードの骨格や要点以外が用意された状態から書けます。型のコードは、今のコードとは別の下書きに残ります。",
+    bridgeUseButton: "この型で書く",
+    bannerText: "詰まってきたら、型（橋渡し）を使って書くこともできます。",
+    bannerDismiss: "閉じる",
+    exampleButton: "お手本を見る",
+    exampleTitle: "お手本（考え方の確認用）",
+    exampleNote: "お手本は、フェーズ6までで学んだコードです。写すためではなく、考え方を確認するために見ましょう。",
+    noFunction: "並び替える関数が見つかりません。リストを受け取って、並び替えたリストを返す関数を1つ書いてください。",
+    autoLabel: "いろいろな並び（自動チェック）",
+    autoShortLabel: "自動チェック",
+    autoCaptionNone: "重複・逆順・短い並びなど、いろいろな並びで自動的に確認します。内容は非公開です。",
+    autoCaptionPassed: "{total} 件すべて、期待どおりの並びになりました。",
+    autoCaptionFailed: "{total} 件中 {passed} 件が期待どおりでした。短い並びや重複のある並びで確かめてみましょう。",
+  },
   hints: {
     labels: ["ヒント1：使う部品を見る", "ヒント2：処理の流れを見る", "ヒント3：条件とループの骨格を見る", "ヒント4：並び替えで確認する"],
     descriptions: ["使える変数やコードの部品を確認する", "どのような順序で処理するかを確認する", "コードの構造を確認する", "コードを並べ替えながら復習する"],

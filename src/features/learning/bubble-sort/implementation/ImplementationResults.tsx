@@ -41,6 +41,10 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
   const [expandedPassed, setExpandedPassed] = useState<ReadonlySet<string>>(new Set());
   const kinds = resultKinds(diagnostics);
   const passed = outcomes.filter(outcome => outcome.passed).length;
+  // 自動チェック（AUTO）は名前つきテストとは別枠で数え、行も分けて出す。
+  const autoOutcome = outcomes.find(outcome => outcome.id === "AUTO");
+  const namedOutcomes = outcomes.filter(outcome => outcome.id !== "AUTO");
+  const totalChecks = content.tests.length + (autoOutcome ? 1 : 0);
   const reducedMotion = useReducedMotion();
   const statusOf = (outcome: TestOutcome | undefined) => !outcome ? labels.statuses.unexecuted
     : outcome.passed ? labels.statuses.passed
@@ -49,14 +53,14 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
     : outcome.error === "timeout" ? labels.statuses.errorTimeout
     : labels.statuses.failed;
   // 全件が同一種のエラー＝コード自体が実行できていないので、テスト別の行は作らない。
-  const aggregatedKind = !stale && outcomes.length === content.tests.length && outcomes.every(outcome => outcome.error)
-    ? (new Set(outcomes.map(outcome => outcome.error)).size === 1 ? outcomes[0].error : undefined)
+  const aggregatedKind = !stale && namedOutcomes.length === content.tests.length && namedOutcomes.every(outcome => outcome.error)
+    ? (new Set(namedOutcomes.map(outcome => outcome.error)).size === 1 ? namedOutcomes[0].error : undefined)
     : undefined;
   if (aggregatedKind) {
-    const line = outcomes.find(outcome => outcome.errorLine !== undefined)?.errorLine;
+    const line = namedOutcomes.find(outcome => outcome.errorLine !== undefined)?.errorLine;
     const lineText = line !== undefined && code ? code.split("\n")[line - 1]?.trim() : undefined;
     const guidance = labels.guidance[aggregatedKind];
-    const exception = aggregatedKind === "runtime" ? exceptionText(outcomes[0]) : undefined;
+    const exception = aggregatedKind === "runtime" ? exceptionText(namedOutcomes[0]) : undefined;
     return <Box>
       <Box role="alert" sx={{ border: "2px solid #111827", borderRadius: 2, bgcolor: "#fff", p: 2 }}>
         <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>
@@ -93,7 +97,7 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
       })}
     </Box>}
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5, mb: 1 }}>
-      <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>{stale ? "前回 " : ""}{passed} / {content.tests.length} 本通過</Typography>
+      <Typography component="p" sx={{ fontSize: 22, fontWeight: 900 }}>{stale ? "前回 " : ""}{passed} / {totalChecks} 本通過</Typography>
     </Box>
     {content.tests.map(test => {
       const outcome = outcomes.find(item => item.id === test.id);
@@ -184,5 +188,31 @@ export function ImplementationResults({ outcomes, diagnostics = outcomes, stale 
           : <Typography component="p" sx={{ fontSize: 14 }}>{labels.invalid}</Typography>}
       </Box>;
     })}
+    {/* 自動チェック（網羅＋性質ベース）は、名前つきテストの後に1行で出す。 */}
+    <Box data-test-id="AUTO" sx={{ border: "1px solid #dbe3ef", borderRadius: 2, bgcolor: "#fff", p: 1.5, mb: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <Typography component="p" sx={{ fontSize: 16, fontWeight: 800, flex: 1, minWidth: 0 }}>{content.freeForm.autoLabel}</Typography>
+        <Box component={motion.span} key={statusOf(autoOutcome).label}
+          initial={reducedMotion ? false : { scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.3 }}
+          sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.5, borderRadius: 999, fontSize: 14, fontWeight: 800, flexShrink: 0,
+            ...(autoOutcome?.passed
+              ? { bgcolor: "#16a34a", color: "#fff" }
+              : autoOutcome
+                ? { border: "2px solid #111827", color: "#111827" }
+                : { border: "2px solid #c3cad4", color: "#111827" }) }}>
+          <span aria-hidden="true">{statusOf(autoOutcome).icon}</span>{statusOf(autoOutcome).label}
+        </Box>
+      </Box>
+      <Typography component="p" sx={{ fontSize: 14 }}>
+        {!autoOutcome
+          ? content.freeForm.autoCaptionNone
+          : autoOutcome.error
+            ? "実行できませんでした。上のメッセージを確認してください。"
+            : autoOutcome.passed
+              ? content.freeForm.autoCaptionPassed.replace("{total}", String(autoOutcome.autoTotal ?? 0))
+              : content.freeForm.autoCaptionFailed.replace("{total}", String(autoOutcome.autoTotal ?? 0)).replace("{passed}", String(autoOutcome.autoPassed ?? 0))}
+      </Typography>
+    </Box>
   </Box>;
 }

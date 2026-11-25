@@ -14,6 +14,7 @@ export const bubbleSortEditorText = {
     mismatch: "実行はできていますが、結果が期待と違います。",
     timeout: "実行が終わりませんでした（無限ループの可能性があります）。",
     unavailable: "Python実行環境を読み込めませんでした。再読込して試してください。",
+    nofunction: "並び替える関数が見つかりません。リストを受け取って、並び替えたリストを返す関数を1つ書いてください。",
   },
   errorLineSuffix: "（{line}行目付近）",
   syntaxNote: "プログラム全体に文法エラーがあると、print を含め1行も実行されません。",
