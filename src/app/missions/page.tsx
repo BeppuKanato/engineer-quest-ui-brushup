@@ -4,9 +4,9 @@ import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
 import { AppHeader } from "@/app/component/appHeader";
 import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
 import { RankMedal } from "@/design/RankMedal";
-import { developmentMissions } from "@/design/developmentMissions";
+import { developmentMissions, nextRank, rankThresholds } from "@/design/developmentMissions";
 import LockIcon from "@mui/icons-material/Lock";
-import { Box, Button, Chip, Container, Paper, Typography } from "@mui/material";
+import { Box, Button, Chip, Container, LinearProgress, Paper, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 
 // 発展ミッション一覧の下書き（2026-11-25、Issue #507）。
@@ -30,18 +30,32 @@ export default function MissionsPage() {
               <Box sx={{ height: 168, flexShrink: 0 }}>{developmentMissionThumbnailFor(mission.id)}</Box>
               <Box sx={{ p: 3, pt: 2.25, display: "flex", flexDirection: "column", flex: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
-                  {mission.unlocked
-                    ? <Chip size="small" label="挑戦できる" sx={{ bgcolor: "#dcfce7", color: "#166534", fontWeight: 700 }} />
-                    : <Chip size="small" icon={<LockIcon sx={{ fontSize: 14 }} />} label={`${mission.unlockUnitName}を終えると解放`} sx={{ bgcolor: "#eef2f7", fontWeight: 700 }} />}
+                  {!mission.unlocked
+                    ? <Chip size="small" icon={<LockIcon sx={{ fontSize: 14 }} />} label={`${mission.unlockUnitName}を終えると解放`} sx={{ bgcolor: "#eef2f7", fontWeight: 700 }} />
+                    : mission.selfBest
+                      ? <Chip size="small" label="クリア済み" sx={{ bgcolor: "#16a34a", color: "#fff", fontWeight: 700 }} />
+                      : <Chip size="small" label="挑戦できる" sx={{ bgcolor: "#dcfce7", color: "#166534", fontWeight: 700 }} />}
                   <Chip size="small" variant="outlined" label={`解放条件：${mission.unlockUnitName}の単元完了`} />
                 </Box>
                 <Typography component="p" sx={{ fontSize: 18, fontWeight: 900 }}>{mission.title}</Typography>
                 <Typography component="p" sx={{ fontSize: 15, lineHeight: 1.8, mt: 0.75 }}>{mission.problem}</Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.75 }}>
+                <Box sx={{ mt: 1.75 }}>
                   {mission.selfBest ? (
                     <>
-                      <RankMedal rank={mission.selfBest.rank} size={28} />
-                      <Typography component="p" sx={{ fontSize: 15 }}>自己ベスト：{mission.selfBest.points}点</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <RankMedal rank={mission.selfBest.rank} size={28} />
+                        <Typography component="p" sx={{ fontSize: 15 }}>自己ベスト：{mission.selfBest.points}点</Typography>
+                        {nextRank(mission.selfBest.points) && (
+                          <Typography component="p" sx={{ fontSize: 14, fontWeight: 700 }}>次の{nextRank(mission.selfBest.points)!.rank}ランクまであと {nextRank(mission.selfBest.points)!.min - mission.selfBest.points}点</Typography>
+                        )}
+                      </Box>
+                      {nextRank(mission.selfBest.points) && (
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.round(((mission.selfBest.points - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300)) / (nextRank(mission.selfBest.points)!.min - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300))) * 100)}
+                          sx={{ mt: 1, height: 8, borderRadius: 999, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 999 } }}
+                        />
+                      )}
                     </>
                   ) : (
                     <Typography component="p" sx={{ fontSize: 15 }}>自己ベスト：まだ記録なし</Typography>
