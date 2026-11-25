@@ -33,6 +33,7 @@ import { BubbleSortCodeMappingPreview } from "@/features/learning/bubble-sort/co
 import { BubbleSortCodeCheckPreview } from "@/features/learning/bubble-sort/code-check/BubbleSortCodeCheckPreview";
 import { BubbleSortConsolidationPreview } from "@/features/learning/bubble-sort/consolidation/BubbleSortConsolidationPreview";
 import { BubbleSortImplementationPreview } from "@/features/learning/bubble-sort/implementation/BubbleSortImplementationPreview";
+import { BubbleSortImplementationPreview as BubbleSortImplementationLegacyPreview } from "@/features/learning/bubble-sort/implementation-legacy/BubbleSortImplementationPreview";
 import { BubbleSortUnitPreview } from "@/features/learning/bubble-sort/unit/BubbleSortUnitPreview";
 import { MazeDiggingMotivationPreview } from "@/features/learning/maze-digging/motivation/MazeDiggingMotivationPreview";
 import { MazeDiggingExecutionPreview } from "@/features/learning/maze-digging/execution/MazeDiggingExecutionPreview";
@@ -74,6 +75,7 @@ export default async function LearningPreviewPage({ params }: { params: Promise<
   if (contentId === "bubble-sort-code-check") return <BubbleSortCodeCheckPreview />;
   if (contentId === "bubble-sort-consolidation") return <BubbleSortConsolidationPreview />;
   if (contentId === "bubble-sort-implementation") return <BubbleSortImplementationPreview />;
+  if (contentId === "bubble-sort-implementation-legacy") return <BubbleSortImplementationLegacyPreview />;
   if (contentId === "maze-digging-motivation") return <MazeDiggingMotivationPreview />;
   if (contentId === "maze-digging-execution") return <MazeDiggingExecutionPreview />;
   if (contentId === "maze-digging-check") return <MazeDiggingCheckPreview />;
