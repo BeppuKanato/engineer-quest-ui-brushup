@@ -19,7 +19,10 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useNavigationFeedback } from "@/hooks/useNavigationFeedback";
+import { PageTransitionOverlay } from "@/app/component/pageTransitionOverlay";
 
 import { getCourses } from "@/api/courses.api";
 import {
@@ -117,6 +120,8 @@ const PostCard = ({ post }: { post: QuestPostSummary }) => (
 );
 
 export default function QuestBoardPage() {
+  const router = useRouter();
+  const { showOverlay, startNavigation } = useNavigationFeedback();
   const { status: sessionStatus, token } = useUserSession();
   const [cachedBoard] = useState(() => peekClientQueryData<QuestBoardListResponse>("quest-board"));
   const [cachedBoardCourses] = useState(() => peekClientQueryData<Course[]>("quest-board-courses"));
@@ -209,6 +214,11 @@ export default function QuestBoardPage() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f7f8fc" }}>
       <AppHeader /><FeedbackDestination failed={!!errorMessage} ready={!isLoading && !errorMessage} />
+      <PageTransitionOverlay
+        open={showOverlay}
+        title="新規投稿を開いています"
+        description="投稿フォームを準備しています。"
+      />
       <Container maxWidth={false} sx={{ maxWidth: 1440, pt: { xs: 3, md: 4 } }}>
         <AppBreadcrumbs items={[{ label: "掲示板" }]} />
       </Container>
@@ -222,7 +232,8 @@ export default function QuestBoardPage() {
               </Typography>
             </Box>
             <Button
-              component={Link} href="/quest-board/new" variant="contained" startIcon={<AddIcon />}
+              variant="contained" startIcon={<AddIcon />}
+              onClick={() => startNavigation(() => router.push("/quest-board/new"))}
               sx={{ minHeight: 48, px: 3, fontWeight: 800, borderRadius: 2, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
             >
               投稿する
