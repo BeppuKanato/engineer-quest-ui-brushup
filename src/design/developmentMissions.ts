@@ -33,6 +33,8 @@ export type DevMission = {
     | { kind: "versions"; firstLine: string; states: number[]; legend: { mark: string; label: string; bg: string; fg: string }[] };
   /** 出力の例（行ごとに意味の注記つき）。 */
   outputExample: { value: string; label: string }[];
+  /** 例の地図の上で「通る経路」と「調べた範囲」の違いを示す図解（ある場合）。座標は [行, 列]。 */
+  exampleTrace?: { pathCells: Array<[number, number]>; examinedCells: Array<[number, number]> };
   /** スコアで数える量の名前（例：調べた部屋数）。 */
   countLabel: string;
   scoring: { best: number; plain: number };
@@ -106,6 +108,12 @@ export const developmentMissions: DevMission[] = [
       { value: "7", label: "最短で通る部屋数（入口と出口を含む）" },
       { value: "11", label: "調べた部屋数（スコアの計算に使う）" },
     ],
+    // 実測（キューから取り出した順に数え、出口を取り出した時点で止める）：
+    // 経路7マス＋経路の外を調べた4マス＝11マス。
+    exampleTrace: {
+      pathCells: [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2]],
+      examinedCells: [[0, 3], [2, 1], [2, 3], [3, 3]],
+    },
     countLabel: "調べた部屋数",
     scoring: { best: 14, plain: 26 },
     tests: [

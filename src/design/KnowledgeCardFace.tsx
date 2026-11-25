@@ -156,18 +156,18 @@ export const KnowledgeCardFace: React.FC<{ card: CardFaceData; owned: boolean; l
           <Typography component="p" sx={{ fontSize: 18, fontWeight: 900, lineHeight: 1.4 }}>{card.title}</Typography>
           {owned ? (
             <>
-              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>{card.description}</Typography>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
+                <Box component="span" sx={{ fontWeight: 800 }}>このミッションでの使いどころ：</Box>{card.useCase}
+              </Typography>
               <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
                 <Box component="span" sx={{ fontWeight: 800 }}>つながり：</Box>{card.connection}
               </Typography>
-              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
-                <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
-              </Typography>
+              <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>{card.description}</Typography>
             </>
           ) : (
             <>
               <Typography component="p" sx={{ fontSize: 16, lineHeight: 1.7 }}>
-                <Box component="span" sx={{ fontWeight: 800 }}>使いどころ：</Box>{card.useCase}
+                <Box component="span" sx={{ fontWeight: 800 }}>このミッションでの使いどころ：</Box>{card.useCase}
               </Typography>
               <Typography component="p" sx={{ fontSize: 14, lineHeight: 1.7 }}>まだ持っていないカードです。中身は、関連する単元で獲得すると開けます。</Typography>
             </>

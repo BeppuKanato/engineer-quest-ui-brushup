@@ -50,11 +50,17 @@ export default function MissionsPage() {
                         )}
                       </Box>
                       {nextRank(mission.selfBest.points) && (
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.round(((mission.selfBest.points - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300)) / (nextRank(mission.selfBest.points)!.min - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300))) * 100)}
-                          sx={{ mt: 1, height: 8, borderRadius: 999, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 999 } }}
-                        />
+                        <>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.round(((mission.selfBest.points - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300)) / (nextRank(mission.selfBest.points)!.min - (rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min ?? 300))) * 100)}
+                            sx={{ mt: 1, height: 8, borderRadius: 999, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: "#16a34a", borderRadius: 999 } }}
+                          />
+                          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
+                            <Typography component="p" sx={{ fontSize: 14 }}>{mission.selfBest.rank}ランク {rankThresholds.find((t) => t.rank === mission.selfBest!.rank)?.min}点</Typography>
+                            <Typography component="p" sx={{ fontSize: 14 }}>{nextRank(mission.selfBest.points)!.rank}ランク {nextRank(mission.selfBest.points)!.min}点</Typography>
+                          </Box>
+                        </>
                       )}
                     </>
                   ) : (
@@ -62,14 +68,23 @@ export default function MissionsPage() {
                   )}
                 </Box>
                 <Box sx={{ flex: 1 }} />
-                <Button
-                  variant="contained"
-                  disabled={!mission.unlocked}
-                  onClick={() => router.push(`/missions/${mission.id}`)}
-                  sx={{ mt: 2.5, minHeight: 48, alignSelf: "flex-start", px: 3, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
-                >
-                  {mission.unlocked ? "挑戦する →" : `${mission.unlockUnitName}を終えると挑戦できる`}
-                </Button>
+                {mission.unlocked ? (
+                  <Button
+                    variant="contained"
+                    onClick={() => router.push(`/missions/${mission.id}`)}
+                    sx={{ mt: 2.5, minHeight: 48, alignSelf: "flex-start", px: 3, fontWeight: 800, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
+                  >
+                    {mission.selfBest ? "記録に挑戦する →" : "挑戦する →"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.push("/courses")}
+                    sx={{ mt: 2.5, minHeight: 48, alignSelf: "flex-start", px: 3, fontWeight: 800 }}
+                  >
+                    {mission.unlockUnitName}を学習する →
+                  </Button>
+                )}
               </Box>
             </Paper>
           ))}
