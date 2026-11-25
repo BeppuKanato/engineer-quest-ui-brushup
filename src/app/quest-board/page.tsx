@@ -2,33 +2,24 @@
 
 import { FeedbackDestination } from "@/app/component/feedbackV1";
 import AddIcon from "@mui/icons-material/Add";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ForumIcon from "@mui/icons-material/Forum";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import {
   Alert,
   Box,
   Button,
-  Chip,
   Container,
-  FormControl,
   InputAdornment,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Skeleton,
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getCourses } from "@/api/courses.api";
 import {
@@ -39,22 +30,13 @@ import {
   type QuestPostSummary,
 } from "@/api/questBoard.api";
 import { QuestBoardAuthor } from "./_components/QuestBoardAuthor";
+import { CategoryChip, CourseChip, StatusChip, isResolvableCategory } from "./_components/BoardChips";
 import { AppHeader } from "@/app/component/appHeader";
 import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
-import { PageTransitionOverlay } from "@/app/component/pageTransitionOverlay";
+import { MascotFigure } from "@/app/component/mascotFigure";
 import type { Course } from "@/app/courses/type";
 import { fetchClientQuery, peekClientQueryData, queryTags } from "@/lib/clientQueryCache";
 import { useUserSession } from "@/app/component/userSession";
-import { useNavigationFeedback } from "@/hooks/useNavigationFeedback";
-
-const categoryColor: Record<QuestPostCategory, "primary" | "secondary" | "success" | "warning" | "info" | "default"> = {
-  QUESTION: "primary",
-  ERROR_HELP: "warning",
-  WORK_SHARE: "success",
-  CODE_SHARE: "secondary",
-  MEMO: "info",
-  REFERENCE: "default",
-};
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString("ja-JP", {
@@ -64,82 +46,82 @@ const formatDate = (value: string) =>
     minute: "2-digit",
   });
 
-const PostCard = ({ post }: { post: QuestPostSummary }) => {
-  const isResolvable = post.category === "QUESTION" || post.category === "ERROR_HELP";
-
+function FilterChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <Paper
-      component={Link}
-      href={`/quest-board/${encodeURIComponent(post.id)}`}
-      elevation={0}
+    <Button
+      onClick={onClick}
       sx={{
-        display: "block",
-        p: 2.5,
-        borderRadius: 2,
-        border: "1px solid #e2e8f0",
-        bgcolor: "#fff",
-        color: "inherit",
-        textDecoration: "none",
-        transition: "border-color 120ms ease, transform 120ms ease",
-        "&:hover": {
-          borderColor: "#60a5fa",
-          transform: "translateY(-1px)",
-        },
+        minHeight: 38, px: 2, borderRadius: 999, fontSize: 14, fontWeight: 700,
+        bgcolor: selected ? "#2563eb" : "#fff",
+        color: selected ? "#fff" : "#111827",
+        border: `1px solid ${selected ? "#2563eb" : "#cbd5e1"}`,
+        "&:hover": { bgcolor: selected ? "#1d4ed8" : "#f1f5f9" },
       }}
     >
-      <Stack spacing={1.5}>
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-          <Chip
-            label={post.categoryLabel}
-            color={categoryColor[post.category]}
-            size="small"
-            sx={{ fontWeight: 900 }}
-          />
-          {isResolvable && (
-            <Chip
-              icon={post.status === "RESOLVED" ? <CheckCircleIcon /> : undefined}
-              label={post.status === "RESOLVED" ? "解決済み" : "未解決"}
-              color={post.status === "RESOLVED" ? "success" : "default"}
-              size="small"
-              sx={{ fontWeight: 900 }}
-            />
-          )}
-          {post.courseTitle && <Chip label={post.courseTitle} size="small" variant="outlined" />}
-        </Stack>
-
-        <Box>
-          <Typography variant="h6" fontWeight={900}>
-            {post.title}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.5, lineHeight: 1.7 }}>
-            {post.excerpt}
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={2} alignItems="center" color="text.secondary" flexWrap="wrap">
-          <QuestBoardAuthor author={post} isDeleted={post.isDeleted} />
-          <Typography variant="body2">{formatDate(post.createdAt)}</Typography>
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <ChatBubbleOutlineIcon fontSize="small" />
-            <Typography variant="body2">{post.commentCount}</Typography>
-          </Stack>
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <ThumbUpAltOutlinedIcon fontSize="small" />
-            <Typography variant="body2">{post.reactions.total}</Typography>
-          </Stack>
-        </Stack>
-      </Stack>
-    </Paper>
+      {children}
+    </Button>
   );
-};
+}
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+      <Typography sx={{ fontSize: 14, fontWeight: 800, minWidth: 56, pt: 1.25 }}>{label}</Typography>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>{children}</Box>
+    </Box>
+  );
+}
+
+const PostCard = ({ post }: { post: QuestPostSummary }) => (
+  <Paper
+    component={Link}
+    href={`/quest-board/${encodeURIComponent(post.id)}`}
+    elevation={0}
+    sx={{
+      display: "block", p: 2.5, borderRadius: 3, border: "1px solid #e2e8f0",
+      bgcolor: "#fff", color: "inherit", textDecoration: "none",
+      transition: "border-color 120ms ease, transform 120ms ease",
+      "&:hover": { borderColor: "#2563eb", transform: "translateY(-1px)" },
+    }}
+  >
+    <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+      <CategoryChip category={post.category} label={post.categoryLabel} />
+      {isResolvableCategory(post.category) && <StatusChip status={post.status} commentCount={post.commentCount} />}
+      {post.courseTitle && <CourseChip title={post.courseTitle} />}
+      <Box sx={{ flex: 1 }} />
+      <Typography sx={{ fontSize: 14 }}>{formatDate(post.createdAt)}</Typography>
+    </Box>
+    <Typography sx={{ fontSize: 18, fontWeight: 900, mt: 1.25, lineHeight: 1.5 }}>{post.title}</Typography>
+    <Typography sx={{ fontSize: 16, lineHeight: 1.7, mt: 0.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      {post.excerpt}
+    </Typography>
+    {post.code && (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1 }}>
+        <CodeRoundedIcon sx={{ fontSize: 18, color: "#334155" }} />
+        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>コード付きの投稿</Typography>
+      </Box>
+    )}
+    <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mt: 1.75 }}>
+      <QuestBoardAuthor author={post} isDeleted={post.isDeleted} />
+      <Box sx={{ flex: 1 }} />
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+        <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 18, color: "#334155" }} />
+        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>コメント {post.commentCount}</Typography>
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+        <LightbulbOutlinedIcon sx={{ fontSize: 18, color: "#334155" }} />
+        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>参考になった {post.reactions.byType.HELPFUL ?? 0}</Typography>
+      </Box>
+    </Box>
+  </Paper>
+);
 
 export default function QuestBoardPage() {
-  const router = useRouter();
-  const { showOverlay, startNavigation } = useNavigationFeedback();
   const { status: sessionStatus, token } = useUserSession();
   const [cachedBoard] = useState(() => peekClientQueryData<QuestBoardListResponse>("quest-board"));
   const [cachedBoardCourses] = useState(() => peekClientQueryData<Course[]>("quest-board-courses"));
   const [board, setBoard] = useState<QuestBoardListResponse | null>(cachedBoard ?? null);
+  const [allPosts, setAllPosts] = useState<QuestPostSummary[]>(cachedBoard?.posts ?? []);
   const [courses, setCourses] = useState<Course[]>(cachedBoardCourses ?? []);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<QuestPostCategory | "ALL">("ALL");
@@ -148,19 +130,18 @@ export default function QuestBoardPage() {
   const [mineOnly, setMineOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(!cachedBoard);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const filtersReady = useRef(false);
 
-  const selectedCourse = useMemo(
-    () => courses.find((course) => course.id === courseId) ?? null,
-    [courses, courseId]
-  );
-
-  const loadBoard = async (idToken: string) => {
+  const loadBoard = async (idToken: string, overrides: Partial<{ q: string; category: QuestPostCategory | "ALL"; status: QuestPostStatus | "ALL"; courseId: string; mine: boolean }> = {}) => {
+    const merged = {
+      q: overrides.q ?? query, category: overrides.category ?? category,
+      status: overrides.status ?? status, courseId: overrides.courseId ?? courseId,
+      mine: overrides.mine ?? mineOnly,
+    };
     const data = await getQuestBoardPosts(idToken, {
-      q: query.trim() || undefined,
-      category,
-      status,
-      courseId: courseId || undefined,
-      mine: mineOnly,
+      q: merged.q.trim() || undefined,
+      category: merged.category, status: merged.status,
+      courseId: merged.courseId || undefined, mine: merged.mine,
     });
     setBoard(data);
   };
@@ -179,17 +160,32 @@ export default function QuestBoardPage() {
       .then(([boardData, courseData]) => {
         if (!isMounted) return;
         setBoard(boardData);
+        setAllPosts(boardData.posts);
         setCourses(courseData);
         setErrorMessage(null);
+        filtersReady.current = true;
       })
       .catch(error => { console.error(error); if (isMounted && !cachedBoard) setErrorMessage("掲示板を取得できませんでした。"); })
       .finally(() => { if (isMounted) setIsLoading(false); });
     return () => { isMounted = false; };
-  }, [sessionStatus, token, cachedBoard]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionStatus, token]);
+
+  // 絞り込みは選んだ瞬間に反映する（検索ボタンはキーワード専用）。
+  useEffect(() => {
+    if (!filtersReady.current || !token) return;
+    let cancelled = false;
+    setIsLoading(true);
+    loadBoard(token)
+      .then(() => { if (!cancelled) setErrorMessage(null); })
+      .catch(error => { console.error(error); if (!cancelled) setErrorMessage("検索に失敗しました。"); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, status, courseId, mineOnly]);
 
   const handleSearch = async () => {
     if (!token) return;
-
     try {
       setIsLoading(true);
       setErrorMessage(null);
@@ -202,72 +198,46 @@ export default function QuestBoardPage() {
     }
   };
 
+  const hasActiveFilters = category !== "ALL" || status !== "ALL" || courseId !== "" || mineOnly || query.trim() !== "";
+  const clearFilters = () => {
+    setQuery(""); setCategory("ALL"); setStatus("ALL"); setCourseId(""); setMineOnly(false);
+    if (token) void loadBoard(token, { q: "", category: "ALL", status: "ALL", courseId: "", mine: false });
+  };
+
+  const categoryCount = (value: QuestPostCategory) => allPosts.filter((p) => p.category === value).length;
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f7f8fc" }}>
       <AppHeader /><FeedbackDestination failed={!!errorMessage} ready={!isLoading && !errorMessage} />
-      <PageTransitionOverlay
-        open={showOverlay}
-        title="投稿画面を開いています"
-        description="新しい投稿を作成する画面へ移動しています。"
-        mascotState="thinking"
-      />
       <Container maxWidth={false} sx={{ maxWidth: 1440, pt: { xs: 3, md: 4 } }}>
-          <AppBreadcrumbs items={[{ label: "掲示板" }]} />
-        </Container>
-      <Container maxWidth={false} sx={{ maxWidth: 1120, pt: 3, pb: 4 }}>
+        <AppBreadcrumbs items={[{ label: "掲示板" }]} />
+      </Container>
+      <Container maxWidth={false} sx={{ maxWidth: 1200, pt: 3, pb: 5 }}>
         <Stack spacing={3}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #e2e8f0" }}>
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={2}
-              justifyContent="space-between"
-              alignItems={{ xs: "stretch", md: "center" }}
+          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", flexWrap: "wrap" }}>
+            <Box sx={{ flex: 1, minWidth: 260 }}>
+              <Typography sx={{ fontSize: 24, fontWeight: 900 }}>掲示板</Typography>
+              <Typography sx={{ fontSize: 16, mt: 0.75, lineHeight: 1.7 }}>
+                分からないことを聞く、作ったものを見せる、学んだことを残す場所です。
+              </Typography>
+            </Box>
+            <Button
+              component={Link} href="/quest-board/new" variant="contained" startIcon={<AddIcon />}
+              sx={{ minHeight: 48, px: 3, fontWeight: 800, borderRadius: 2, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
             >
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2,
-                    display: "grid",
-                    placeItems: "center",
-                    bgcolor: "#eff6ff",
-                    color: "#2563eb",
-                  }}
-                >
-                  <ForumIcon />
-                </Box>
-                <Box>
-                  <Typography variant="h4" fontWeight={900}>
-                    掲示板
-                  </Typography>
-                  <Typography color="text.secondary">
-                    質問、エラー相談、作品共有、メモをカテゴリ別に投稿できます。
-                  </Typography>
-                </Box>
-              </Stack>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => startNavigation(() => router.push("/quest-board/new"))}
-                sx={{ minHeight: 44, fontWeight: 900, borderRadius: 2 }}
-              >
-                投稿する
-              </Button>
-            </Stack>
-          </Paper>
+              投稿する
+            </Button>
+          </Box>
 
-          <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: "1px solid #e2e8f0" }}>
-            <Stack spacing={2}>
+          <Stack spacing={1.75}>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
               <TextField
-                label="キーワード検索"
+                placeholder="キーワードで探す"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    void handleSearch();
-                  }
-                }}
+                onKeyDown={(event) => { if (event.key === "Enter") void handleSearch(); }}
+                fullWidth
+                sx={{ bgcolor: "#fff" }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -276,88 +246,73 @@ export default function QuestBoardPage() {
                   ),
                 }}
               />
-              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                <ToggleButtonGroup
-                  exclusive
-                  value={category}
-                  onChange={(_, value) => value && setCategory(value)}
-                  size="small"
-                  sx={{ flexWrap: "wrap" }}
+              <Button variant="contained" onClick={handleSearch} sx={{ minWidth: 96, fontWeight: 800, borderRadius: 2, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>
+                検索
+              </Button>
+            </Box>
+            <FilterRow label="種類">
+              <FilterChip selected={category === "ALL"} onClick={() => setCategory("ALL")}>すべて {allPosts.length}</FilterChip>
+              {(board?.options.categories ?? []).map((option) => (
+                <FilterChip
+                  key={option.value}
+                  selected={category === option.value}
+                  onClick={() => setCategory(option.value as QuestPostCategory)}
                 >
-                  <ToggleButton value="ALL">すべて</ToggleButton>
-                  {(board?.options.categories ?? []).map((option) => (
-                    <ToggleButton key={option.value} value={option.value}>
-                      {option.label}
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              </Stack>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <FormControl sx={{ minWidth: 220 }}>
-                  <InputLabel>コース</InputLabel>
-                  <Select
-                    label="コース"
-                    value={courseId}
-                    onChange={(event) => setCourseId(event.target.value)}
-                  >
-                    <MenuItem value="">すべて</MenuItem>
-                    {courses.map((course) => (
-                      <MenuItem key={course.id} value={course.id}>
-                        {course.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl sx={{ minWidth: 180 }}>
-                  <InputLabel>状態</InputLabel>
-                  <Select
-                    label="状態"
-                    value={status}
-                    onChange={(event) => setStatus(event.target.value as QuestPostStatus | "ALL")}
-                  >
-                    <MenuItem value="ALL">すべて</MenuItem>
-                    <MenuItem value="OPEN">未解決</MenuItem>
-                    <MenuItem value="RESOLVED">解決済み</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl sx={{ minWidth: 160 }}>
-                  <InputLabel>表示</InputLabel>
-                  <Select
-                    label="表示"
-                    value={mineOnly ? "mine" : "all"}
-                    onChange={(event) => setMineOnly(event.target.value === "mine")}
-                  >
-                    <MenuItem value="all">全員の投稿</MenuItem>
-                    <MenuItem value="mine">自分の投稿</MenuItem>
-                  </Select>
-                </FormControl>
-                <Button variant="contained" onClick={handleSearch} sx={{ minHeight: 54, fontWeight: 900 }}>
-                  検索
-                </Button>
-              </Stack>
-              {selectedCourse && (
-                <Typography variant="body2" color="text.secondary">
-                  コース 絞り込み: {selectedCourse.title}
-                </Typography>
-              )}
-            </Stack>
-          </Paper>
+                  {option.label} {categoryCount(option.value as QuestPostCategory)}
+                </FilterChip>
+              ))}
+            </FilterRow>
+            <FilterRow label="状態">
+              <FilterChip selected={status === "ALL"} onClick={() => setStatus("ALL")}>すべて</FilterChip>
+              <FilterChip selected={status === "OPEN"} onClick={() => setStatus("OPEN")}>回答受付中</FilterChip>
+              <FilterChip selected={status === "RESOLVED"} onClick={() => setStatus("RESOLVED")}>解決済み</FilterChip>
+              <FilterChip selected={mineOnly} onClick={() => setMineOnly(!mineOnly)}>自分の投稿</FilterChip>
+            </FilterRow>
+            <FilterRow label="単元">
+              <FilterChip selected={courseId === ""} onClick={() => setCourseId("")}>すべて</FilterChip>
+              {courses.map((course) => (
+                <FilterChip key={course.id} selected={courseId === course.id} onClick={() => setCourseId(course.id)}>
+                  {course.title}
+                </FilterChip>
+              ))}
+            </FilterRow>
+          </Stack>
 
           {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 800 }}>
+              {isLoading ? "読み込み中" : `${board?.posts.length ?? 0}件の投稿`}
+            </Typography>
+            {hasActiveFilters && (
+              <Button onClick={clearFilters} sx={{ fontWeight: 700, color: "#2563eb" }}>条件をクリア</Button>
+            )}
+          </Box>
 
           <Stack spacing={2}>
             {isLoading ? (
               [0, 1, 2].map((index) => (
-                <Skeleton key={index} variant="rounded" height={168} sx={{ borderRadius: 2 }} />
+                <Skeleton key={index} variant="rounded" height={168} sx={{ borderRadius: 3 }} />
               ))
             ) : board?.posts.length ? (
               board.posts.map((post) => <PostCard key={post.id} post={post} />)
             ) : (
-              <Paper elevation={0} sx={{ p: 4, borderRadius: 2, border: "1px solid #e2e8f0" }}>
-                <Typography fontWeight={900}>投稿がありません。</Typography>
-                <Typography color="text.secondary" sx={{ mt: 1 }}>
-                  条件を変えるか、最初の投稿を作成してください。
+              <Paper elevation={0} sx={{ p: 5, borderRadius: 3, border: "1px solid #e2e8f0", textAlign: "center" }}>
+                <Box sx={{ display: "flex", justifyContent: "center" }}>
+                  <MascotFigure mascotId="red-panda" alt="マスコット" size="L" grounding="frame" presentation="circle" motion="none" />
+                </Box>
+                <Typography sx={{ fontSize: 18, fontWeight: 900, mt: 2 }}>投稿がありません</Typography>
+                <Typography sx={{ fontSize: 16, mt: 1 }}>
+                  {hasActiveFilters ? "条件に合う投稿がありません。条件を変えてみてください。" : "最初の投稿を作成してみましょう。"}
                 </Typography>
+                <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", mt: 2.5, flexWrap: "wrap" }}>
+                  {hasActiveFilters && (
+                    <Button variant="outlined" onClick={clearFilters} sx={{ minHeight: 44, fontWeight: 800, borderRadius: 2 }}>条件をクリア</Button>
+                  )}
+                  <Button component={Link} href="/quest-board/new" variant="contained" startIcon={<AddIcon />} sx={{ minHeight: 44, fontWeight: 800, borderRadius: 2, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}>
+                    投稿する
+                  </Button>
+                </Box>
               </Paper>
             )}
           </Stack>

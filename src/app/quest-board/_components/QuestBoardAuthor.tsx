@@ -27,10 +27,10 @@ export function QuestBoardAuthor({ author, isDeleted = false }: { author: QuestB
   return <Stack data-board-author direction="row" gap={1} alignItems="center" flexWrap="wrap" sx={{ minWidth: 0, maxWidth: "100%" }}>
     <MascotFigure mascotId={isMascotId(author.authorMascotId) ? author.authorMascotId : "red-panda"}
       alt={`${author.authorName}のマスコット`} size="S" grounding="frame" presentation="circle" motion="none" />
-    <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>{author.authorName}</Typography>
+    <Typography sx={{ fontSize: 14, fontWeight: 700, overflowWrap: "anywhere" }}>{author.authorName}</Typography>
     {achievement && <Box data-profile-achievement sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, borderRadius: 1.5, bgcolor: "#eaf2ff", color: "#0052d9", minWidth: 0, maxWidth: "100%" }}>
       <Icon aria-hidden sx={{ fontSize: 18, flexShrink: 0 }} />
-      <Typography component="span" variant="caption" sx={{ fontWeight: 800, overflowWrap: "anywhere" }}>{achievement.title}</Typography>
+      <Typography component="span" sx={{ fontSize: 14, fontWeight: 800, overflowWrap: "anywhere" }}>{achievement.title}</Typography>
     </Box>}
   </Stack>;
 }

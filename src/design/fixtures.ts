@@ -6,6 +6,8 @@
 import type { User } from "firebase/auth";
 import type { AuthUser, GetMeResponse } from "@/api/auth.api";
 import type { HomeResponse, HomeUnit } from "@/api/home.api";
+import type { QuestBoardOptions, QuestBoardReactionSummary, QuestComment, QuestPostDetail, QuestPostStatus, QuestPostSummary } from "@/api/questBoard.api";
+import type { Course } from "@/app/courses/type";
 import achievementsData from "./data/achievements.json";
 
 // デザインモード用の仮 Firebase ユーザー。画面側は firebaseUser の uid と
@@ -379,7 +381,18 @@ const achievementsFixture = {
   profileAchievementId: null,
 };
 
+const coursesFixture: Course[] = [
+  { id: "course-algorithm-breadth-first-search-v1", title: "幅優先探索（BFS）", description: "", categories: ["algorithm", "graph", "search"], difficulty: "normal", status: "completed", progressRate: 100 },
+  { id: "course-algorithm-depth-first-search-v1", title: "深さ優先探索（DFS）", description: "", categories: ["algorithm", "graph", "search"], difficulty: "normal", status: "completed", progressRate: 100 },
+  { id: "course-algorithm-bubble-sort-v2", title: "バブルソート", description: "", categories: ["algorithm", "sort"], difficulty: "easy", status: "completed", progressRate: 100 },
+  { id: "course-algorithm-maze-digging-v1", title: "穴掘り法", description: "", categories: ["algorithm", "graph"], difficulty: "normal", status: "not_started", progressRate: 0 },
+  { id: "course-algorithm-wall-extension-v1", title: "棒倒し法", description: "", categories: ["algorithm", "graph"], difficulty: "normal", status: "in_progress", progressRate: 33 },
+  { id: "course-algorithm-binary-search-v1", title: "二分探索", description: "", categories: ["algorithm", "search"], difficulty: "normal", status: "in_progress", progressRate: 50 },
+  { id: "course-algorithm-greedy-v1", title: "貪欲法", description: "", categories: ["algorithm"], difficulty: "normal", status: "not_started", progressRate: 0 },
+];
+
 const fixtures: Record<string, unknown> = {
+  "/courses": coursesFixture,
   "/achievements": achievementsFixture,
   "/auth/me": getMeFixture,
   "/auth/ensure": getMeFixture,
@@ -422,6 +435,231 @@ function designUnlockedAchievements(courseId: string, phaseKey: string | null) {
     }));
 }
 
+
+// ---- 掲示板の仮データ（2026-11-25、掲示板UIの下書き用） ----
+// 投稿の中身は、ホームの「最近の投稿」と同じ題を使い、単元とのつながり・状態・
+// コード付き相談・作品共有が一通り見えるようにそろえた。状態の正はこのデータで、
+// リアクション/状態変更/コメント追加はモジュール内の上書きで見た目だけ再現する
+// （コメント本文はフィクスチャでは受け取れないため、固定文を返す）。
+const boardOptions: QuestBoardOptions = {
+  categories: [
+    { value: "QUESTION", label: "質問" },
+    { value: "ERROR_HELP", label: "エラー相談" },
+    { value: "WORK_SHARE", label: "作品共有" },
+    { value: "CODE_SHARE", label: "コード共有" },
+    { value: "MEMO", label: "メモ" },
+    { value: "REFERENCE", label: "参考リンク" },
+  ],
+  statuses: [
+    { value: "OPEN", label: "未解決" },
+    { value: "RESOLVED", label: "解決済み" },
+  ],
+  reactionTypes: [
+    { value: "LIKE", label: "いいね" },
+    { value: "HELPFUL", label: "参考になった" },
+    { value: "SAVED_ME", label: "助かった" },
+  ],
+};
+
+const boardAuthorSelf = { authorName: "サンプル", authorMascotId: "red-panda", authorAchievement: { title: "幅優先探索を修得した", rarity: "COMMON" as const, iconKey: "course" } };
+const boardAuthorAkari = { authorName: "あかり", authorMascotId: "red-panda", authorAchievement: { title: "自分で実装クリア", rarity: "RARE" as const, iconKey: "build" } };
+const boardAuthorYuta = { authorName: "ゆうた", authorMascotId: "red-panda", authorAchievement: { title: "ノーヒントクリア", rarity: "EPIC" as const, iconKey: "challenge" } };
+const boardAuthorMiku = { authorName: "みく", authorMascotId: "red-panda", authorAchievement: null };
+
+const reactionsOf = (like: number, helpful: number, saved: number): QuestBoardReactionSummary => ({
+  total: like + helpful + saved,
+  byType: { LIKE: like, HELPFUL: helpful, SAVED_ME: saved },
+  userReactedTypes: [],
+});
+
+type BoardPostSeed = QuestPostSummary & { comments: QuestComment[] };
+const boardPosts: BoardPostSeed[] = [
+  {
+    id: "design-post-7", category: "WORK_SHARE", categoryLabel: "作品共有",
+    title: "発展ミッション『ダンジョンの最短脱出』で767点が取れました",
+    body: "幅優先探索の単元を終えて、発展ミッションのダンジョンに挑戦しました。ふつうの幅優先探索だと767点（Bランク）でした。調べた部屋数を数えるのがスコアになるので、ゴールに着いたらすぐ止めるのが大事でした。次は両方向から探してAランクをねらいます。",
+    excerpt: "", code: null, referenceUrl: "/my-works/design-work-1", status: "OPEN",
+    courseId: null, courseTitle: null, commentCount: 2, reactions: reactionsOf(8, 3, 0),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-24T15:30:00+09:00", updatedAt: "2026-11-24T15:30:00+09:00",
+    ...boardAuthorYuta,
+    comments: [
+      { id: "c7-1", body: "767点すごいです。ゴールに着いたら止める、というのは単元の最短経路の話とつながりますね。", createdAt: "2026-11-24T16:02:00+09:00", updatedAt: "2026-11-24T16:02:00+09:00", ...boardAuthorAkari },
+      { id: "c7-2", body: "両方向から探すやり方、私も試してみます。記録が出たら教えてください。", createdAt: "2026-11-24T17:45:00+09:00", updatedAt: "2026-11-24T17:45:00+09:00", ...boardAuthorMiku },
+    ],
+  },
+  {
+    id: "design-post-6", category: "ERROR_HELP", categoryLabel: "エラー相談",
+    title: "真ん中より大きいのに右半分を探してしまいます",
+    body: "二分探索の応用問題で、探す値が真ん中より大きいとき、本当は左半分を見たいのに、右半分を探しに行ってしまいます。範囲の更新のしかたが逆になっている気がするのですが、どこを見直せばいいでしょうか。",
+    excerpt: "",
+    code: "def binary_search(a, target):\n    lo = 0\n    hi = len(a) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if a[mid] == target:\n            return mid\n        elif a[mid] < target:\n            hi = mid - 1\n        else:\n            lo = mid + 1\n    return -1",
+    referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-binary-search-v1", courseTitle: "二分探索", commentCount: 1, reactions: reactionsOf(0, 1, 1),
+    canResolve: true, isOwner: true, isDeleted: false,
+    createdAt: "2026-11-20T13:05:00+09:00", updatedAt: "2026-11-20T13:05:00+09:00",
+    ...boardAuthorSelf,
+    comments: [
+      { id: "c6-1", body: "a[mid] < target のとき、探す値は真ん中より右にあるので、左端（lo）を進めるはずです。コードでは hi を下げているので、そこが逆だと思います。", createdAt: "2026-11-20T14:20:00+09:00", updatedAt: "2026-11-20T14:20:00+09:00", ...boardAuthorAkari },
+    ],
+  },
+  {
+    id: "design-post-1", category: "QUESTION", categoryLabel: "質問",
+    title: "キューから取り出すタイミングが分かりません",
+    body: "幅優先探索の動きの説明で、キューに頂点を入れる場面と取り出す場面が交互に出てきます。取り出すのは「その頂点から広げるとき」で合っていますか。入れた順に取り出す理由も、あわせて知りたいです。",
+    excerpt: "", code: null, referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-breadth-first-search-v1", courseTitle: "幅優先探索", commentCount: 2, reactions: reactionsOf(2, 3, 0),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-19T09:12:00+09:00", updatedAt: "2026-11-19T09:12:00+09:00",
+    ...boardAuthorAkari,
+    comments: [
+      { id: "c1-1", body: "合っています。キューは「先に入れたものから出す」ので、始点に近い頂点から順に広がります。取り出すタイミングがそのまま「調べる順番」になります。", createdAt: "2026-11-19T10:03:00+09:00", updatedAt: "2026-11-19T10:03:00+09:00", ...boardAuthorYuta },
+      { id: "c1-2", body: "段階3の動きの確認で、キューの中身がどう変わるかを追う問題がありました。あれを見ると取り出すタイミングが分かりやすかったです。", createdAt: "2026-11-19T11:40:00+09:00", updatedAt: "2026-11-19T11:40:00+09:00", ...boardAuthorSelf },
+    ],
+  },
+  {
+    id: "design-post-2", category: "QUESTION", categoryLabel: "質問",
+    title: "二分探索で範囲が1つになっても終わらないのはなぜ？",
+    body: "探す範囲が1つの要素だけになっても、ループが終わらずに同じところを見続けます。真ん中の位置の計算か、範囲の更新のどちらかがおかしいと思うのですが、見分ける方法はありますか。",
+    excerpt: "", code: null, referenceUrl: null, status: "RESOLVED",
+    courseId: "course-algorithm-binary-search-v1", courseTitle: "二分探索", commentCount: 3, reactions: reactionsOf(1, 6, 2),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-18T16:40:00+09:00", updatedAt: "2026-11-19T08:15:00+09:00",
+    ...boardAuthorMiku,
+    comments: [
+      { id: "c2-1", body: "範囲が1つになっても終わらないなら、更新で範囲が狭まっていないはずです。真ん中を含めたまま更新していないか確認してみてください。", createdAt: "2026-11-18T17:22:00+09:00", updatedAt: "2026-11-18T17:22:00+09:00", ...boardAuthorYuta },
+      { id: "c2-2", body: "私も同じところで詰まりました。lo と hi の値を1回ごとに書き出すと、どこで止まっているか一目で分かります。", createdAt: "2026-11-18T19:05:00+09:00", updatedAt: "2026-11-18T19:05:00+09:00", ...boardAuthorAkari },
+      { id: "c2-3", body: "真ん中を含めたまま更新していました。mid + 1 / mid - 1 に直したら終わるようになりました。ありがとうございます。", createdAt: "2026-11-19T08:15:00+09:00", updatedAt: "2026-11-19T08:15:00+09:00", ...boardAuthorMiku },
+    ],
+  },
+  {
+    id: "design-post-3", category: "QUESTION", categoryLabel: "質問",
+    title: "バブルソートで交換が止まる条件が分かりません",
+    body: "バブルソートの動きの確認で、1周しても交換が起きなかったら終わり、とありました。なぜ交換が起きないと「もう並んでいる」と言えるのかが分かりません。",
+    excerpt: "", code: null, referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-bubble-sort-v2", courseTitle: "バブルソート", commentCount: 0, reactions: reactionsOf(0, 0, 0),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-18T11:05:00+09:00", updatedAt: "2026-11-18T11:05:00+09:00",
+    ...boardAuthorYuta,
+    comments: [],
+  },
+  {
+    id: "design-post-8", category: "CODE_SHARE", categoryLabel: "コード共有",
+    title: "幅優先探索のコードを書いてみました",
+    body: "単元の最終チャレンジで書いた幅優先探索です。キューに deque を使うと、先頭から取り出すのが速いと聞いてそうしました。もっと短く書く方法があれば教えてください。",
+    excerpt: "",
+    code: "from collections import deque\n\ndef bfs(graph, start):\n    dist = {start: 0}\n    queue = deque([start])\n    while queue:\n        v = queue.popleft()\n        for nxt in graph[v]:\n            if nxt not in dist:\n                dist[nxt] = dist[v] + 1\n                queue.append(nxt)\n    return dist",
+    referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-breadth-first-search-v1", courseTitle: "幅優先探索", commentCount: 1, reactions: reactionsOf(3, 2, 0),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-17T15:40:00+09:00", updatedAt: "2026-11-17T15:40:00+09:00",
+    ...boardAuthorMiku,
+    comments: [
+      { id: "c8-1", body: "dist に入っているかで「調べたか」を判定するのが分かりやすいです。私も同じ書き方になりました。", createdAt: "2026-11-17T16:30:00+09:00", updatedAt: "2026-11-17T16:30:00+09:00", ...boardAuthorAkari },
+    ],
+  },
+  {
+    id: "design-post-4", category: "QUESTION", categoryLabel: "質問",
+    title: "DFSとBFSはどう使い分けるのですか",
+    body: "深さ優先探索と幅優先探索の両方を学びました。どちらもグラフをたどる方法ですが、どんなときにどちらを使うのか、使い分けの目安が知りたいです。",
+    excerpt: "", code: null, referenceUrl: null, status: "RESOLVED",
+    courseId: null, courseTitle: null, commentCount: 2, reactions: reactionsOf(2, 5, 1),
+    canResolve: false, isOwner: false, isDeleted: false,
+    createdAt: "2026-11-17T15:22:00+09:00", updatedAt: "2026-11-18T09:00:00+09:00",
+    ...boardAuthorAkari,
+    comments: [
+      { id: "c4-1", body: "最短の道のりが知りたいときは幅優先探索、というのが一番大きな目安だと思います。深さ優先探索は「つながっているか」や「全部たどる」ときに使います。", createdAt: "2026-11-17T16:10:00+09:00", updatedAt: "2026-11-17T16:10:00+09:00", ...boardAuthorYuta },
+      { id: "c4-2", body: "島の数を数える発展ミッションは深さ優先探索で解けました。使い分けが少し分かってきました。", createdAt: "2026-11-18T09:00:00+09:00", updatedAt: "2026-11-18T09:00:00+09:00", ...boardAuthorAkari },
+    ],
+  },
+  {
+    id: "design-post-5", category: "MEMO", categoryLabel: "メモ",
+    title: "貪欲法のメモ：大きい硬貨から使う理由",
+    body: "大きい硬貨から使うと、合計の枚数が少なくなる。理由は、大きい硬貨1枚で小さい硬貨の何枚分かをまかなえるから。ただし、硬貨の組み合わせによっては成り立たないこともある、というのが今日の学び。",
+    excerpt: "", code: null, referenceUrl: null, status: "OPEN",
+    courseId: "course-algorithm-greedy-v1", courseTitle: "貪欲法", commentCount: 1, reactions: reactionsOf(1, 2, 0),
+    canResolve: false, isOwner: true, isDeleted: false,
+    createdAt: "2026-11-16T10:48:00+09:00", updatedAt: "2026-11-16T10:48:00+09:00",
+    ...boardAuthorSelf,
+    comments: [
+      { id: "c5-1", body: "「成り立たないこともある」の部分が大事だと思います。メモ参考になりました。", createdAt: "2026-11-16T12:15:00+09:00", updatedAt: "2026-11-16T12:15:00+09:00", ...boardAuthorMiku },
+    ],
+  },
+];
+for (const post of boardPosts) {
+  post.excerpt = post.body.length > 90 ? `${post.body.slice(0, 90)}…` : post.body;
+}
+
+const boardStatusOverrides = new Map<string, QuestPostStatus>();
+const boardAppendedComments = new Map<string, QuestComment[]>();
+
+const boardSummaryOf = (post: BoardPostSeed): QuestPostSummary => {
+  const { comments: _comments, ...summary } = post;
+  const appended = boardAppendedComments.get(post.id) ?? [];
+  return {
+    ...summary,
+    status: boardStatusOverrides.get(post.id) ?? summary.status,
+    commentCount: summary.commentCount + appended.length,
+  };
+};
+
+const boardDetailOf = (post: BoardPostSeed): QuestPostDetail => ({
+  ...boardSummaryOf(post),
+  comments: [...post.comments, ...(boardAppendedComments.get(post.id) ?? [])],
+});
+
+const boardFixture = (path: string): unknown => {
+  const [key, queryString] = path.split("?");
+  if (key === "/quest-board") {
+    const params = new URLSearchParams(queryString ?? "");
+    let posts = boardPosts.map(boardSummaryOf);
+    const q = params.get("q");
+    if (q) posts = posts.filter((p) => p.title.includes(q) || p.body.includes(q));
+    const category = params.get("category");
+    if (category) posts = posts.filter((p) => p.category === category);
+    const courseId = params.get("courseId");
+    if (courseId) posts = posts.filter((p) => p.courseId === courseId);
+    const status = params.get("status");
+    if (status) posts = posts.filter((p) => p.status === status);
+    if (params.get("mine")) posts = posts.filter((p) => p.isOwner);
+    // 作成 POST も同じパスに来るため、作成側が読む postId を含めて返す（値は最新投稿）。
+    return { posts, options: boardOptions, postId: boardPosts[0].id };
+  }
+  const statusMatch = key.match(/^\/quest-board\/([^/]+)\/status$/);
+  if (statusMatch) {
+    const post = boardPosts.find((p) => p.id === decodeURIComponent(statusMatch[1]));
+    if (!post) return undefined;
+    const next: QuestPostStatus = (boardStatusOverrides.get(post.id) ?? post.status) === "OPEN" ? "RESOLVED" : "OPEN";
+    boardStatusOverrides.set(post.id, next);
+    return { status: next, updatedAt: "2026-11-25T10:00:00+09:00" };
+  }
+  const commentsMatch = key.match(/^\/quest-board\/([^/]+)\/comments$/);
+  if (commentsMatch) {
+    const post = boardPosts.find((p) => p.id === decodeURIComponent(commentsMatch[1]));
+    if (!post) return undefined;
+    const comment: QuestComment = {
+      id: `design-comment-${Date.now()}`,
+      body: "コメントありがとうございます。試してみます。",
+      createdAt: "2026-11-25T10:00:00+09:00", updatedAt: "2026-11-25T10:00:00+09:00",
+      ...boardAuthorSelf,
+    };
+    boardAppendedComments.set(post.id, [...(boardAppendedComments.get(post.id) ?? []), comment]);
+    return { comment };
+  }
+  const reactionsMatch = key.match(/^\/quest-board\/([^/]+)\/reactions$/);
+  if (reactionsMatch) {
+    const post = boardPosts.find((p) => p.id === decodeURIComponent(reactionsMatch[1]));
+    // 種類はフィクスチャでは受け取れないため、件数は変えずに現在の集計を返す。
+    return post ? { reactions: post.reactions } : undefined;
+  }
+  const detailMatch = key.match(/^\/quest-board\/([^/]+)$/);
+  if (detailMatch) {
+    const post = boardPosts.find((p) => p.id === decodeURIComponent(detailMatch[1]));
+    return post ? { post: boardDetailOf(post), options: boardOptions } : undefined;
+  }
+  return undefined;
+};
+
 // パスに対応するフィクスチャを返す。無い場合は undefined。
 export const resolveFixture = (path: string): unknown => {
   const key = path.split("?")[0];
@@ -453,6 +691,8 @@ export const resolveFixture = (path: string): unknown => {
       achievedBigGoals: [],
     };
   }
+  const board = boardFixture(path);
+  if (board !== undefined) return board;
   // フィードバック画面の仮データ（2026-11-23）: 文面ありの状態をデザイン確認できるようにする。
   if (key.startsWith("/feedback-v1/phase/") || key.startsWith("/feedback-v1/unit/")) return designFeedbackResult(key);
   return fixtures[key];
