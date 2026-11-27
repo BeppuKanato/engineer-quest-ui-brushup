@@ -15,6 +15,7 @@ import { implementationInputLevels, implementationInputLevelText, type Implement
 import { useImplementationInputLevel } from "../../implementation/useImplementationInputLevel";
 
 import { missionThumbnailFor } from "@/design/MissionThumbnail";
+import { RobotFigure } from "@/app/component/robotFigure";
 import { findUnitMission } from "../../app/missionRegistry";
 import { DrawnCheck } from "../../app/DrawnCheck";
 import { ResultConfetti } from "../../app/ResultConfetti";
@@ -460,7 +461,7 @@ export function BubbleSortImplementationPreview({ embedded = false, onComplete, 
           閉じれば完成したコードはそのまま見返せる。 */}
       {complete && !celebrationDismissed && <Box data-completion-celebration sx={{ position: "absolute", inset: 0, zIndex: 8, display: "grid", placeItems: "center", bgcolor: "rgba(238, 244, 252, 0.55)", p: 2 }}>
         <Box sx={{ bgcolor: "#fff", border: "2px solid #2563eb", borderRadius: 4, px: 4, py: 3.5, maxWidth: 760, width: "100%", textAlign: "center", boxShadow: 6 }}>
-          <Box component="img" src="/images/mascots/red-panda/celebrate.png" alt="" sx={{ width: 120, height: 120, objectFit: "contain", mx: "auto", display: "block" }} />
+          <Box sx={{ display: "flex", justifyContent: "center" }}><RobotFigure alt="" state="celebrate" size="M" grounding="shadow" sx={{ width: 120, height: 120 }} /></Box>
           <Typography component="p" sx={{ fontSize: 24, fontWeight: 900, mt: 0.5 }}>{content.result.celebrationHeading}</Typography>
           <Box sx={{ maxWidth: 520, mx: "auto", mt: 1.5, borderRadius: 2, overflow: "hidden" }}>
             <SortingShelfCelebration />

@@ -3,7 +3,7 @@
 // 発展ミッション挑戦画面の下書き（2026-11-25、Issue #507）。
 // 土台はフェーズ7の自由実装の枠（プログラム形式）を流用し、スコアパネルと
 // 関連知識カードの参照要素（Issue #510）を足したもの。
-import { MascotFigure } from "@/app/component/mascotFigure";
+import { RobotFigure } from "@/app/component/robotFigure";
 import cardsData from "@/design/data/knowledgeCards.json";
 import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
 import { KnowledgeCardFace } from "@/design/KnowledgeCardFace";
@@ -36,14 +36,12 @@ const missionCourseIds: Record<string, string> = {
 };
 
 /**
- * マスコットの見せ方（2026-11-25）：全身を小さく置くのではなく、
- * 大きく切り取って（バストアップ）感情が伝わる大きさで出す。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを全身で立たせる。
+ * 旧マスコットのバストアップ（胴で切り取る）はやめる。
  */
-const MascotBust: React.FC<{ state: "cheer" | "point" | "celebrate" | "happy"; width?: number; height?: number; imgSize?: number }> = ({ state, width = 168, height = 128, imgSize = 215 }) => (
-  <Box sx={{ width, height, overflow: "hidden", flexShrink: 0, position: "relative" }} aria-hidden>
-    <Box sx={{ position: "absolute", left: "50%", top: -14, transform: "translateX(-50%)", width: imgSize, height: imgSize }}>
-      <MascotFigure mascotId="red-panda" alt="" state={state} size="XL" grounding="shadow" sx={{ width: imgSize, height: imgSize }} />
-    </Box>
+const MascotBust: React.FC<{ state: "cheer" | "point" | "celebrate" | "happy"; width?: number; height?: number; imgSize?: number }> = ({ state, width = 168, height = 128 }) => (
+  <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
+    <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: height * 0.88, height }} />
   </Box>
 );
 

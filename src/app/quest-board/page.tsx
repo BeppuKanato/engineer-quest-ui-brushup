@@ -37,7 +37,7 @@ import { CategoryChip, CourseChip, MissionChip, StatusChip, isResolvableCategory
 import { developmentMissionThumbnailFor } from "@/design/DevelopmentMissionThumbnail";
 import { AppHeader } from "@/app/component/appHeader";
 import { AppBreadcrumbs } from "@/app/component/appBreadcrumbs";
-import { MascotFigure } from "@/app/component/mascotFigure";
+import { RobotFigure } from "@/app/component/robotFigure";
 import type { Course } from "@/app/courses/type";
 import { fetchClientQuery, peekClientQueryData, queryTags } from "@/lib/clientQueryCache";
 import { useUserSession } from "@/app/component/userSession";
@@ -372,7 +372,7 @@ export default function QuestBoardPage() {
             ) : (
               <Paper elevation={0} sx={{ p: 5, borderRadius: 3, border: "1px solid #e2e8f0", textAlign: "center" }}>
                 <Box sx={{ display: "flex", justifyContent: "center" }}>
-                  <MascotFigure mascotId="red-panda" alt="マスコット" size="L" grounding="frame" presentation="circle" motion="none" />
+                  <RobotFigure mascotId="red-panda" alt="マスコット" size="L" grounding="frame" presentation="circle" motion="none" />
                 </Box>
                 <Typography sx={{ fontSize: 18, fontWeight: 900, mt: 2 }}>投稿がありません</Typography>
                 <Typography sx={{ fontSize: 16, mt: 1 }}>

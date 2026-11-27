@@ -4,7 +4,7 @@ import { Box, Button, Chip, LinearProgress, Paper, Stack, Typography } from "@mu
 import Link from "next/link";
 import type { HomeResponse } from "@/api/home.api";
 import { isMascotId } from "@/app/component/mascot";
-import { MascotFigure } from "@/app/component/mascotFigure";
+import { RobotFigure } from "@/app/component/robotFigure";
 import type { ReactNode } from "react";
 
 function Section({ title, id, children }: { title: string; id: string; children: ReactNode }) {
@@ -22,7 +22,7 @@ export function HomeDashboard({ data, review, currentGoal }: { data: HomeRespons
   return <Stack spacing={3}>
     <Section id="location" title="現在地">
       <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems={{ sm: "center" }}>
-        <MascotFigure mascotId={isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda"} state="normal" alt="ユーザーの相棒" size="L" grounding="disc" />
+        <RobotFigure mascotId={isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda"} state="normal" alt="ユーザーの相棒" size="L" grounding="disc" />
         <Box sx={{ flex: 1 }}>
           <Typography color="text.secondary">{data.user.displayName?.trim() || "エンジニア"}さんの進み具合</Typography>
           <Stack direction="row" gap={3} flexWrap="wrap" sx={{ mt: 1 }}><Typography fontSize={24} fontWeight={900}>単元 {overview.completedUnits}/{overview.totalUnits}</Typography><Typography fontSize={24} fontWeight={900}>カード {overview.collectedCards}/{overview.totalCards}</Typography></Stack>

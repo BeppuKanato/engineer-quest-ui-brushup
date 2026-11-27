@@ -1,10 +1,12 @@
 "use client";
 
-// ホームの設計叩き台 v14（デザイン用）。v14（2026-11-27）：(1) ホームのカードに単元の
+// ホームの設計叩き台 v15（デザイン用）。v15（2026-11-27）：アプリ全体のキャラを
+// 場面サムネの主人公ロボットに統一（マスコット廃止）。話者は立場のあるロボになり、
+// 記録なし（初回）はコース一覧への誘導に特化し、ロボの立場からの一歩セリフを入れる。
+// v14（2026-11-27）：(1) ホームのカードに単元の
 // 場面サムネは載せない（コース一覧の仕事。ホームでは情報が増えるだけで識別に効かなかった）。
-// (2) 記録なし（初回）は「今日の狙い」の形をやめ、キャラも置かず、最初の単元のミッション
-// 提示＋コース一覧への導線に変える。キャラは喋る内容がある場所（称賛・フィードバック）
-// でのみ成立し、初回カードでは言葉がないため浮く。静止画の浮きはアニメーションでは直らない。
+// (2) 記録なし（初回）は「今日の狙い」の形をやめ、最初の単元のミッション
+// 提示＋コース一覧への導線に変える。
 // v13（2026-11-27）：空状態の方針を全面に適用。
 // 進捗データの欠落（復習）は詰める（狙いが全幅になる）／場所と目標（掲示板・次の実績・
 // 目標）は促す形で常駐させる（掲示板は見出しに「掲示板」と明記し、質問が無い状態でも
@@ -38,11 +40,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { HomeResponse } from "@/api/home.api";
 import { isMascotId, type MascotState } from "@/app/component/mascot";
-import { MascotFigure } from "@/app/component/mascotFigure";
+import { RobotFigure } from "@/app/component/robotFigure";
 import { knowledgeCardTones } from "@/components/rewards/rarity.tokens";
 import achievementsData from "@/design/data/achievements.json";
 import knowledgeCardsData from "@/design/data/knowledgeCards.json";
-import { findUnitMission } from "@/features/learning/app/missionRegistry";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
 
 const PRIMARY = "#2563eb";
@@ -63,16 +64,14 @@ function TileTitle({ children }: { children: ReactNode }) {
 }
 
 /**
- * マスコットの見せ方（実アプリ MissionChallenge の MascotBust と同じ形、2026-11-25）：
- * 全身を小さく置くのではなく、大きく切り取って（バストアップ）感情が伝わる大きさで出す。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを全身で立たせる。
+ * 旧マスコットのバストアップ（胴で切り取る）はやめる。ロボは頭と体が一体の絵なので、
+ * 切り取らず足元まで見せるのが自然な置き方になる。
  */
-function MascotBust({ mascotId, state, width = 168, height = 128, imgSize = 215 }: { mascotId: string; state: MascotState; width?: number; height?: number; imgSize?: number }) {
-  const id = isMascotId(mascotId) ? mascotId : "red-panda";
+function MascotBust({ state, width = 168, height = 128 }: { mascotId?: string; state: MascotState; width?: number; height?: number; imgSize?: number }) {
   return (
-    <Box sx={{ width, height, overflow: "hidden", flexShrink: 0, position: "relative" }} aria-hidden>
-      <Box sx={{ position: "absolute", left: "50%", top: -14, transform: "translateX(-50%)", width: imgSize, height: imgSize }}>
-        <MascotFigure mascotId={id} alt="" state={state} size="XL" grounding="shadow" sx={{ width: imgSize, height: imgSize }} />
-      </Box>
+    <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
+      <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: height * 0.88, height }} />
     </Box>
   );
 }
@@ -118,7 +117,6 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
   // 記録なし（初回）：何も始めていない人には「今日の狙い」の形自体が嘘になる
   // （選んでもいない単元が今日の分として出る）。専用の「はじめよう」に切り替える。
   const isFresh = Boolean(current && !resume && overview.completedUnits === 0 && current.status === "NOT_STARTED");
-  const currentMission = current ? findUnitMission(current.id) : undefined;
   const nearAchievement = today.nearAchievements[0];
   const nearAchievementData = nearAchievement ? achievementsData.find((a) => a.id === nearAchievement.id) : undefined;
   const latestCard = overview.collectedCards > 0 ? latestCardFixture : undefined;
@@ -191,9 +189,10 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
         </Paper>
       )}
 
-      {/* (1) 記録なし（初回）専用：最初の単元のミッション提示＋コース一覧への導線。
-          キャラは置かない（喋る内容がない場所では浮くため）。中身の密度は通常の狙いと
-          そろえる：ミッションの題・説明・達成条件・ステップ数までをここで見せる */}
+      {/* (1) 記録なし（初回）専用：コース一覧への誘導に特化する。
+          話者は場面サムネの主人公ロボット。セリフはロボの立場（あいまいな判断ができない
+          コンピュータで、学習者のコードで動く）から書く。単元を始めるボタンは置かない
+          （選ぶのはコース一覧の仕事） */}
       {current && isFresh && (
         <motion.section
           initial={{ opacity: 0, y: 12 }}
@@ -202,33 +201,31 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
           aria-label="はじめよう"
           style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 32 }}
         >
-          <Chip label="最初の単元" size="small" sx={{ height: 24, fontSize: 14, fontWeight: 800, bgcolor: "#eef4ff", color: PRIMARY }} />
-          <Typography component="h3" fontSize={24} fontWeight={900} sx={{ mt: 1.5 }}>
-            {current.title}
-          </Typography>
-          {currentMission && (
-            <>
-              <Typography fontSize={22} fontWeight={900} sx={{ mt: 2.5 }}>
-                {currentMission.title}
+          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+            <Box sx={{ flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
+              <RobotFigure alt="" state="cheer" size="XL" grounding="shadow" sx={{ width: 150, height: 170 }} />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
+                <Typography fontSize={18} sx={{ lineHeight: 1.6 }}>
+                  ボクはコンピュータ。あいまいな判断はできないけど、キミのコードがあれば動ける。学習の一歩を、いっしょに踏み出そう。
+                </Typography>
+              </Box>
+              <Typography component="h3" fontSize={24} fontWeight={900} sx={{ mt: 2.5 }}>
+                学ぶ単元を選ぼう
               </Typography>
-              <Typography fontSize={16} sx={{ mt: 1, maxWidth: 720, lineHeight: 1.8 }}>
-                {currentMission.description}
+              <Typography fontSize={16} sx={{ mt: 1, lineHeight: 1.8 }}>
+                全{overview.totalUnits}単元。どの単元にも、困っている場面とミッションがある。最初は「幅優先探索（BFS）」がおすすめ。
               </Typography>
-              <Typography fontSize={14} sx={{ mt: 1.5 }}>
-                <Box component="span" sx={{ fontWeight: 800 }}>達成条件</Box>　{currentMission.successCondition}
-              </Typography>
-            </>
-          )}
-          <Typography fontSize={14} fontWeight={700} sx={{ mt: 2 }}>
-            全{current.totalPhases}ステップ{current.nextPhase ? ` ・ 最初は『${current.nextPhase}』から` : ""}
-          </Typography>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3 }}>
-            <Button component={Link} href={current.href} variant="contained" sx={{ bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}>
-              この単元をはじめる
-            </Button>
-            <Button component={Link} href="/courses" variant="outlined" sx={{ borderColor: PRIMARY, color: PRIMARY, fontWeight: 900, fontSize: 16, px: 3, py: 2, borderRadius: 2.5 }}>
-              コース一覧で他の単元も見る
-            </Button>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
+                {overview.units.map((u) => (
+                  <Chip key={u.id} label={u.title} size="small" sx={{ height: 24, fontSize: 14, fontWeight: 700 }} />
+                ))}
+              </Stack>
+              <Button component={Link} href="/courses" variant="contained" sx={{ mt: 3, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}>
+                コース一覧を見る
+              </Button>
+            </Box>
           </Stack>
         </motion.section>
       )}

@@ -22,7 +22,7 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { useUserMascotState } from "./mascot";
-import { MascotFigure } from "./mascotFigure";
+import { RobotFigure } from "./robotFigure";
 
 const pages = [
   { label: "ホーム", href: "/home", icon: HomeRoundedIcon, match: ["/home"] },
@@ -185,7 +185,7 @@ export const AppHeader: React.FC = () => {
                     }}
                   />
                 ) : (
-                  <MascotFigure mascotId={mascotId} alt="ユーザーアイコン" size="S" presentation="circle" />
+                  <RobotFigure mascotId={mascotId} alt="ユーザーアイコン" size="S" presentation="circle" />
                 )}
               </IconButton>
             </Tooltip>

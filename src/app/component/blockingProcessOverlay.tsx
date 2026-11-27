@@ -6,7 +6,7 @@ import { Box, CircularProgress, Paper, Typography, keyframes } from "@mui/materi
 import { useEffect, useState } from "react";
 
 import { useUserMascot, type MascotState } from "./mascot";
-import { MascotFigure } from "./mascotFigure";
+import { RobotFigure } from "./robotFigure";
 
 type BlockingProcessOverlayProps = {
   open: boolean;
@@ -76,7 +76,7 @@ export const BlockingProcessOverlay = ({
               placeItems: "center",
             }}
           >
-            <MascotFigure mascotId={mascotId} state={mascotState} alt="相棒マスコット" size="M" grounding="shadow" motion="bounce" />
+            <RobotFigure mascotId={mascotId} state={mascotState} alt="相棒マスコット" size="M" grounding="shadow" motion="bounce" />
             <AutoAwesomeRoundedIcon
               sx={{
                 position: "absolute",

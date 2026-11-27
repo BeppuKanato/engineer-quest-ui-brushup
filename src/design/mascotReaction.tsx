@@ -1,21 +1,16 @@
 "use client";
 
-// 結果画面でのマスコットの反応の試作（デザイン用）。
-// 方式は方針3章の決定どおり：状態ごとの画像の切り替え＋全体の動き（Motion）。
+// 結果画面でのキャラクターの反応の試作（デザイン用）。
+// 方式は方針3章の決定どおり：状態ごとの表情の切り替え＋全体の動き（Motion）。
 // 出来事の瞬間に表情が切り替わり、跳ねの強さは実績のレアリティで変わる。
-// 画像は現在の PNG を使い、動きだけを検証する。絵は後で差し替える前提。
+// 2026-11-27：キャラは全体ロボ化に合わせて RobotFigure（SVG）に差し替え。
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { RobotFigure } from "@/app/component/robotFigure";
 
 export type ReactionStrength = 1 | 2 | 3;
 type FaceState = "normal" | "surprise" | "celebrate";
-
-const FACE_SRC: Record<FaceState, string> = {
-  normal: "/images/mascots/red-panda/normal.png",
-  surprise: "/images/mascots/red-panda/suprise.png",
-  celebrate: "/images/mascots/red-panda/celebrate.png",
-};
 
 const LINES: Record<ReactionStrength, string> = {
   1: "フェーズをクリアしたね",
@@ -89,10 +84,8 @@ export default function MascotReaction({ size = 220 }: { size?: number }) {
           style={{ width: size, height: size, position: "relative", flexShrink: 0 }}
         >
           <AnimatePresence initial={false}>
-            <motion.img
+            <motion.div
               key={face}
-              src={FACE_SRC[face]}
-              alt=""
               initial={{ opacity: 0, scale: face === "surprise" ? 1.06 : 1 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -100,11 +93,10 @@ export default function MascotReaction({ size = 220 }: { size?: number }) {
               style={{
                 position: "absolute",
                 inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
               }}
-            />
+            >
+              <RobotFigure alt="" state={face} size="XL" grounding="shadow" sx={{ width: "100%", height: "100%" }} />
+            </motion.div>
           </AnimatePresence>
         </motion.div>
         <div
