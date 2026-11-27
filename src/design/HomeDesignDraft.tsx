@@ -1,6 +1,11 @@
 "use client";
 
-// ホームの設計叩き台 v13（デザイン用）。v13（2026-11-27）：空状態の方針を全面に適用。
+// ホームの設計叩き台 v14（デザイン用）。v14（2026-11-27）：(1) ホームのカードに単元の
+// 場面サムネは載せない（コース一覧の仕事。ホームでは情報が増えるだけで識別に効かなかった）。
+// (2) 記録なし（初回）は「今日の狙い」の形をやめ、キャラも置かず、最初の単元のミッション
+// 提示＋コース一覧への導線に変える。キャラは喋る内容がある場所（称賛・フィードバック）
+// でのみ成立し、初回カードでは言葉がないため浮く。静止画の浮きはアニメーションでは直らない。
+// v13（2026-11-27）：空状態の方針を全面に適用。
 // 進捗データの欠落（復習）は詰める（狙いが全幅になる）／場所と目標（掲示板・次の実績・
 // 目標）は促す形で常駐させる（掲示板は見出しに「掲示板」と明記し、質問が無い状態でも
 // 節を残す。実績は進捗0のものも出す。目標は未設定なら案内帯）。
@@ -37,7 +42,7 @@ import { MascotFigure } from "@/app/component/mascotFigure";
 import { knowledgeCardTones } from "@/components/rewards/rarity.tokens";
 import achievementsData from "@/design/data/achievements.json";
 import knowledgeCardsData from "@/design/data/knowledgeCards.json";
-import { missionThumbnailFor } from "@/design/MissionThumbnail";
+import { findUnitMission } from "@/features/learning/app/missionRegistry";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
 
 const PRIMARY = "#2563eb";
@@ -110,6 +115,10 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
   const sameUnit = Boolean(resume && current && resume.id === current.id);
   // 狙いのボタンの文言は単元の状態で決める（未着手に「再開する」とは言わない）。
   const aimLabel = current?.status === "IN_PROGRESS" ? "学習を再開する" : current?.status === "COMPLETED" ? "復習する" : "学習をはじめる";
+  // 記録なし（初回）：何も始めていない人には「今日の狙い」の形自体が嘘になる
+  // （選んでもいない単元が今日の分として出る）。専用の「はじめよう」に切り替える。
+  const isFresh = Boolean(current && !resume && overview.completedUnits === 0 && current.status === "NOT_STARTED");
+  const currentMission = current ? findUnitMission(current.id) : undefined;
   const nearAchievement = today.nearAchievements[0];
   const nearAchievementData = nearAchievement ? achievementsData.find((a) => a.id === nearAchievement.id) : undefined;
   const latestCard = overview.collectedCards > 0 ? latestCardFixture : undefined;
@@ -182,8 +191,50 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
         </Paper>
       )}
 
+      {/* (1) 記録なし（初回）専用：最初の単元のミッション提示＋コース一覧への導線。
+          キャラは置かない（喋る内容がない場所では浮くため）。中身の密度は通常の狙いと
+          そろえる：ミッションの題・説明・達成条件・ステップ数までをここで見せる */}
+      {current && isFresh && (
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          aria-label="はじめよう"
+          style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 32 }}
+        >
+          <Chip label="最初の単元" size="small" sx={{ height: 24, fontSize: 14, fontWeight: 800, bgcolor: "#eef4ff", color: PRIMARY }} />
+          <Typography component="h3" fontSize={24} fontWeight={900} sx={{ mt: 1.5 }}>
+            {current.title}
+          </Typography>
+          {currentMission && (
+            <>
+              <Typography fontSize={22} fontWeight={900} sx={{ mt: 2.5 }}>
+                {currentMission.title}
+              </Typography>
+              <Typography fontSize={16} sx={{ mt: 1, maxWidth: 720, lineHeight: 1.8 }}>
+                {currentMission.description}
+              </Typography>
+              <Typography fontSize={14} sx={{ mt: 1.5 }}>
+                <Box component="span" sx={{ fontWeight: 800 }}>達成条件</Box>　{currentMission.successCondition}
+              </Typography>
+            </>
+          )}
+          <Typography fontSize={14} fontWeight={700} sx={{ mt: 2 }}>
+            全{current.totalPhases}ステップ{current.nextPhase ? ` ・ 最初は『${current.nextPhase}』から` : ""}
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3 }}>
+            <Button component={Link} href={current.href} variant="contained" sx={{ bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}>
+              この単元をはじめる
+            </Button>
+            <Button component={Link} href="/courses" variant="outlined" sx={{ borderColor: PRIMARY, color: PRIMARY, fontWeight: 900, fontSize: 16, px: 3, py: 2, borderRadius: 2.5 }}>
+              コース一覧で他の単元も見る
+            </Button>
+          </Stack>
+        </motion.section>
+      )}
+
       {/* (1) 今日の行動：狙い（主）と復習（副）を横に並べる */}
-      {current && (
+      {current && !isFresh && (
         <Box
           sx={{
             display: "grid",
@@ -200,12 +251,6 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
             style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-              {/* 続きからの単元は、場面サムネで「どの単元の続きか」を絵で示す */}
-              {current.status === "IN_PROGRESS" && (
-                <Box sx={{ width: { xs: "100%", md: 230 }, height: { xs: 130, md: 158 }, borderRadius: 2, overflow: "hidden", flexShrink: 0 }} aria-hidden>
-                  {missionThumbnailFor(current.id)}
-                </Box>
-              )}
               <Box sx={{ flex: 1, minWidth: 0, maxWidth: 780 }}>
                 <Typography component="h3" fontSize={24} fontWeight={900}>
                   {current.title}
@@ -235,37 +280,30 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
                     </Box>
                   </Box>
                 ) : (
-                  <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "flex-end" }}>
-                    <MascotBust mascotId={mascotId} state="point" width={190} height={140} imgSize={235} />
-                    <Box>
-                      {current.nextPhase && (
-                        <Typography fontSize={16} fontWeight={700}>
-                          次は『{current.nextPhase}』
-                        </Typography>
-                      )}
-                      <Button
-                        component={Link}
-                        href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                        variant="contained"
-                        sx={{ mt: 1.5, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
-                      >
-                        {aimLabel}
-                      </Button>
-                    </Box>
-                  </Box>
+                  <>
+                    {current.nextPhase && (
+                      <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
+                        次は『{current.nextPhase}』
+                      </Typography>
+                    )}
+                    <Button
+                      component={Link}
+                      href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                      variant="contained"
+                      sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                    >
+                      {aimLabel}
+                    </Button>
+                  </>
                 )}
               </Box>
             </Stack>
           </motion.section>
 
-          {/* 今日の復習：狙いの横に独立した小さい行動として置く。
-              どの単元の復習かは、場面サムネで一目で分かるようにする */}
+          {/* 今日の復習：狙いの横に独立した小さい行動として置く */}
           {review && (
             <Paper component="section" aria-label="今日の復習" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
               <TileTitle>今日の復習（1問）</TileTitle>
-              <Box sx={{ height: 92, borderRadius: 2, overflow: "hidden", mb: 2 }} aria-hidden>
-                {missionThumbnailFor(review.courseId)}
-              </Box>
               <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.6 }}>
                 {review.question.prompt}
               </Typography>
@@ -289,25 +327,17 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
       {resume && !sameUnit && (
         <Paper component="section" aria-label="前回の続き" elevation={0} sx={S1}>
           <TileTitle>前回の続き</TileTitle>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-            {/* どの単元の続きかは、場面サムネで示す */}
-            <Box sx={{ width: { xs: "100%", md: 230 }, height: { xs: 130, md: 158 }, borderRadius: 2, overflow: "hidden", flexShrink: 0 }} aria-hidden>
-              {missionThumbnailFor(resume.id)}
+          <Typography fontWeight={900}>
+            {resume.title}（{resume.nextPhase ?? "単元の最終結果"}から）
+          </Typography>
+          {resume.nextStep && (
+            <Box sx={{ mt: 1.75, maxWidth: 640 }}>
+              <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
             </Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography fontWeight={900}>
-                {resume.title}（{resume.nextPhase ?? "単元の最終結果"}から）
-              </Typography>
-              {resume.nextStep && (
-                <Box sx={{ mt: 1.75, maxWidth: 640 }}>
-                  <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
-                </Box>
-              )}
-              <Button component={Link} href={resume.resumeHref} variant="outlined" sx={{ mt: 2, borderColor: PRIMARY, color: PRIMARY, fontWeight: 900 }}>
-                前回の続きに戻る
-              </Button>
-            </Box>
-          </Stack>
+          )}
+          <Button component={Link} href={resume.resumeHref} variant="outlined" sx={{ mt: 2, borderColor: PRIMARY, color: PRIMARY, fontWeight: 900 }}>
+            前回の続きに戻る
+          </Button>
         </Paper>
       )}
 
