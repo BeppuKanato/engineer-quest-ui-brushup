@@ -208,7 +208,7 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
                 <Typography fontSize={18} sx={{ lineHeight: 1.6 }}>
-                  ボクはコンピュータ。あいまいな判断はできないけど、キミのコードがあれば動ける。学習の一歩を、いっしょに踏み出そう。
+                  アルドはあいまいな判断ができないけど、キミのコードがあれば動ける。学習の一歩を、いっしょに踏み出そう。
                 </Typography>
               </Box>
               <Typography component="h3" fontSize={24} fontWeight={900} sx={{ mt: 2.5 }}>
