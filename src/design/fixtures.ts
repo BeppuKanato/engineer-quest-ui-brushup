@@ -162,6 +162,59 @@ export const homeFixture: HomeResponse = {
   },
 };
 
+// ===== ホームの表示パターン（叩き台用、2026-11-27）=====
+// 記録の有無でホームの節の出方が変わるため、状態ごとに切り替えて見られるようにする。
+// 空状態の方針：進捗データの欠落（復習）は詰める／場所と目標（掲示板・実績・目標）は
+// 促す形で常駐させる。
+const notStarted = (u: HomeUnit): HomeUnit => ({ ...u, status: "NOT_STARTED", completedPhases: 0, collectedCards: 0, nextPhase: null });
+const firstAchievement = { id: "ach-unit-count-lv1", title: "単元探求者 Lv.1", progress: 0, goal: 1, href: "/achievements" };
+
+// 記録なし（初回）：何も始まっていない。狙いは BFS の未着手、目標は未設定。
+const freshUnits = units.map((u) => (u.id === bfs.id ? { ...notStarted(u), nextPhase: "導入" } : notStarted(u)));
+export const homeFixtureFresh: HomeResponse = {
+  ...homeFixture,
+  overview: { completedUnits: 0, totalUnits: 7, collectedCards: 0, totalCards: 21, units: freshUnits },
+  today: { recommended: freshUnits.find((u) => u.id === bfs.id)!, nearAchievements: [firstAchievement], nearCards: [] },
+  resume: null,
+  hasInProgressUnit: false,
+  week: { streakDays: 0, days: homeFixture.week.days.map((d) => ({ ...d, learned: false })) },
+  questions: [],
+  user: { ...homeFixture.user, completedAchievementNum: 0, continuationDays: 0, totalDays: 0 },
+  calendar: { ...homeFixture.calendar, learnedDays: [], continuationDays: 0, totalDays: 0, hasLearnedToday: false },
+};
+
+// 学習中・修了なし：棒倒し法を学習中（続きあり）。修了単元がないので掲示板は案内、
+// 実績は進捗0のもの、復習はまだ無い（完了した段階がない）。
+const learningUnits = units.map((u) => (u.id === wallExtension.id ? { ...u, collectedCards: 0 } : notStarted(u)));
+export const homeFixtureLearning: HomeResponse = {
+  ...homeFixture,
+  overview: { completedUnits: 0, totalUnits: 7, collectedCards: 0, totalCards: 21, units: learningUnits },
+  today: { recommended: learningUnits.find((u) => u.id === wallExtension.id)!, nearAchievements: [firstAchievement], nearCards: [] },
+  resume: { ...learningUnits.find((u) => u.id === wallExtension.id)!, nextStep: "前回、壁を伸ばす向きの決め方で一度つまずいたね。今日は、伸ばした壁で迷路がどう分かれるかを確かめてみよう" },
+  hasInProgressUnit: true,
+  week: { streakDays: 2, days: homeFixture.week.days.map((d) => ({ ...d, learned: d.date === "2026-11-18" || d.date === "2026-11-19" })) },
+  questions: [],
+  user: { ...homeFixture.user, completedAchievementNum: 0, continuationDays: 2, totalDays: 3 },
+  calendar: { ...homeFixture.calendar, learnedDays: [18, 19], continuationDays: 2, totalDays: 3, hasLearnedToday: false },
+};
+
+// 修了あり・質問なし：DFS が「前回の続き」（狙いとは別単元）、掲示板は答えられる質問なし。
+const dfsInProgress = { ...dfs, status: "IN_PROGRESS" as const, completedPhases: 3, collectedCards: 1, nextPhase: "動きの確認問題" };
+export const homeFixtureNoQuestions: HomeResponse = {
+  ...homeFixture,
+  overview: { completedUnits: 1, totalUnits: 7, collectedCards: 5, totalCards: 21, units: units.map((u) => (u.id === dfs.id ? dfsInProgress : u)) },
+  resume: { ...dfsInProgress, nextStep: "前回、行き止まりまで進んで戻る動きを確かめたね。今日は、戻ったあとに別の分かれ道を試すところを見てみよう" },
+  questions: [],
+};
+
+export type HomePattern = { id: string; label: string; data: HomeResponse; goalText?: string; hasReview: boolean };
+export const homePatterns: HomePattern[] = [
+  { id: "full", label: "記録あり", data: homeFixture, goalText: "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる", hasReview: true },
+  { id: "fresh", label: "記録なし（初回）", data: homeFixtureFresh, hasReview: false },
+  { id: "learning", label: "学習中・修了なし", data: homeFixtureLearning, goalText: "棒倒し法の仕組みを理解し、壁を伸ばす規則を正しく使えるようになる", hasReview: false },
+  { id: "no-questions", label: "修了あり・質問なし", data: homeFixtureNoQuestions, goalText: "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる", hasReview: true },
+];
+
 const getMeFixture: GetMeResponse = { user: designUser };
 
 // 今日の復習は、二分探索の動きの確認問題から1問（実在する問題キー）。

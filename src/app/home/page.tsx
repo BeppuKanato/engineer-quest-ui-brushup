@@ -1,5 +1,5 @@
 "use client";
-import { Alert, Box, Container, Skeleton, Stack } from "@mui/material";
+import { Alert, Box, Chip, Container, Skeleton, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getHome, type HomeResponse } from "@/api/home.api";
 import { AppHeader } from "@/app/component/appHeader";
@@ -7,10 +7,28 @@ import { FeedbackDestination } from "@/app/component/feedbackV1";
 import { useUserSession } from "@/app/component/userSession";
 import { HomeDashboard } from "@/features/home/HomeDashboard";
 import { HomeDesignDraft } from "@/design/HomeDesignDraft";
-import { isDesignMode } from "@/design/fixtures";
+import { homePatterns, isDesignMode } from "@/design/fixtures";
 import { BigGoalBanner } from "@/features/learning/app/bigGoal/BigGoalBanner";
 import { DailyReviewCard } from "@/features/learning/daily-review/DailyReviewCard";
 import { peekClientQueryData } from "@/lib/clientQueryCache";
+
+// 叩き台用：記録の有無などの状態パターンを切り替えてホームを見比べる。
+// goalText は「学習者が目標に設定した単元ミッション」の文（#508）。LLM の大目標ではない。
+function HomePatternPreview() {
+  const [patternId, setPatternId] = useState(homePatterns[0].id);
+  const pattern = homePatterns.find((p) => p.id === patternId) ?? homePatterns[0];
+  return (
+    <Stack spacing={2}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Typography fontSize={14} fontWeight={800}>表示パターン（叩き台用）</Typography>
+        {homePatterns.map((p) => (
+          <Chip key={p.id} label={p.label} clickable color={p.id === patternId ? "primary" : "default"} variant={p.id === patternId ? "filled" : "outlined"} onClick={() => setPatternId(p.id)} sx={{ fontWeight: 800 }} />
+        ))}
+      </Box>
+      <HomeDesignDraft data={pattern.data} goalText={pattern.goalText} hasReview={pattern.hasReview} />
+    </Stack>
+  );
+}
 
 export default function HomePage() {
   const { status, token } = useUserSession();
@@ -30,9 +48,7 @@ export default function HomePage() {
     <Container maxWidth={false} sx={{ maxWidth: 1440, py: { xs: 3, md: 4 } }}>
       {errorMessage && <Alert severity={homeData ? "warning" : "error"} sx={{ mb: 3 }}>{errorMessage}</Alert>}
       {homeData ? (isDesignMode()
-        ? <HomeDesignDraft data={homeData} goalText={homeData.hasInProgressUnit ? "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる" : undefined} />
-        // ↑ goalText は「学習者が目標に設定した単元ミッション」の文（#508）。LLM の大目標ではない。
-        //    設定があるときだけ渡し、帯もそのときだけ出る。叩き台では学習中の単元のミッションを充てている。
+        ? <HomePatternPreview />
         : <HomeDashboard data={homeData} review={<DailyReviewCard />} currentGoal={homeData.hasInProgressUnit ? <BigGoalBanner currentOnly /> : undefined} />) : isLoading ? <Stack spacing={3}><Skeleton variant="rounded" height={260} /><Skeleton variant="rounded" height={180} /></Stack> : null}
     </Container>
   </Box>;

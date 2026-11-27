@@ -1,6 +1,12 @@
 "use client";
 
-// ホームの設計叩き台 v12（デザイン用）。v12（2026-11-27）：(1) 目標帯は LLM の大目標ではなく、
+// ホームの設計叩き台 v13（デザイン用）。v13（2026-11-27）：空状態の方針を全面に適用。
+// 進捗データの欠落（復習）は詰める（狙いが全幅になる）／場所と目標（掲示板・次の実績・
+// 目標）は促す形で常駐させる（掲示板は見出しに「掲示板」と明記し、質問が無い状態でも
+// 節を残す。実績は進捗0のものも出す。目標は未設定なら案内帯）。
+// あわせて「続きから」の単元には単元ミッションの場面サムネを載せる（狙い・前回の続き・
+// 復習。絵で単元を識別する）。状態はホームの表示パターン（fixtures の homePatterns）で切替。
+// v12（2026-11-27）：(1) 目標帯は LLM の大目標ではなく、
 // 学習者が目標に設定した単元ミッションを表示する形に変更（大目標システム廃止に伴う。#508）。
 // (2) マスコットは全身を小さく置かず、実アプリ MissionChallenge の MascotBust と同じ
 // バストアップ（大きく切り取り、感情が伝わる大きさ）で出す。
@@ -19,6 +25,7 @@
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import StyleIcon from "@mui/icons-material/Style";
 import FlagIcon from "@mui/icons-material/Flag";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
 import { motion } from "framer-motion";
@@ -30,6 +37,7 @@ import { MascotFigure } from "@/app/component/mascotFigure";
 import { knowledgeCardTones } from "@/components/rewards/rarity.tokens";
 import achievementsData from "@/design/data/achievements.json";
 import knowledgeCardsData from "@/design/data/knowledgeCards.json";
+import { missionThumbnailFor } from "@/design/MissionThumbnail";
 import { resolveReviewMaterial, reviewUnitName } from "@/features/learning/daily-review/reviewMaterials";
 
 const PRIMARY = "#2563eb";
@@ -88,10 +96,10 @@ const reviewMaterial = resolveReviewMaterial({
   questionId: "first-center",
 });
 
-// 最近手に入れたカード（叩き台では固定の1枚）。
-const latestCard = knowledgeCardsData.find((card) => card.id === "knowledge-card-binary-search-halving-range");
+// 最近手に入れたカード（叩き台では固定の1枚）。1枚も持っていなければ出さない。
+const latestCardFixture = knowledgeCardsData.find((card) => card.id === "knowledge-card-binary-search-halving-range");
 
-export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeResponse; review?: ReactNode; currentGoal?: ReactNode; goalText?: string }) {
+export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: HomeResponse; goalText?: string; hasReview?: boolean }) {
   const { overview, today, resume, week, questions } = data;
   const mascotId = isMascotId(data.user.selectedMascotId) ? data.user.selectedMascotId : "red-panda";
   const current = today.recommended;
@@ -100,15 +108,46 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
   const boardQuestions = questions.slice(0, 2);
   // 再開先と推奨先が同じ単元なら、前回の続きは独立させず狙いの中の引用に畳む。
   const sameUnit = Boolean(resume && current && resume.id === current.id);
+  // 狙いのボタンの文言は単元の状態で決める（未着手に「再開する」とは言わない）。
+  const aimLabel = current?.status === "IN_PROGRESS" ? "学習を再開する" : current?.status === "COMPLETED" ? "復習する" : "学習をはじめる";
   const nearAchievement = today.nearAchievements[0];
   const nearAchievementData = nearAchievement ? achievementsData.find((a) => a.id === nearAchievement.id) : undefined;
+  const latestCard = overview.collectedCards > 0 ? latestCardFixture : undefined;
   const latestTone = latestCard ? knowledgeCardTones[latestCard.rarity as keyof typeof knowledgeCardTones] : undefined;
+  // 復習は「完了した段階」から出る。無いパターンでは節ごと詰めて狙いを全幅にする。
+  const review = hasReview ? reviewMaterial : null;
 
   return (
     <Stack spacing={3}>
       {/* (0) 目標：最上部に切り出し、進捗ゲージと一緒に見せる。
           中身は LLM の大目標ではなく、学習者が目標に設定した単元ミッション（#508）。
           設定したときだけ帯を出し、対象の単元名をチップで明示する */}
+      {/* 目標が未設定なら、帯の場所で設定を促す（場所と目標は常駐させる方針）。
+          目標そのものの表示ではなく「ここに何が出るか」の案内なので、帯の形は保ちつつ
+          中身は案内文＋コース一覧への行き先にする */}
+      {!goalText && (
+        <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+              <FlagIcon sx={{ color: PRIMARY, fontSize: 28, flexShrink: 0 }} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontSize={14} fontWeight={800}>
+                  目標
+                </Typography>
+                <Typography fontSize={22} fontWeight={900} sx={{ mt: 0.5 }}>
+                  目標はまだ設定されていません
+                </Typography>
+                <Typography fontSize={16} sx={{ mt: 0.5 }}>
+                  コース一覧や単元画面で旗を立てると、ここに単元ミッションと進み具合が表示されます
+                </Typography>
+              </Box>
+            </Stack>
+            <Button component={Link} href="/courses" variant="outlined" sx={{ borderColor: PRIMARY, color: PRIMARY, fontWeight: 900, fontSize: 16, px: 3, py: 1.25, borderRadius: 2.5, flexShrink: 0 }}>
+              コース一覧で目標を設定する
+            </Button>
+          </Stack>
+        </Paper>
+      )}
       {goalText && current && (
         <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
@@ -149,7 +188,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           sx={{
             display: "grid",
             gap: 3,
-            gridTemplateColumns: reviewMaterial ? { xs: "1fr", lg: "2fr 1fr" } : "1fr",
+            gridTemplateColumns: review ? { xs: "1fr", lg: "2fr 1fr" } : "1fr",
             alignItems: "stretch",
           }}
         >
@@ -161,6 +200,12 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
             style={{ background: "#ffffff", border: `2px solid ${PRIMARY}`, borderRadius: 12, padding: 24 }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+              {/* 続きからの単元は、場面サムネで「どの単元の続きか」を絵で示す */}
+              {current.status === "IN_PROGRESS" && (
+                <Box sx={{ width: { xs: "100%", md: 230 }, height: { xs: 130, md: 158 }, borderRadius: 2, overflow: "hidden", flexShrink: 0 }} aria-hidden>
+                  {missionThumbnailFor(current.id)}
+                </Box>
+              )}
               <Box sx={{ flex: 1, minWidth: 0, maxWidth: 780 }}>
                 <Typography component="h3" fontSize={24} fontWeight={900}>
                   {current.title}
@@ -170,7 +215,9 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                     <MascotBust mascotId={mascotId} state="point" width={190} height={140} imgSize={235} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
-                        <Typography fontSize={22} fontWeight={500} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた<Box component="span" sx={{ fontWeight: 800 }}>「範囲を絞るところ」</Box>、今日は<Box component="span" sx={{ fontWeight: 800 }}>コードで確かめてみよう</Box></Typography>
+                        {/* 台詞は単元ごとに変わる（前回フィードバックの次の一歩）。文を固定で書くと
+                            別の単元のパターンで内容が食い違うので、データから出す */}
+                        <Typography fontSize={22} fontWeight={500} sx={{ lineHeight: 1.5 }}>{resume.nextStep}</Typography>
                       </Box>
                       {current.nextPhase && (
                         <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
@@ -183,40 +230,47 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                         variant="contained"
                         sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
                       >
-                        {current.nextPhase ? "学習を再開する" : "単元を見る"}
+                        {aimLabel}
                       </Button>
                     </Box>
                   </Box>
                 ) : (
-                  <>
-                    {current.nextPhase && (
-                      <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
-                        次は『{current.nextPhase}』
-                      </Typography>
-                    )}
-                    <Button
-                      component={Link}
-                      href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                      variant="contained"
-                      sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
-                    >
-                      {current.nextPhase ? "学習を再開する" : "単元を見る"}
-                    </Button>
-                  </>
+                  <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "flex-end" }}>
+                    <MascotBust mascotId={mascotId} state="point" width={190} height={140} imgSize={235} />
+                    <Box>
+                      {current.nextPhase && (
+                        <Typography fontSize={16} fontWeight={700}>
+                          次は『{current.nextPhase}』
+                        </Typography>
+                      )}
+                      <Button
+                        component={Link}
+                        href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                        variant="contained"
+                        sx={{ mt: 1.5, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                      >
+                        {aimLabel}
+                      </Button>
+                    </Box>
+                  </Box>
                 )}
               </Box>
             </Stack>
           </motion.section>
 
-          {/* 今日の復習：狙いの横に独立した小さい行動として置く */}
-          {reviewMaterial && (
+          {/* 今日の復習：狙いの横に独立した小さい行動として置く。
+              どの単元の復習かは、場面サムネで一目で分かるようにする */}
+          {review && (
             <Paper component="section" aria-label="今日の復習" elevation={0} sx={{ ...S1, display: "flex", flexDirection: "column" }}>
               <TileTitle>今日の復習（1問）</TileTitle>
+              <Box sx={{ height: 92, borderRadius: 2, overflow: "hidden", mb: 2 }} aria-hidden>
+                {missionThumbnailFor(review.courseId)}
+              </Box>
               <Typography fontSize={18} fontWeight={900} sx={{ lineHeight: 1.6 }}>
-                {reviewMaterial.question.prompt}
+                {review.question.prompt}
               </Typography>
               <Typography fontSize={18} sx={{ mt: 1.25 }}>
-                {reviewUnitName(reviewMaterial.courseId)} ・ 動きの確認問題から。前に間違えた問題です
+                {reviewUnitName(review.courseId)} ・ 動きの確認問題から。前に間違えた問題です
               </Typography>
               <Typography fontSize={14} color="text.primary" sx={{ display: "block", mt: 0.5 }}>
                 今日の分はこの1問だけです
@@ -229,23 +283,31 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
           )}
         </Box>
       )}
-      {!goalText && data.hasInProgressUnit && currentGoal}
+
 
       {/* 前回の続き：再開先が推奨先と違う単元の時だけ独立させる */}
       {resume && !sameUnit && (
         <Paper component="section" aria-label="前回の続き" elevation={0} sx={S1}>
           <TileTitle>前回の続き</TileTitle>
-          <Typography fontWeight={900}>
-            {resume.title}（{resume.nextPhase ?? "単元の最終結果"}から）
-          </Typography>
-          {resume.nextStep && (
-            <Box sx={{ mt: 1.75, maxWidth: 640 }}>
-              <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+            {/* どの単元の続きかは、場面サムネで示す */}
+            <Box sx={{ width: { xs: "100%", md: 230 }, height: { xs: 130, md: 158 }, borderRadius: 2, overflow: "hidden", flexShrink: 0 }} aria-hidden>
+              {missionThumbnailFor(resume.id)}
             </Box>
-          )}
-          <Button component={Link} href={resume.resumeHref} variant="outlined" sx={{ mt: 2, borderColor: PRIMARY, color: PRIMARY, fontWeight: 900 }}>
-            前回の続きに戻る
-          </Button>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography fontWeight={900}>
+                {resume.title}（{resume.nextPhase ?? "単元の最終結果"}から）
+              </Typography>
+              {resume.nextStep && (
+                <Box sx={{ mt: 1.75, maxWidth: 640 }}>
+                  <FeedbackQuote mascotId={mascotId} nextStep={resume.nextStep} />
+                </Box>
+              )}
+              <Button component={Link} href={resume.resumeHref} variant="outlined" sx={{ mt: 2, borderColor: PRIMARY, color: PRIMARY, fontWeight: 900 }}>
+                前回の続きに戻る
+              </Button>
+            </Box>
+          </Stack>
         </Paper>
       )}
 
@@ -405,13 +467,28 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
               </Stack>
             </Box>
           </Box>
-          {/* 掲示板：右の縦長の列。修了した単元の未解決質問を、理由つきで出す */}
-          {boardQuestions.length > 0 && (
-            <Box component="section" aria-label="掲示板・修了した単元から" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
-              <TileTitle>学んだ知識を活かそう</TileTitle>
-              <Typography fontSize={14} sx={{ mt: 0.5 }}>
-                あなたが修了した単元で、仲間が質問しています。
+          {/* 掲示板：右の縦長の列。場所なので常駐させ、見出しで「掲示板」と一目で分かるようにする。
+              中身は修了した単元の未解決質問。無いときは状態に応じた案内を出す */}
+          <Box component="section" aria-label="掲示板" sx={{ display: "flex", flexDirection: "column", p: { xs: 3, md: 4 }, borderLeft: { lg: "1px solid #e7edf5" }, borderTop: { xs: "1px solid #e7edf5", lg: "none" } }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "#eef4ff", color: PRIMARY, flexShrink: 0 }}>
+                <ForumOutlinedIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography component="h2" fontSize={18} fontWeight={900}>
+                掲示板
               </Typography>
+            </Stack>
+            <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
+              学んだ知識を活かそう
+            </Typography>
+            <Typography fontSize={14} sx={{ mt: 0.5 }}>
+              {boardQuestions.length > 0
+                ? "あなたが修了した単元で、仲間が質問しています。"
+                : overview.completedUnits > 0
+                  ? "いま答えられる質問はありません。"
+                  : "単元を修了すると、その単元で仲間がしている質問に、ここから答えられるようになります。"}
+            </Typography>
+            {boardQuestions.length > 0 && (
               <Box>
                 <Stack divider={<Divider flexItem />}>
                   {boardQuestions.map((question) => (
@@ -439,12 +516,12 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                   ))}
                 </Stack>
               </Box>
-              <Box sx={{ flex: 1 }} />
-              <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
-                掲示板へ
-              </Button>
-            </Box>
-          )}
+            )}
+            <Box sx={{ flex: 1 }} />
+            <Button component={Link} href="/quest-board" sx={{ color: PRIMARY, fontWeight: 800, mt: 1, px: 0.5, alignSelf: "flex-start" }}>
+              掲示板へ
+            </Button>
+          </Box>
         </Box>
       </Paper>
     </Stack>
