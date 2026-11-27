@@ -1,6 +1,10 @@
 "use client";
 
-// ホームの設計叩き台 v11（デザイン用）。v11：カードの大きさは揃える（ばらつきはノイズ）。
+// ホームの設計叩き台 v12（デザイン用）。v12（2026-11-27）：(1) 目標帯は LLM の大目標ではなく、
+// 学習者が目標に設定した単元ミッションを表示する形に変更（大目標システム廃止に伴う。#508）。
+// (2) マスコットは全身を小さく置かず、実アプリ MissionChallenge の MascotBust と同じ
+// バストアップ（大きく切り取り、感情が伝わる大きさ）で出す。
+// v11：カードの大きさは揃える（ばらつきはノイズ）。
 // 余白対策は「残した情報を大きくする」：本文16・見出し18、面の余白とアイコンも拡大。
 // 幅はアプリ共通の外枠（1440）に従う
 // 目的（2026-11-20 確認）：開いてすぐに学習を再開できる画面。
@@ -21,7 +25,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { HomeResponse } from "@/api/home.api";
-import { isMascotId } from "@/app/component/mascot";
+import { isMascotId, type MascotState } from "@/app/component/mascot";
 import { MascotFigure } from "@/app/component/mascotFigure";
 import { knowledgeCardTones } from "@/components/rewards/rarity.tokens";
 import achievementsData from "@/design/data/achievements.json";
@@ -45,12 +49,27 @@ function TileTitle({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * マスコットの見せ方（実アプリ MissionChallenge の MascotBust と同じ形、2026-11-25）：
+ * 全身を小さく置くのではなく、大きく切り取って（バストアップ）感情が伝わる大きさで出す。
+ */
+function MascotBust({ mascotId, state, width = 168, height = 128, imgSize = 215 }: { mascotId: string; state: MascotState; width?: number; height?: number; imgSize?: number }) {
+  const id = isMascotId(mascotId) ? mascotId : "red-panda";
+  return (
+    <Box sx={{ width, height, overflow: "hidden", flexShrink: 0, position: "relative" }} aria-hidden>
+      <Box sx={{ position: "absolute", left: "50%", top: -14, transform: "translateX(-50%)", width: imgSize, height: imgSize }}>
+        <MascotFigure mascotId={id} alt="" state={state} size="XL" grounding="shadow" sx={{ width: imgSize, height: imgSize }} />
+      </Box>
+    </Box>
+  );
+}
+
 // フィードバックの「次の一歩」の引用。話者はマスコット。
 function FeedbackQuote({ mascotId, nextStep }: { mascotId: string; nextStep: string }) {
   const id = isMascotId(mascotId) ? mascotId : "red-panda";
   return (
     <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-      <MascotFigure mascotId={id} state="normal" alt="相棒" size="L" grounding="shadow" />
+      <MascotBust mascotId={id} state="normal" width={148} height={102} imgSize={182} />
       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5, flex: 1 }}>
         <Typography fontSize={14} fontWeight={800}>
           次の一歩
@@ -87,18 +106,25 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
 
   return (
     <Stack spacing={3}>
-      {/* (0) 目標：最上部に切り出し、進捗ゲージと一緒に見せる */}
+      {/* (0) 目標：最上部に切り出し、進捗ゲージと一緒に見せる。
+          中身は LLM の大目標ではなく、学習者が目標に設定した単元ミッション（#508）。
+          設定したときだけ帯を出し、対象の単元名をチップで明示する */}
       {goalText && current && (
         <Paper component="section" aria-label="目標" elevation={0} sx={S1}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems={{ md: "center" }} justifyContent="space-between">
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-              <FlagIcon sx={{ color: PRIMARY, fontSize: 28 }} />
-              <Typography fontSize={14} fontWeight={800} sx={{ whiteSpace: "nowrap" }}>
-                目標
-              </Typography>
-              <Typography fontSize={22} fontWeight={900}>
-                {goalText}
-              </Typography>
+              <FlagIcon sx={{ color: PRIMARY, fontSize: 28, flexShrink: 0 }} />
+              <Box sx={{ minWidth: 0 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography fontSize={14} fontWeight={800} sx={{ whiteSpace: "nowrap" }}>
+                    目標
+                  </Typography>
+                  <Chip label={current.title} size="small" sx={{ height: 22, fontSize: 14, fontWeight: 700 }} />
+                </Stack>
+                <Typography fontSize={22} fontWeight={900} sx={{ mt: 0.5 }}>
+                  {goalText}
+                </Typography>
+              </Box>
             </Stack>
             <Box sx={{ minWidth: { md: 260 }, flexShrink: 0 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
@@ -141,7 +167,7 @@ export function HomeDesignDraft({ data, currentGoal, goalText }: { data: HomeRes
                 </Typography>
                 {sameUnit && resume?.nextStep ? (
                   <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "center" }}>
-                    <MascotFigure mascotId={isMascotId(mascotId) ? mascotId : "red-panda"} state="point" alt="相棒" size="L" grounding="shadow" />
+                    <MascotBust mascotId={mascotId} state="point" width={190} height={140} imgSize={235} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
                         <Typography fontSize={22} fontWeight={500} sx={{ lineHeight: 1.5 }}>今日も学習しよう！ 前回つまずいた<Box component="span" sx={{ fontWeight: 800 }}>「範囲を絞るところ」</Box>、今日は<Box component="span" sx={{ fontWeight: 800 }}>コードで確かめてみよう</Box></Typography>

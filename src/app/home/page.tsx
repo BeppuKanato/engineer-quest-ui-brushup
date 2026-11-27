@@ -31,6 +31,8 @@ export default function HomePage() {
       {errorMessage && <Alert severity={homeData ? "warning" : "error"} sx={{ mb: 3 }}>{errorMessage}</Alert>}
       {homeData ? (isDesignMode()
         ? <HomeDesignDraft data={homeData} goalText={homeData.hasInProgressUnit ? "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる" : undefined} />
+        // ↑ goalText は「学習者が目標に設定した単元ミッション」の文（#508）。LLM の大目標ではない。
+        //    設定があるときだけ渡し、帯もそのときだけ出る。叩き台では学習中の単元のミッションを充てている。
         : <HomeDashboard data={homeData} review={<DailyReviewCard />} currentGoal={homeData.hasInProgressUnit ? <BigGoalBanner currentOnly /> : undefined} />) : isLoading ? <Stack spacing={3}><Skeleton variant="rounded" height={260} /><Skeleton variant="rounded" height={180} /></Stack> : null}
     </Container>
   </Box>;
