@@ -212,7 +212,7 @@ export const homePatterns: HomePattern[] = [
   { id: "full", label: "記録あり", data: homeFixture, goalText: "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる", hasReview: true },
   { id: "fresh", label: "記録なし（初回）", data: homeFixtureFresh, hasReview: false },
   { id: "learning", label: "学習中・修了なし", data: homeFixtureLearning, goalText: "棒倒し法の仕組みを理解し、壁を伸ばす規則を正しく使えるようになる", hasReview: false },
-  { id: "no-questions", label: "修了あり・質問なし", data: homeFixtureNoQuestions, goalText: "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる", hasReview: true },
+  { id: "no-questions", label: "続きが別単元・質問なし", data: homeFixtureNoQuestions, goalText: "二分探索の仕組みを理解し、探索範囲を正しく更新できるようになる", hasReview: true },
 ];
 
 const getMeFixture: GetMeResponse = { user: designUser };

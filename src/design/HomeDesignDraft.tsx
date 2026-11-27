@@ -277,21 +277,33 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
                     </Box>
                   </Box>
                 ) : (
-                  <>
-                    {current.nextPhase && (
-                      <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
-                        次は『{current.nextPhase}』
-                      </Typography>
-                    )}
-                    <Button
-                      component={Link}
-                      href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
-                      variant="contained"
-                      sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
-                    >
-                      {aimLabel}
-                    </Button>
-                  </>
+                  <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "center" }}>
+                    <MascotBust mascotId={mascotId} state="normal" width={190} height={140} imgSize={235} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
+                        {/* 続きが別単元でフィードバックの台詞が無い時は、単元自体の位置
+                            （進み具合）をアルドが伝える。素の見出し＋ボタンだけの枠にしない */}
+                        <Typography fontSize={22} fontWeight={500} sx={{ lineHeight: 1.5 }}>
+                          {current.status === "COMPLETED"
+                            ? "この単元は修了済み。復習でもう一度、動きを確かめられるよ"
+                            : `学習ステップは${current.totalPhases}つ中${current.completedPhases}つ終わっているよ。今日はこの続きからいこう`}
+                        </Typography>
+                      </Box>
+                      {current.nextPhase && (
+                        <Typography fontSize={16} fontWeight={700} sx={{ mt: 2 }}>
+                          次は『{current.nextPhase}』
+                        </Typography>
+                      )}
+                      <Button
+                        component={Link}
+                        href={current.status === "IN_PROGRESS" ? current.resumeHref : current.href}
+                        variant="contained"
+                        sx={{ mt: 1, bgcolor: PRIMARY, fontWeight: 900, fontSize: 18, px: 5, py: 2, borderRadius: 2.5 }}
+                      >
+                        {aimLabel}
+                      </Button>
+                    </Box>
+                  </Box>
                 )}
               </Box>
             </Stack>
