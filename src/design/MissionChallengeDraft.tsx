@@ -36,12 +36,12 @@ const missionCourseIds: Record<string, string> = {
 };
 
 /**
- * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを全身で立たせる。
- * 旧マスコットのバストアップ（胴で切り取る）はやめる。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを「顔だけ」で出す。
+ * サムネでもロボは頭だけで描かれており、体を足すと別キャラになって怖さが出る。
  */
 const MascotBust: React.FC<{ state: "cheer" | "point" | "celebrate" | "happy"; width?: number; height?: number; imgSize?: number }> = ({ state, width = 168, height = 128 }) => (
   <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-    <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: height * 0.88, height }} />
+    <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width, height: Math.round(width * 2 / 3) }} />
   </Box>
 );
 

@@ -2,8 +2,9 @@
 
 // アプリ全体のキャラクター（2026-11-27、全体ロボ化の叩き台）。
 // 場面サムネ・ストーリーで主人公を務めるロボット（コンピュータ）を、アプリの話者に統一する。
-// 絵は既存の場面サムネと同じ SVG 語彙（頭 #2563eb／顔パネル #dbeafe／目 #1e3a8a／
-// アンテナ）で描き、表情と体を足した。マスコット（レッサーパンダ等）は廃止方向。
+// 形はサムネの TroubledRobot と同じ「顔（頭）だけ」。体を描き足すと別キャラになって
+// 怖さが出るため、頭＋アンテナの構成をそのまま使う（2026-11-27 Kanato 判断）。
+// 絵の語彙もサムネと同じ：頭 #2563eb／顔パネル #dbeafe／目 #1e3a8a。
 // MascotFigure と同じ props を受ける差し替え用コンポーネント（mascotId は受け取るが使わない）。
 
 import { Box, keyframes, type SxProps, type Theme } from "@mui/material";
@@ -27,12 +28,13 @@ const robotFloat = keyframes`
   50% { transform: translateY(-6px) scale(1.03); }
 `;
 
-type RobotExpression = "normal" | "smile" | "celebrate" | "thinking" | "surprise" | "troubled" | "point";
+type RobotExpression = "normal" | "smile" | "celebrate" | "thinking" | "surprise" | "troubled";
 
 const expressionFor = (state: MascotState): RobotExpression => {
   switch (state) {
     case "happy":
     case "cheer":
+    case "point":
       return "smile";
     case "celebrate":
       return "celebrate";
@@ -40,21 +42,15 @@ const expressionFor = (state: MascotState): RobotExpression => {
       return "thinking";
     case "surprise":
       return "surprise";
-    case "point":
-      return "point";
     default:
       return "normal";
   }
 };
 
-function RobotSvg({ expression, grounding }: { expression: RobotExpression; grounding: "disc" | "shadow" | "frame" }) {
+function RobotHead({ expression }: { expression: RobotExpression }) {
   const happyEyes = expression === "smile" || expression === "celebrate";
-  const armsUp = expression === "celebrate";
-  const rightArmUp = armsUp || expression === "point";
   return (
-    <svg viewBox="0 0 120 136" width="100%" height="100%" role="img" aria-hidden style={{ display: "block" }}>
-      {grounding === "disc" && <circle cx="60" cy="64" r="57" fill="#eaf2ff" />}
-      {grounding === "shadow" && <ellipse cx="60" cy="128" rx="36" ry="6" fill="#0f172a" opacity="0.14" />}
+    <g>
       {/* アンテナ */}
       <line x1="60" y1="16" x2="60" y2="7" stroke="#1e40af" strokeWidth="4" strokeLinecap="round" />
       <circle cx="60" cy="5" r="4.5" fill="#2563eb" />
@@ -89,7 +85,7 @@ function RobotSvg({ expression, grounding }: { expression: RobotExpression; grou
       {/* 口 */}
       {expression === "celebrate" ? (
         <path d="M53 47 A7 7 0 0 0 67 47 Z" fill="#1e3a8a" />
-      ) : expression === "smile" || expression === "point" ? (
+      ) : expression === "smile" ? (
         <path d="M53 48 Q60 56 67 48" stroke="#1e3a8a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
       ) : expression === "thinking" ? (
         <line x1="56" y1="51" x2="64" y2="51" stroke="#1e3a8a" strokeWidth="2.4" strokeLinecap="round" />
@@ -111,22 +107,16 @@ function RobotSvg({ expression, grounding }: { expression: RobotExpression; grou
           <path d="M108 12 L109.5 16.5 L114 18 L109.5 19.5 L108 24 L106.5 19.5 L102 18 L106.5 16.5 Z" />
         </g>
       )}
-      {/* 首と胴 */}
-      <rect x="54" y="68" width="12" height="7" fill="#1e40af" />
-      <g transform={armsUp ? "rotate(48 31 79)" : undefined}>
-        <rect x="25" y="76" width="11" height="26" rx="5.5" fill="#1e40af" />
-      </g>
-      <g transform={rightArmUp ? "rotate(-48 85 79)" : undefined}>
-        <rect x="79" y="76" width="11" height="26" rx="5.5" fill="#1e40af" />
-      </g>
-      <rect x="38" y="74" width="44" height="36" rx="11" fill="#2563eb" />
-      <rect x="49" y="82" width="22" height="16" rx="5" fill="#dbeafe" />
-      <circle cx="60" cy="90" r="3.2" fill="#16a34a" />
-      {/* 脚と足 */}
-      <rect x="45" y="110" width="12" height="12" rx="4" fill="#1e40af" />
-      <rect x="63" y="110" width="12" height="12" rx="4" fill="#1e40af" />
-      <ellipse cx="51" cy="125" rx="9" ry="4" fill="#1e3a8a" />
-      <ellipse cx="69" cy="125" rx="9" ry="4" fill="#1e3a8a" />
+    </g>
+  );
+}
+
+function RobotSvg({ expression, grounding }: { expression: RobotExpression; grounding: "disc" | "shadow" | "frame" }) {
+  return (
+    <svg viewBox="0 0 120 80" width="100%" height="100%" role="img" aria-hidden style={{ display: "block" }}>
+      {grounding === "disc" && <circle cx="60" cy="40" r="39" fill="#eaf2ff" />}
+      {grounding === "shadow" && <ellipse cx="60" cy="74" rx="30" ry="5" fill="#0f172a" opacity="0.14" />}
+      <RobotHead expression={expression} />
     </svg>
   );
 }
@@ -173,19 +163,9 @@ export const RobotFigure = ({ alt, state = "normal", size = "M", grounding = "di
           ...extraSx,
         ]}
       >
-        <Box sx={{ width: "88%", height: "88%", animation }}>
-          <svg viewBox="14 0 92 76" width="100%" height="100%" aria-hidden style={{ display: "block" }}>
-            <line x1="60" y1="16" x2="60" y2="7" stroke="#1e40af" strokeWidth="4" strokeLinecap="round" />
-            <circle cx="60" cy="5" r="4.5" fill="#2563eb" />
-            <rect x="17" y="32" width="9" height="22" rx="4.5" fill="#1e40af" />
-            <rect x="94" y="32" width="9" height="22" rx="4.5" fill="#1e40af" />
-            <rect x="26" y="16" width="68" height="52" rx="14" fill="#2563eb" />
-            <rect x="35" y="25" width="50" height="34" rx="9" fill="#dbeafe" />
-            <g fill="#1e3a8a">
-              <circle cx="52" cy="39" r="3.6" />
-              <circle cx="68" cy="39" r="3.6" />
-            </g>
-            <path d="M55 49 Q60 53 65 49" stroke="#1e3a8a" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+        <Box sx={{ width: "92%", height: "92%", animation }}>
+          <svg viewBox="10 0 100 72" width="100%" height="100%" aria-hidden style={{ display: "block" }}>
+            <RobotHead expression={expression} />
           </svg>
         </Box>
       </Box>

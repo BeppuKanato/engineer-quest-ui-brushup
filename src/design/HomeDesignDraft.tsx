@@ -64,14 +64,14 @@ function TileTitle({ children }: { children: ReactNode }) {
 }
 
 /**
- * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを全身で立たせる。
- * 旧マスコットのバストアップ（胴で切り取る）はやめる。ロボは頭と体が一体の絵なので、
- * 切り取らず足元まで見せるのが自然な置き方になる。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを「顔だけ」で出す。
+ * サムネでもロボは頭だけで描かれており、体を足すと別キャラになって怖さが出る。
+ * 枠の下端に影で接地させて置く。
  */
 function MascotBust({ state, width = 168, height = 128 }: { mascotId?: string; state: MascotState; width?: number; height?: number; imgSize?: number }) {
   return (
     <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-      <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: height * 0.88, height }} />
+      <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width, height: Math.round(width * 2 / 3) }} />
     </Box>
   );
 }
@@ -203,7 +203,7 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
         >
           <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
             <Box sx={{ flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-              <RobotFigure alt="" state="cheer" size="XL" grounding="shadow" sx={{ width: 150, height: 170 }} />
+              <RobotFigure alt="" state="cheer" size="XL" grounding="shadow" sx={{ width: 176, height: 117 }} />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>
