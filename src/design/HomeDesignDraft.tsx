@@ -64,14 +64,14 @@ function TileTitle({ children }: { children: ReactNode }) {
 }
 
 /**
- * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを「顔だけ」で出す。
- * サムネでもロボは頭だけで描かれており、体を足すと別キャラになって怖さが出る。
- * 枠の下端に影で接地させて置く。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを出す。
+ * 形は楕円の胴体＋楕円の腕、脚なし（脚を付けると人型の怖さが出る）。枠の下端に
+ * 影で接地させて置く。
  */
 function MascotBust({ state, width = 168, height = 128 }: { mascotId?: string; state: MascotState; width?: number; height?: number; imgSize?: number }) {
   return (
     <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-      <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width, height: Math.round(width * 2 / 3) }} />
+      <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: Math.round(height * 0.94), height }} />
     </Box>
   );
 }
@@ -203,7 +203,7 @@ export function HomeDesignDraft({ data, goalText, hasReview = true }: { data: Ho
         >
           <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
             <Box sx={{ flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-              <RobotFigure alt="" state="cheer" size="XL" grounding="shadow" sx={{ width: 176, height: 117 }} />
+              <RobotFigure alt="" state="cheer" size="XL" grounding="shadow" sx={{ width: 131, height: 140 }} />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ bgcolor: "#f1f5fb", borderLeft: `4px solid ${PRIMARY}`, borderRadius: 2, px: 2, py: 1.5 }}>

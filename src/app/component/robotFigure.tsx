@@ -2,9 +2,10 @@
 
 // アプリ全体のキャラクター（2026-11-27、全体ロボ化の叩き台）。
 // 場面サムネ・ストーリーで主人公を務めるロボット（コンピュータ）を、アプリの話者に統一する。
-// 形はサムネの TroubledRobot と同じ「顔（頭）だけ」。体を描き足すと別キャラになって
-// 怖さが出るため、頭＋アンテナの構成をそのまま使う（2026-11-27 Kanato 判断）。
-// 絵の語彙もサムネと同じ：頭 #2563eb／顔パネル #dbeafe／目 #1e3a8a。
+// 形（2026-11-27 Kanato の参考イメージ＋判断）：頭はサムネの語彙（#2563eb／顔パネル
+// #dbeafe／目 #1e3a8a）を保ち、胴体は楕円、腕も楕円。脚は付けない（付けると「小さい人」に
+// なって人型の怖さが出る。卵型ボディ＋下の影で浮かぶマスコットにする）。リアルに寄せず
+// フラットでファンシーに寄せる。
 // MascotFigure と同じ props を受ける差し替え用コンポーネント（mascotId は受け取るが使わない）。
 
 import { Box, keyframes, type SxProps, type Theme } from "@mui/material";
@@ -28,14 +29,15 @@ const robotFloat = keyframes`
   50% { transform: translateY(-6px) scale(1.03); }
 `;
 
-type RobotExpression = "normal" | "smile" | "celebrate" | "thinking" | "surprise" | "troubled";
+type RobotExpression = "normal" | "smile" | "celebrate" | "thinking" | "surprise" | "troubled" | "point";
 
 const expressionFor = (state: MascotState): RobotExpression => {
   switch (state) {
     case "happy":
     case "cheer":
-    case "point":
       return "smile";
+    case "point":
+      return "point";
     case "celebrate":
       return "celebrate";
     case "thinking":
@@ -85,7 +87,7 @@ function RobotHead({ expression }: { expression: RobotExpression }) {
       {/* 口 */}
       {expression === "celebrate" ? (
         <path d="M53 47 A7 7 0 0 0 67 47 Z" fill="#1e3a8a" />
-      ) : expression === "smile" ? (
+      ) : expression === "smile" || expression === "point" ? (
         <path d="M53 48 Q60 56 67 48" stroke="#1e3a8a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
       ) : expression === "thinking" ? (
         <line x1="56" y1="51" x2="64" y2="51" stroke="#1e3a8a" strokeWidth="2.4" strokeLinecap="round" />
@@ -112,10 +114,28 @@ function RobotHead({ expression }: { expression: RobotExpression }) {
 }
 
 function RobotSvg({ expression, grounding }: { expression: RobotExpression; grounding: "disc" | "shadow" | "frame" }) {
+  const armsUp = expression === "celebrate";
+  const rightArmUp = armsUp || expression === "point";
   return (
-    <svg viewBox="0 0 120 80" width="100%" height="100%" role="img" aria-hidden style={{ display: "block" }}>
-      {grounding === "disc" && <circle cx="60" cy="40" r="39" fill="#eaf2ff" />}
-      {grounding === "shadow" && <ellipse cx="60" cy="74" rx="30" ry="5" fill="#0f172a" opacity="0.14" />}
+    <svg viewBox="0 0 120 128" width="100%" height="100%" role="img" aria-hidden style={{ display: "block" }}>
+      {grounding === "disc" && <circle cx="60" cy="64" r="58" fill="#eaf2ff" />}
+      {grounding === "shadow" && <ellipse cx="60" cy="121" rx="28" ry="5" fill="#0f172a" opacity="0.14" />}
+      {/* 腕（楕円）。体の後ろから出す */}
+      {armsUp ? (
+        <ellipse cx="23" cy="56" rx="8" ry="15" fill="#1e40af" transform="rotate(28 23 56)" />
+      ) : (
+        <ellipse cx="31" cy="84" rx="8" ry="15" fill="#1e40af" transform="rotate(18 31 84)" />
+      )}
+      {rightArmUp ? (
+        <ellipse cx="97" cy="56" rx="8" ry="15" fill="#1e40af" transform="rotate(-28 97 56)" />
+      ) : (
+        <ellipse cx="89" cy="84" rx="8" ry="15" fill="#1e40af" transform="rotate(-18 89 84)" />
+      )}
+      {/* 首と胴体（楕円）。脚は付けない */}
+      <rect x="54" y="62" width="12" height="9" fill="#1e40af" />
+      <ellipse cx="60" cy="90" rx="25" ry="24" fill="#2563eb" />
+      <ellipse cx="60" cy="96" rx="14" ry="12" fill="#dbeafe" />
+      <circle cx="60" cy="92" r="3.4" fill="#22c55e" />
       <RobotHead expression={expression} />
     </svg>
   );

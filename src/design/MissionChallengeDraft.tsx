@@ -36,12 +36,12 @@ const missionCourseIds: Record<string, string> = {
 };
 
 /**
- * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを「顔だけ」で出す。
- * サムネでもロボは頭だけで描かれており、体を足すと別キャラになって怖さが出る。
+ * 話者の見せ方（2026-11-27、全体ロボ化）：場面サムネの主人公ロボットを出す。
+ * 形は楕円の胴体＋楕円の腕、脚なし（脚を付けると人型の怖さが出る）。
  */
 const MascotBust: React.FC<{ state: "cheer" | "point" | "celebrate" | "happy"; width?: number; height?: number; imgSize?: number }> = ({ state, width = 168, height = 128 }) => (
   <Box sx={{ width, height, flexShrink: 0, display: "flex", alignItems: "flex-end", justifyContent: "center" }} aria-hidden>
-    <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width, height: Math.round(width * 2 / 3) }} />
+    <RobotFigure alt="" state={state} size="XL" grounding="shadow" sx={{ width: Math.round(height * 0.94), height }} />
   </Box>
 );
 
